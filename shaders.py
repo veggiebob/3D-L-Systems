@@ -1,6 +1,7 @@
 from OpenGL.GLUT import *
 from OpenGL.GLU import *
 from OpenGL.GL import *
+from uniforms import *
 from array import array
 import numpy as np
 
@@ -17,13 +18,14 @@ fragment_shader_string = """
 #version 330
 
 out vec4 outputColor;
-
+uniform vec2 mouse;
+uniform float time;
 void main()
 {
     float lerpValue = gl_FragCoord.y / 500.0f;
-    
-    outputColor = mix(vec4(1.0f, 1.0f, 1.0f, 1.0f),
-        vec4(0.2f, 0.2f, 0.2f, 1.0f), lerpValue);
+    vec3 col = vec3(mouse, 0.5);
+    col = mix(col, vec3(sin(time * 0.1)), lerpValue);
+    outputColor = vec4(col, 1.);
 }
 """
 
