@@ -19,9 +19,7 @@ window = None
 
 framecount = 0
 
-inputs = {} # this is probably bad
-add_uniform('mouse', 'vec2')
-add_uniform('time', 'float')
+inputs = {'mouse': [0, 0]}  # this is probably bad
 
 vertex_pos = np.array(
     [0.75, 0.75, 0.0, 1.0,
@@ -64,18 +62,22 @@ def keyboard(key, x, y):
         return
     inputs['key'] = key
 
+
 def continuous_mouse(x, y):
     inputs['mouse'] = [x, y]
     glutPostRedisplay()
 
+
 def main():
+    add_uniform('mouse', 'vec2')
+    add_uniform('time', 'float')
     global program, window, vbo
     glutInit(sys.argv)
     display_mode = GLUT_DOUBLE | GLUT_ALPHA | GLUT_DEPTH | GLUT_STENCIL
     glutInitDisplayMode(display_mode)
     window = create_window((640, 480), (0, 0), "Quake-like")
     program = create_all_shaders()
-    init_uniforms(program) # create uniforms for the frag shader
+    init_uniforms(program)  # create uniforms for the frag shader
     vbo = VertexBufferObject()
     vbo.update_data(vertex_pos)
     glBindVertexArray(glGenVertexArrays(1))
@@ -85,6 +87,7 @@ def main():
     glutMotionFunc(continuous_mouse)
     glutPassiveMotionFunc(continuous_mouse)
     glutMainLoop()
+
 
 if __name__ == "__main__":
     main()
