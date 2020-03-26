@@ -7,23 +7,28 @@ import numpy as np
 
 vertex_shader_string = """
 #version 330
-layout(location = 0) in vec4 position;
+layout(location = 0) in vec3 position;
+layout(location = 1) in vec3 normal;
+varying vec3 fposition;
+varying vec3 fnormal;
 void main()
 {
-   gl_Position = position;
+    fposition = position;
+    fnormal = normal;
+    gl_Position = position;
 }
 """
 
 fragment_shader_string = """
 #version 330
-
 out vec4 outputColor;
-uniform vec2 mouse;
+varying vec3 fposition;
+varying vec3 normal;
 uniform float time;
 void main()
 {
     float lerpValue = gl_FragCoord.y / 500.0f;
-    vec3 col = vec3(mouse, 0.5);
+    vec3 col = vec3(1.0, 0., 0.5);
     col = mix(col, vec3(sin(time * 0.1)), lerpValue);
     outputColor = vec4(col, 1.);
 }
@@ -38,7 +43,7 @@ def create_all_shaders():
     glLinkProgram(program)
     status = glGetProgramiv(program, GL_LINK_STATUS)
     if status == GL_FALSE:
-        print("Linker failure: " + glGetProgramInfoLog(program))
+        print("Linker failure: " + str(glGetProgramInfoLog(program)))
     for shader in shaders:
         glDeleteShader(shader)
     return program
