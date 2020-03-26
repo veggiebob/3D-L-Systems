@@ -29,11 +29,12 @@ def create_rotation_matrix(x, y, z):
 
 
 def look_at(position, target, up):
-    zaxis = norm_vec3(np.subtract(position, target))
+    zaxis = norm_vec3(target - position)
     xaxis = norm_vec3(vertex_math.cross_array(norm_vec3(up), zaxis))
     yaxis = vertex_math.cross_array(zaxis, xaxis)  # quick maths
-    translation = create_translation_matrix(position * -1)
     rotation = create_rotation_matrix(xaxis, yaxis, zaxis)
+    translation = create_translation_matrix(position * -1)
+    #rotation[3] = [-np.dot(xaxis, position), -np.dot(zaxis, position), -np.dot(yaxis, position), 1]
     return translation * rotation
 
 

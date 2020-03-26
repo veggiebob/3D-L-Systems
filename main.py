@@ -82,11 +82,11 @@ def render():
     glUseProgram(program)
 
     projection_mat = create_projection_matrix(45.0, 4 / 3, 0.1, 100)
-    fcfact = (30-(framecount%60))/60
-    view_mat = look_at(np.array([0.01, 10, 2+ 10*fcfact], dtype='float32'), np.array([0, 0, 0], dtype='float32'),
-                       np.array([0, 1, 0], dtype='float32'))
+    fcfact = np.sin(framecount*np.pi/180)
+    view_mat = look_at(np.array([4, 4, 0+5*fcfact], dtype='float32'), np.array([0, 0, 0], dtype='float32'),
+                       np.array([0, -1, 0], dtype='float32'))
     model_mat = np.identity(4, dtype='float32')
-    MVP_mat = projection_mat * view_mat * model_mat
+    MVP_mat = np.identity(4) * view_mat * model_mat
 
     glUniformMatrix4fv(mvpLoc, 1, GL_FALSE, MVP_mat.transpose())
 
