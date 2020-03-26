@@ -9,13 +9,17 @@ vertex_shader_string = """
 #version 330
 layout(location = 0) in vec3 position;
 layout(location = 1) in vec3 normal;
+layout(location = 2) in vec3 color;
 varying vec3 fposition;
 varying vec3 fnormal;
+out vec3 fcolor;
+uniform mat4 mvp;
 void main()
 {
     fposition = position;
     fnormal = normal;
-    gl_Position = position;
+    gl_Position =  mvp * vec4(position,1);
+    fcolor = color;
 }
 """
 
@@ -23,14 +27,11 @@ fragment_shader_string = """
 #version 330
 out vec4 outputColor;
 varying vec3 fposition;
-varying vec3 normal;
-uniform float time;
+varying vec3 fnormal;
+varying vec3 fcolor;
 void main()
 {
-    float lerpValue = gl_FragCoord.y / 500.0f;
-    vec3 col = vec3(1.0, 0., 0.5);
-    col = mix(col, vec3(sin(time * 0.1)), lerpValue);
-    outputColor = vec4(col, 1.);
+    outputColor = vec4(fcolor.x, fcolor.y, fcolor.z, 1.);
 }
 """
 

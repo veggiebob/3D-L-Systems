@@ -13,7 +13,8 @@ u_types: Dict[str, Callable] = {
     'int': glUniform1i,
     'ivec2': glUniform2i,
     'ivec3': glUniform3i,
-    'mat3': glUniformMatrix3fv
+    'mat3': glUniformMatrix3fv,
+    'mat4': glUniformMatrix4fv
 }
 
 
