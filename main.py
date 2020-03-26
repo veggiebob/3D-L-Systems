@@ -20,46 +20,13 @@ framecount = 0
 inputs = {'mouse': [0, 0]}  # this is probably bad
 
 vertex_pos = np.array(
-    [-1.0, -1.0, -1.0,
-     -1.0, -1.0, 1.0,
-     -1.0, 1.0, 1.0,
-     1.0, 1.0, -1.0,
-     -1.0, -1.0, -1.0,
-     -1.0, 1.0, -1.0,
-     1.0, -1.0, 1.0,
-     -1.0, -1.0, -1.0,
-     1.0, -1.0, -1.0,
-     1.0, 1.0, -1.0,
-     1.0, -1.0, -1.0,
-     -1.0, -1.0, -1.0,
-     -1.0, -1.0, -1.0,
-     -1.0, 1.0, 1.0,
-     -1.0, 1.0, -1.0,
-     1.0, -1.0, 1.0,
-     -1.0, -1.0, 1.0,
-     -1.0, -1.0, -1.0,
-     -1.0, 1.0, 1.0,
-     -1.0, -1.0, 1.0,
-     1.0, -1.0, 1.0,
-     1.0, 1.0, 1.0,
-     1.0, -1.0, -1.0,
-     1.0, 1.0, -1.0,
-     1.0, -1.0, -1.0,
-     1.0, 1.0, 1.0,
-     1.0, -1.0, 1.0,
-     1.0, 1.0, 1.0,
-     1.0, 1.0, -1.0,
-     -1.0, 1.0, -1.0,
-     1.0, 1.0, 1.0,
-     -1.0, 1.0, -1.0,
-     -1.0, 1.0, 1.0,
-     1.0, 1.0, 1.0,
-     -1.0, 1.0, 1.0,
-     1.0, -1.0, 1.0],
+    [0.75, 0.75, 0.0,
+     0.75, -0.75, 0.0,
+     -0.75, -0.75, 0.0],
     dtype='float32'
 )
 color = np.array(
-    [    0.583,  0.771,  0.014,
+    [0.583,  0.771,  0.014,
     0.609,  0.115,  0.436,
     0.327,  0.483,  0.844,
     0.822,  0.569,  0.201,
@@ -115,8 +82,8 @@ def render():
     glUseProgram(program)
 
     projection_mat = create_projection_matrix(45.0, 4 / 3, 0.1, 100)
-
-    view_mat = look_at(np.array([1, 1, 2], dtype='float32'), np.array([0, 0, 0], dtype='float32'),
+    fcfact = (30-(framecount%60))/60
+    view_mat = look_at(np.array([0.01, 10, 2+ 10*fcfact], dtype='float32'), np.array([0, 0, 0], dtype='float32'),
                        np.array([0, 1, 0], dtype='float32'))
     model_mat = np.identity(4, dtype='float32')
     MVP_mat = projection_mat * view_mat * model_mat
@@ -138,7 +105,7 @@ def render():
     cvbo.bind()
     glVertexAttribPointer(2, 3, GL_FLOAT, GL_TRUE, 0, None)
 
-    glDrawArrays(GL_TRIANGLES, 0, 12*3)
+    glDrawArrays(GL_TRIANGLES, 0, 3)
     glDisableVertexAttribArray(0)
     glDisableVertexAttribArray(1)
     glDisableVertexAttribArray(2)
