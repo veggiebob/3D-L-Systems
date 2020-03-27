@@ -114,7 +114,7 @@ def create_window(size, pos, title):
 def render():
     global framecount
     glClearColor(0.0, 0.0, 0.0, 0.0)
-    glClear(GL_COLOR_BUFFER_BIT)
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
     # update_uniform('mvp', MVP_mat.transpose())
     glUseProgram(program)
     perspective_mat = glm.perspective(glm.radians(100.0), 4.0/3.0, 0.1, 100.0)
@@ -172,8 +172,8 @@ def main():
     display_mode = GLUT_DOUBLE | GLUT_ALPHA | GLUT_DEPTH | GLUT_STENCIL
     glutInitDisplayMode(display_mode)
     window = create_window((640, 480), (0, 0), "Quake-like")
-    #glEnable(GL_DEPTH_TEST)
-    #glDepthFunc(GL_LESS)
+    glEnable(GL_DEPTH_TEST)
+    glDepthFunc(GL_LESS)
     program = create_all_shaders()
     init_uniforms(program)  # create uniforms for the frag shader
     vbo = VertexBufferObject()
