@@ -32,9 +32,11 @@ out vec4 outputColor;
 varying vec3 fposition;
 varying vec3 fnormal;
 varying vec3 fcolor;
+uniform sampler2D noise_512;
 void main()
 {
-    outputColor = vec4(fcolor, 1.);
+    vec3 col = texture2D(noise_512, fposition.xy).r * fcolor;
+    outputColor = vec4(col, 1.);
 }
 """
 

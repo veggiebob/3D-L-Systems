@@ -4,23 +4,26 @@ OpenGL.USE_ACCELERATE = False
 from vbo import *
 from shaders import *
 from uniforms import *
-import numpy as np
 import sys
 from vertex_math import *
 from matrix import *
 import glm
+import texture_loading
+from texture_loading import TEXTURES
 program = None
 vbo, nvbo, cvbo = None, None, None
 window = None
 
 framecount = 0
 
-# add_uniform('mouse', 'vec2')
-# add_uniform('time', 'float')
-add_uniform('mvp', 'mat4')
+# add_uniform('mvp', 'mat4')
 add_uniform('modelViewMatrix', 'mat4')
 add_uniform('projectionMatrix', 'mat4')
 add_uniform('viewMatrix', 'mat4')
+
+# add_uniform('mouse', 'vec2')
+# add_uniform('time', 'float')
+
 inputs = {'mouse': [0, 0]}  # this is probably bad
 
 vertex_pos = np.array(
@@ -115,7 +118,6 @@ def render():
     global framecount
     glClearColor(0.0, 0.0, 0.0, 0.0)
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
-    # update_uniform('mvp', MVP_mat.transpose())
     glUseProgram(program)
     perspective_mat = glm.perspective(glm.radians(100.0), 4.0/3.0, 0.1, 100.0)
     view_mat = glm.lookAt(glm.vec3([4, 3, 3]), glm.vec3([0, 0, 0]), glm.vec3([0, 1, 0]))
@@ -124,12 +126,11 @@ def render():
     update_uniform('modelViewMatrix', [1, GL_FALSE, np.array(model_mat)])
     update_uniform('viewMatrix', [1, GL_FALSE, np.array(view_mat)])
     update_uniform('projectionMatrix', [1, GL_FALSE, np.array(perspective_mat)])
-    # glUniformMatrix4fv(mvpLoc, 1, GL_TRUE, np.array(MVP_mat))
+    # update_uniform('time', [float(framecount)])
+    # update_uniform('mouse', inputs['mouse'])
 
     glEnableVertexAttribArray(0)
     vbo.bind()
-    # update_uniform('time', [float(framecount)])
-    # update_uniform('mouse', inputs['mouse'])
 
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, None)
 
@@ -173,11 +174,13 @@ def main():
     glutInitDisplayMode(display_mode)
     window = create_window((640, 480), (0, 0), "Quake-like")
     glEnable(GL_DEPTH_TEST)
+    glEnable(GL_TEXTURE_2D)
     glDepthMask(GL_TRUE)
     glDepthFunc(GL_LEQUAL)
     glDepthRange(0.0, 1.0)
     program = create_all_shaders()
     init_uniforms(program)  # create uniforms for the frag shader
+    texture_loading.load_all_textures('data/textures')
     vbo = VertexBufferObject()
     vbo.update_data(vertex_pos)
     nvbo = VertexBufferObject()
