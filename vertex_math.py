@@ -22,9 +22,8 @@ def get_normals(vertex_data):  # binary vertex data, 3 groups of 3 float 32s rep
         bc = (i - x, j - y, k - z)
         ac = (a - x, a - y, a - z)
         norm = cross(*(bc + ac))
-        normals += norm[0] + norm[1] + norm[2]
+        normals = numpy.append(normals, norm)
     return normals
-
 
 def cross(a, b, c, x, y, z):
     """
@@ -37,3 +36,9 @@ def cross(a, b, c, x, y, z):
 
 def cross_array(v1, v2):
     return cross(v1[0], v1[1], v1[2], v2[0], v2[1], v2[2])
+
+def concat (*args):
+    arr = numpy.array([], dtype='float32')
+    for a in args:
+        arr = numpy.append(arr, a)
+    return arr

@@ -8,6 +8,7 @@ import numpy as np
 import sys
 from vertex_math import *
 from matrix import *
+import test_objects
 import glm
 program = None
 vbo, nvbo, cvbo = None, None, None
@@ -62,6 +63,9 @@ vertex_pos = np.array(
      1.0, -1.0, 1.0],
     dtype='float32'
 )
+print(len(vertex_pos))
+vertex_pos = test_objects.generate_sphere() * 3
+print(len(vertex_pos))
 color = np.array(
     [0.583,  0.771,  0.014,
     0.609,  0.115,  0.436,
@@ -101,6 +105,8 @@ color = np.array(
     0.982,  0.099,  0.879],
     dtype='float32'
 )
+while len(color) < len(vertex_pos):
+    color = np.append(color, np.array([1], dtype='float32'))
 normals = get_normals(vertex_pos)
 
 
@@ -118,7 +124,7 @@ def render():
     # update_uniform('mvp', MVP_mat.transpose())
     glUseProgram(program)
     perspective_mat = glm.perspective(glm.radians(100.0), 4.0/3.0, 0.1, 100.0)
-    view_mat = glm.lookAt(glm.vec3([4, 3, 3]), glm.vec3([0, 0, 0]), glm.vec3([0, 1, 0]))
+    view_mat = glm.lookAt(glm.vec3([np.sin(framecount * 0.001), 1, np.cos(framecount * 0.001)]) * 3, glm.vec3([0, 0, 0]), glm.vec3([0, 1, 0]))
     model_mat = np.identity(4, dtype='float32')
 
     update_uniform('modelViewMatrix', [1, GL_FALSE, np.array(model_mat)])
@@ -141,7 +147,7 @@ def render():
     cvbo.bind()
     glVertexAttribPointer(2, 3, GL_FLOAT, GL_TRUE, 0, None)
 
-    glDrawArrays(GL_TRIANGLES, 0, 3*12)
+    glDrawArrays(GL_TRIANGLES, 0, int(len(vertex_pos) / 3))
     glDisableVertexAttribArray(0)
     glDisableVertexAttribArray(1)
     glDisableVertexAttribArray(2)
