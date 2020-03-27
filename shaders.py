@@ -1,3 +1,6 @@
+import string
+
+from OpenGL.GL.shaders import ShaderCompilationError
 from OpenGL.GLUT import *
 from OpenGL.GLU import *
 from OpenGL.GL import *
@@ -33,9 +36,13 @@ varying vec3 fposition;
 varying vec3 fnormal;
 varying vec3 fcolor;
 uniform sampler2D noise_512;
+uniform sampler2D cat;
 void main()
 {
     vec3 col = texture2D(noise_512, fposition.xy).r * fcolor;
+    if (dot(vec3(1., 0., 0.), fnormal) > 0.5) {
+        col = texture2D(cat, fposition.xy + 0.5).rgb;
+    }
     outputColor = vec4(col, 1.);
 }
 """
@@ -59,8 +66,7 @@ def create_shader(type, source):
     shader = glCreateShader(type)
     glShaderSource(shader, source)
     glCompileShader(shader)
-    status = None
-    glGetShaderiv(shader, GL_COMPILE_STATUS, status)
+    status = glGetShaderiv(shader, GL_COMPILE_STATUS)
     if status == GL_FALSE:
-        print("Compilation failure for " + type + " shader:" + glGetShaderInfoLog(shader))
+        raise ShaderCompilationError("Compilation failure for %s\n%s"%(str(type), glGetShaderInfoLog(shader).decode()))
     return shader
