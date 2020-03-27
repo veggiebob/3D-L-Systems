@@ -42,3 +42,19 @@ def concat (*args):
     for a in args:
         arr = numpy.append(arr, a)
     return arr
+
+class ModelOp:
+    @staticmethod
+    def scale (model, scale_v:numpy.ndarray):
+        nm = numpy.array(model, dtype='float32')
+        nm[::3] = model[::3] * scale_v[0] # x
+        nm[1::3] = model[1::3] * scale_v[1] # y
+        nm[2::3] = model[2::3] * scale_v[2] # z
+        return nm
+    @staticmethod
+    def translate (model:numpy.ndarray, trans_v:numpy.ndarray):
+        nm = numpy.array([], dtype='float32')
+        nm[::3] = model[::3] + trans_v[0]
+        nm[1::3] = model[1::3] + trans_v[1]
+        nm[2::3] = model[2::3] + trans_v[2]
+        return nm
