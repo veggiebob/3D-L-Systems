@@ -1,3 +1,5 @@
+import random
+
 import OpenGL
 
 OpenGL.USE_ACCELERATE = False
@@ -64,7 +66,7 @@ vertex_pos = np.array(
     dtype='float32'
 )
 print(len(vertex_pos))
-vertex_pos = test_objects.generate_sphere() * 3
+vertex_pos = test_objects.generate_cone() * 3
 print(len(vertex_pos))
 color = np.array(
     [0.583,  0.771,  0.014,
@@ -106,7 +108,7 @@ color = np.array(
     dtype='float32'
 )
 while len(color) < len(vertex_pos):
-    color = np.append(color, np.array([1], dtype='float32'))
+    color = np.append(color, np.array([random.random()], dtype='float32'))
 normals = get_normals(vertex_pos)
 
 

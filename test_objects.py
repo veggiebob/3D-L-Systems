@@ -23,10 +23,26 @@ def generate_sphere ():
             )
     return vertices
 
-
+def generate_cone ():
+    vertices = np.array([], dtype='float32')
+    height = np.sqrt(3) / 2
+    top = np.array([0, height, 0], dtype='float32')
+    bottom = np.array([0, 0, 0], dtype='float32')
+    res = 30
+    for a in range(res + 1):
+        ang = a / res * 2 * np.pi
+        nang = (a+1) / res * 2 * np.pi
+        v = sphere_coords(np.pi / 2, ang)
+        nv = sphere_coords(np.pi / 2, nang)
+        vertices = concat(
+            vertices,
+            v, nv, top,
+            nv, v, bottom
+        )
+    return vertices
 def sphere_coords (phi: float, theta: float):
     return np.array([
         np.cos(theta) * np.sin(phi),
-        np.sin(theta) * np.sin(phi),
-        np.cos(phi)
+        np.cos(phi),
+        np.sin(theta) * np.sin(phi)
     ], dtype='float32')
