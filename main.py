@@ -180,7 +180,13 @@ def main():
     glDepthRange(0.0, 1.0)
     program = create_all_shaders()
     init_uniforms(program)  # create uniforms for the frag shader
-    texture_loading.load_all_textures('data/textures')
+    texture_loading.load_all_textures('data/textures', {
+        # https://open.gl/textures
+        'noise_512': {
+            'sample_mode': GL_LINEAR,
+            'clamp_mode': GL_REPEAT
+        }
+    })
     vbo = VertexBufferObject()
     vbo.update_data(vertex_pos)
     nvbo = VertexBufferObject()

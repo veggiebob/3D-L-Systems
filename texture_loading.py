@@ -1,9 +1,8 @@
 from typing import Dict
 
-import PIL
+import PIL, os, yaml
 import numpy as np
 from PIL import Image
-import os
 
 from uniforms import Texture
 
@@ -40,15 +39,15 @@ def get_image_data(filepath):
         return
     return np.array(img, dtype='float32')
 
-def load_texture(filepath, name:str=None):
+def load_texture(filepath, name:str=None, config:dict={}):
     if name is None: name = filepath
     data = get_image_data(filepath)
     width = len(data[0])
     height = len(data)
-    TEXTURES[name] = Texture(data.flatten(), name, width, height)
+    TEXTURES[name] = Texture(data.flatten(), name, width, height, **config)
 
 
-def load_all_textures(path='./data/textures'):
+def load_all_textures(path='./data/textures', config:dict={}):
     files = os.listdir(path)
     for f in files:
         try:
@@ -59,7 +58,7 @@ def load_all_textures(path='./data/textures'):
             continue
         filename = f[:f.index('.')]
         print('loaded texture %s'%filename)
-        load_texture('%s/%s'%(path, f), filename)
+        load_texture('%s/%s'%(path, f), filename, config[filename] if filename in config else {})
 
 if __name__ == '__main__':
     load_all_textures()
