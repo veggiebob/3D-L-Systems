@@ -1,6 +1,14 @@
 import numpy as np
 import vertex_math
 
+def create_new_projection_matrix(fFrustumScale, fzNear, fzFar):
+    arr = np.zeros(16, dtype='float32')
+    arr[0] = fFrustumScale
+    arr[5] = fFrustumScale
+    arr[10] = (fzFar + fzNear) / (fzNear - fzFar)
+    arr[14] = (2 * fzFar * fzNear) / (fzNear - fzFar)
+    arr[11] = -1.0
+    return arr
 
 def create_projection_matrix(fov, aspect_ratio, near_clip, far_clip):
     tan_half_fov = np.tan(0.5 * fov * (np.pi / 180.0))
@@ -41,3 +49,19 @@ def look_at(position, target, up):
 def norm_vec3(vec):
     mag = np.sqrt(vec[0] * vec[0] + vec[1] * vec[1] + vec[2] * vec[2])
     return np.array([vec[0] / mag, vec[1] / mag, vec[2] / mag])
+
+def flatten(mat4):
+    arr = np.zeros(16, dtype='float32')
+    for j in range(0, 3):
+        for i in range(0, 3):
+            k = i+4*j
+            arr[k] = mat4[j][i]
+    return arr
+
+
+
+
+
+
+
+

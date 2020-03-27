@@ -8,6 +8,7 @@ import numpy as np
 import sys
 from vertex_math import *
 from matrix import *
+import glm
 program = None
 vbo, nvbo, cvbo = None, None, None
 window = None
@@ -20,9 +21,42 @@ framecount = 0
 inputs = {'mouse': [0, 0]}  # this is probably bad
 
 vertex_pos = np.array(
-    [0.75, 0.75, 0.0,
-     0.75, -0.75, 0.0,
-     -0.75, -0.75, 0.0],
+    [-1.0, -1.0, -1.0,
+     -1.0, -1.0, 1.0,
+     -1.0, 1.0, 1.0,
+     1.0, 1.0, -1.0,
+     -1.0, -1.0, -1.0,
+     -1.0, 1.0, -1.0,
+     1.0, -1.0, 1.0,
+     -1.0, -1.0, -1.0,
+     1.0, -1.0, -1.0,
+     1.0, 1.0, -1.0,
+     1.0, -1.0, -1.0,
+     -1.0, -1.0, -1.0,
+     -1.0, -1.0, -1.0,
+     -1.0, 1.0, 1.0,
+     -1.0, 1.0, -1.0,
+     1.0, -1.0, 1.0,
+     -1.0, -1.0, 1.0,
+     -1.0, -1.0, -1.0,
+     -1.0, 1.0, 1.0,
+     -1.0, -1.0, 1.0,
+     1.0, -1.0, 1.0,
+     1.0, 1.0, 1.0,
+     1.0, -1.0, -1.0,
+     1.0, 1.0, -1.0,
+     1.0, -1.0, -1.0,
+     1.0, 1.0, 1.0,
+     1.0, -1.0, 1.0,
+     1.0, 1.0, 1.0,
+     1.0, 1.0, -1.0,
+     -1.0, 1.0, -1.0,
+     1.0, 1.0, 1.0,
+     -1.0, 1.0, -1.0,
+     -1.0, 1.0, 1.0,
+     1.0, 1.0, 1.0,
+     -1.0, 1.0, 1.0,
+     1.0, -1.0, 1.0],
     dtype='float32'
 )
 color = np.array(
@@ -80,15 +114,12 @@ def render():
     glClear(GL_COLOR_BUFFER_BIT)
     # update_uniform('mvp', MVP_mat.transpose())
     glUseProgram(program)
-
-    projection_mat = create_projection_matrix(45.0, 4 / 3, 0.1, 100)
-    fcfact = np.sin(framecount*np.pi/180)
-    view_mat = look_at(np.array([4, 4, 0+5*fcfact], dtype='float32'), np.array([0, 0, 0], dtype='float32'),
-                       np.array([0, -1, 0], dtype='float32'))
+    perspective_mat = glm.perspective(glm.radians(45.0), 4.0/3.0, 0.1, 100.0)
+    view_mat = glm.lookAt(glm.vec3([4, 3, 30]), glm.vec3([0, 0, 0]), glm.vec3([0, 1, 0]))
     model_mat = np.identity(4, dtype='float32')
-    MVP_mat = np.identity(4) * view_mat * model_mat
+    MVP_mat = perspective_mat * view_mat * model_mat
 
-    glUniformMatrix4fv(mvpLoc, 1, GL_FALSE, MVP_mat.transpose())
+    glUniformMatrix4fv(mvpLoc, 1, GL_TRUE, np.array(MVP_mat))
 
     glEnableVertexAttribArray(0)
     vbo.bind()
@@ -105,7 +136,7 @@ def render():
     cvbo.bind()
     glVertexAttribPointer(2, 3, GL_FLOAT, GL_TRUE, 0, None)
 
-    glDrawArrays(GL_TRIANGLES, 0, 3)
+    glDrawArrays(GL_TRIANGLES, 0, 3*12)
     glDisableVertexAttribArray(0)
     glDisableVertexAttribArray(1)
     glDisableVertexAttribArray(2)

@@ -18,7 +18,8 @@ void main()
 {
     fposition = position;
     fnormal = normal;
-    gl_Position =  mvp * vec4(position,1);
+    vec4 cameraPos = vec4(position, 1.0);
+    gl_Position =  mvp * cameraPos;
     fcolor = color;
 }
 """
