@@ -173,7 +173,9 @@ def main():
     glutInitDisplayMode(display_mode)
     window = create_window((640, 480), (0, 0), "Quake-like")
     glEnable(GL_DEPTH_TEST)
-    glDepthFunc(GL_LESS)
+    glDepthMask(GL_TRUE)
+    glDepthFunc(GL_LEQUAL)
+    glDepthRange(0.0, 1.0)
     program = create_all_shaders()
     init_uniforms(program)  # create uniforms for the frag shader
     vbo = VertexBufferObject()
