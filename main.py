@@ -118,7 +118,7 @@ def render():
     # update_uniform('mvp', MVP_mat.transpose())
     glUseProgram(program)
     perspective_mat = glm.perspective(glm.radians(100.0), 4.0/3.0, 0.1, 100.0)
-    view_mat = glm.lookAt(glm.vec3([4, 3, 3]), glm.vec3([0, 0, 0]), glm.vec3([0, 1, 0]))
+    view_mat = glm.lookAt(3 * glm.vec3([np.sin(framecount * 0.001), 0, np.cos(framecount * 0.001)]), glm.vec3([0, 0, 0]), glm.vec3([0, 1, 0]))
     model_mat = np.identity(4, dtype='float32')
 
     update_uniform('modelViewMatrix', [1, GL_FALSE, np.array(model_mat)])

@@ -37,17 +37,13 @@ def create_rotation_matrix(x, y, z):
 
 
 def look_at(position, target, up):
-    zaxis = norm_vec3(target - position)
-    xaxis = norm_vec3(vertex_math.cross_array(norm_vec3(up), zaxis))
+    zaxis = vertex_math.norm_vec3(target - position)
+    xaxis = vertex_math.norm_vec3(vertex_math.cross_array(vertex_math.norm_vec3(up), zaxis))
     yaxis = vertex_math.cross_array(zaxis, xaxis)  # quick maths
     rotation = create_rotation_matrix(xaxis, yaxis, zaxis)
     translation = create_translation_matrix(position * -1)
     #rotation[3] = [-np.dot(xaxis, position), -np.dot(zaxis, position), -np.dot(yaxis, position), 1]
     return translation * rotation
-
-def norm_vec3(vec):
-    mag = np.sqrt(vec[0] * vec[0] + vec[1] * vec[1] + vec[2] * vec[2])
-    return np.array([vec[0] / mag, vec[1] / mag, vec[2] / mag])
 
 def flatten(mat4):
     arr = np.zeros(16, dtype='float32')
