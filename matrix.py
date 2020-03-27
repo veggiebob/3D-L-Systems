@@ -45,7 +45,6 @@ def look_at(position, target, up):
     #rotation[3] = [-np.dot(xaxis, position), -np.dot(zaxis, position), -np.dot(yaxis, position), 1]
     return translation * rotation
 
-
 def norm_vec3(vec):
     mag = np.sqrt(vec[0] * vec[0] + vec[1] * vec[1] + vec[2] * vec[2])
     return np.array([vec[0] / mag, vec[1] / mag, vec[2] / mag])

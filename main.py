@@ -17,7 +17,10 @@ framecount = 0
 
 # add_uniform('mouse', 'vec2')
 # add_uniform('time', 'float')
-# add_uniform('mvp', 'mat4')
+add_uniform('mvp', 'mat4')
+add_uniform('modelViewMatrix', 'mat4')
+add_uniform('projectionMatrix', 'mat4')
+add_uniform('viewMatrix', 'mat4')
 inputs = {'mouse': [0, 0]}  # this is probably bad
 
 vertex_pos = np.array(
@@ -114,12 +117,14 @@ def render():
     glClear(GL_COLOR_BUFFER_BIT)
     # update_uniform('mvp', MVP_mat.transpose())
     glUseProgram(program)
-    perspective_mat = glm.perspective(glm.radians(45.0), 4.0/3.0, 0.1, 100.0)
-    view_mat = glm.lookAt(glm.vec3([4, 3, 30]), glm.vec3([0, 0, 0]), glm.vec3([0, 1, 0]))
+    perspective_mat = glm.perspective(glm.radians(100.0), 4.0/3.0, 0.1, 100.0)
+    view_mat = glm.lookAt(glm.vec3([4, 3, 3]), glm.vec3([0, 0, 0]), glm.vec3([0, 1, 0]))
     model_mat = np.identity(4, dtype='float32')
-    MVP_mat = perspective_mat * view_mat * model_mat
 
-    glUniformMatrix4fv(mvpLoc, 1, GL_TRUE, np.array(MVP_mat))
+    update_uniform('modelViewMatrix', [1, GL_FALSE, np.array(model_mat)])
+    update_uniform('viewMatrix', [1, GL_FALSE, np.array(view_mat)])
+    update_uniform('projectionMatrix', [1, GL_FALSE, np.array(perspective_mat)])
+    # glUniformMatrix4fv(mvpLoc, 1, GL_TRUE, np.array(MVP_mat))
 
     glEnableVertexAttribArray(0)
     vbo.bind()
@@ -161,10 +166,8 @@ def keyboard(key, x, y):
 def continuous_mouse(x, y):
     inputs['mouse'] = [x, y]
 
-mvpLoc = None
-
 def main():
-    global program, window, vbo, nvbo, cvbo, mvpLoc
+    global program, window, vbo, nvbo, cvbo
     glutInit(sys.argv)
     display_mode = GLUT_DOUBLE | GLUT_ALPHA | GLUT_DEPTH | GLUT_STENCIL
     glutInitDisplayMode(display_mode)
@@ -173,7 +176,6 @@ def main():
     #glDepthFunc(GL_LESS)
     program = create_all_shaders()
     init_uniforms(program)  # create uniforms for the frag shader
-    mvpLoc = glGetUniformLocation(program, "mvp")
     vbo = VertexBufferObject()
     vbo.update_data(vertex_pos)
     nvbo = VertexBufferObject()
