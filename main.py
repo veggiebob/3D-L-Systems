@@ -23,43 +23,58 @@ add_uniform('projectionMatrix', 'mat4')
 add_uniform('viewMatrix', 'mat4')
 inputs = {'mouse': [0, 0]}  # this is probably bad
 
+
+
 vertex_pos = np.array(
-    [-1.0, -1.0, -1.0,
+    [
+    -1.0, -1.0, -1.0,
      -1.0, -1.0, 1.0,
      -1.0, 1.0, 1.0,
+
+    -1.0, 1.0, -1.0,
      1.0, 1.0, -1.0,
      -1.0, -1.0, -1.0,
-     -1.0, 1.0, -1.0,
+
      1.0, -1.0, 1.0,
      -1.0, -1.0, -1.0,
      1.0, -1.0, -1.0,
+
      1.0, 1.0, -1.0,
      1.0, -1.0, -1.0,
      -1.0, -1.0, -1.0,
+
      -1.0, -1.0, -1.0,
      -1.0, 1.0, 1.0,
      -1.0, 1.0, -1.0,
+
      1.0, -1.0, 1.0,
      -1.0, -1.0, 1.0,
      -1.0, -1.0, -1.0,
+
      -1.0, 1.0, 1.0,
      -1.0, -1.0, 1.0,
      1.0, -1.0, 1.0,
+
      1.0, 1.0, 1.0,
      1.0, -1.0, -1.0,
      1.0, 1.0, -1.0,
+
      1.0, -1.0, -1.0,
      1.0, 1.0, 1.0,
      1.0, -1.0, 1.0,
+
      1.0, 1.0, 1.0,
      1.0, 1.0, -1.0,
      -1.0, 1.0, -1.0,
+
      1.0, 1.0, 1.0,
      -1.0, 1.0, -1.0,
      -1.0, 1.0, 1.0,
+
      1.0, 1.0, 1.0,
      -1.0, 1.0, 1.0,
-     1.0, -1.0, 1.0],
+     1.0, -1.0, 1.0
+    ],
     dtype='float32'
 )
 color = np.array(
@@ -101,8 +116,14 @@ color = np.array(
     0.982,  0.099,  0.879],
     dtype='float32'
 )
-normals = get_normals(vertex_pos)
-
+normals = get_normals(vertex_pos, right_hand=False)
+for i in range(0, len(normals), 9):
+    vert = vertex_pos[i:i+3]
+    norm = normals[i:i+3]
+    print('normal is %s for triangle %s'%(norm, i/9))
+    if dot_array(vert, norm) <= 0 and False:
+        print('normal: %s, vertex: %s'%(norm, vert))
+        print('bad normal at %s, or triangle %s'%(i, i/9))
 
 
 def create_window(size, pos, title):
@@ -118,18 +139,33 @@ def render():
     # update_uniform('mvp', MVP_mat.transpose())
     glUseProgram(program)
     perspective_mat = glm.perspective(glm.radians(100.0), 4.0/3.0, 0.1, 100.0)
-    view_mat = glm.lookAt(3 * glm.vec3([np.sin(framecount * 0.001), 0, np.cos(framecount * 0.001)]), glm.vec3([0, 0, 0]), glm.vec3([0, 1, 0]))
+    view_mat = glm.lookAt(3 * glm.vec3([np.sin(framecount * 0.001), np.sin(framecount * 0.0005), np.cos(framecount * 0.001)]), glm.vec3([0, 0, 0]), glm.vec3([0, 1, 0]))
     model_mat = np.identity(4, dtype='float32')
 
-    update_uniform('modelViewMatrix', [1, GL_FALSE, np.array(model_mat)])
+    update_uniform('modelViewMatrix', [1, GL_FALSE, model_mat])
     update_uniform('viewMatrix', [1, GL_FALSE, np.array(view_mat)])
     update_uniform('projectionMatrix', [1, GL_FALSE, np.array(perspective_mat)])
+    # update_uniform('time', [float(framecount)])
+    # update_uniform('mouse', inputs['mouse'])
     # glUniformMatrix4fv(mvpLoc, 1, GL_TRUE, np.array(MVP_mat))
+
+    # draw normals
+    # glLineWidth(3.0)
+    # for tri in range(0, len(vertex_pos), 9):
+    #     v1 = vertex_pos[tri:tri + 3]
+    #     v2 = vertex_pos[tri + 3:tri + 6]
+    #     v3 = vertex_pos[tri + 6:tri + 9]
+    #     vert = (v1 + v2 + v3) / 3
+    #     norm = normals[tri:tri + 3]
+    #     end = vert + norm
+    #     glBegin(GL_LINES)
+    #     glVertex3f(vert[0], vert[1], vert[2])
+    #     glVertex3f(end[0], end[1], end[2])
+    #     glEnd()
+
 
     glEnableVertexAttribArray(0)
     vbo.bind()
-    # update_uniform('time', [float(framecount)])
-    # update_uniform('mouse', inputs['mouse'])
 
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, None)
 
@@ -141,7 +177,8 @@ def render():
     cvbo.bind()
     glVertexAttribPointer(2, 3, GL_FLOAT, GL_TRUE, 0, None)
 
-    glDrawArrays(GL_TRIANGLES, 0, 3*12)
+
+    glDrawArrays(GL_TRIANGLES, 0, int(len(vertex_pos)/3))
     glDisableVertexAttribArray(0)
     glDisableVertexAttribArray(1)
     glDisableVertexAttribArray(2)
@@ -169,7 +206,7 @@ def continuous_mouse(x, y):
 def main():
     global program, window, vbo, nvbo, cvbo
     glutInit(sys.argv)
-    display_mode = GLUT_DOUBLE | GLUT_ALPHA | GLUT_DEPTH | GLUT_STENCIL
+    display_mode = GLUT_DOUBLE | GLUT_ALPHA | GLUT_DEPTH | GLUT_STENCIL | GLUT_RGBA
     glutInitDisplayMode(display_mode)
     window = create_window((640, 480), (0, 0), "Quake-like")
     glEnable(GL_DEPTH_TEST)
