@@ -1,3 +1,6 @@
+import string
+
+from OpenGL.GL.shaders import ShaderCompilationError
 from OpenGL.GLUT import *
 from OpenGL.GLU import *
 from OpenGL.GL import *
@@ -5,42 +8,8 @@ from uniforms import *
 from array import array
 import numpy as np
 
-vertex_shader_string = """
-#version 330
-layout(location = 0) in vec3 position;
-layout(location = 1) in vec3 normal;
-layout(location = 2) in vec3 color;
-varying vec3 fposition;
-varying vec3 fnormal;
-out vec3 fcolor;
-uniform mat4 modelViewMatrix;
-uniform mat4 projectionMatrix;
-uniform mat4 viewMatrix;
-void main()
-{
-    fposition = position;
-    fnormal = normalize((viewMatrix * vec4(normal, 0.)).xyz);
-    vec4 cameraPos = vec4(position, 1.0);
-    gl_Position = projectionMatrix * viewMatrix * modelViewMatrix * vec4(position, 1.);
-    fcolor = color;
-}
-"""
-
-fragment_shader_string = """
-#version 330
-out vec4 outputColor;
-varying vec3 fposition;
-varying vec3 fnormal;
-varying vec3 fcolor;
-void main()
-{
-    vec3 raydir = normalize(vec3(1., 1., 1.));
-    vec3 col = vec3(1.);
-    float diffuse = max(dot(raydir, fnormal), 0.);
-    float specular = pow(dot(raydir, reflect(fnormal, -raydir)), 4.);
-    outputColor = vec4(col * (0.2 + diffuse * 0. + specular * 0.8), 1.);
-}
-"""
+vertex_shader_string = open('data/shaders/vertex.glsl', 'r').read()
+fragment_shader_string = open('data/shaders/fragment.glsl', 'r').read()
 
 def create_all_shaders():
     program = glCreateProgram()
@@ -61,8 +30,7 @@ def create_shader(type, source):
     shader = glCreateShader(type)
     glShaderSource(shader, source)
     glCompileShader(shader)
-    status = None
-    glGetShaderiv(shader, GL_COMPILE_STATUS, status)
+    status = glGetShaderiv(shader, GL_COMPILE_STATUS)
     if status == GL_FALSE:
-        print("Compilation failure for " + type + " shader:" + glGetShaderInfoLog(shader))
+        raise ShaderCompilationError("Compilation failure for %s\n%s"%(str(type), glGetShaderInfoLog(shader).decode()))
     return shader
