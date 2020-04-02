@@ -1,6 +1,9 @@
 import numpy as np
+
+from game_object import GameObject
 from vertex_math import *
-def generate_sphere (thetaRes=40, phiRes=40):
+
+def generate_sphere_stl (thetaRes=40, phiRes=40):
     vertices = np.array([], dtype='float32')
     phiC = np.pi / phiRes # map phi index to phi
     thetaC = 2 * np.pi / thetaRes # map theta index to theta
@@ -21,7 +24,7 @@ def generate_sphere (thetaRes=40, phiRes=40):
             )
     return vertices
 
-def generate_cone ():
+def generate_cone_stl ():
     vertices = np.array([], dtype='float32')
     height = np.sqrt(3) / 2
     top = np.array([0, height, 0], dtype='float32')
@@ -46,7 +49,7 @@ def sphere_coords (phi: float, theta: float):
         np.sin(theta) * np.sin(phi)
     ], dtype='float32')
 
-def generate_box ():
+def generate_box_stl ():
     # except everything is lhr :(
     return np.array(
         [

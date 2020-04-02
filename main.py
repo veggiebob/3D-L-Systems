@@ -50,7 +50,7 @@ def render():
     glUseProgram(program)
 
     perspective_mat = glm.perspective(glm.radians(100.0), 4.0/3.0, 0.1, 100.0)
-    cam = glm.vec3(camera.spin(framecount) * 1850)
+    cam = glm.vec3(camera.spin(framecount) * 80)
     focus_point = glm.vec3([0, 0, 0])
     view_mat = glm.lookAt(cam, focus_point, glm.vec3([0, 1, 0]))
     model_mat = np.identity(4, dtype='float32')
@@ -120,7 +120,8 @@ def main():
         }
     })
 
-    teapot = obj_loader.load_game_object_from_file('data/models/teapot.obj')
+    teapot = obj_loader.load_game_object_from_file('data/models/teapot.obj', program)
+    print(teapot.vertex_count)
 
     glutDisplayFunc(render)
     glutReshapeFunc(reshape)
