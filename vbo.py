@@ -4,7 +4,8 @@ from OpenGL.GL import *
 from array import array
 import numpy as np
 
-
+# https://github.com/TheThinMatrix/OpenGL-Tutorial-2
+# Loader.java
 class VertexBufferObject:
     def __init__(self):
         self.handle = glGenBuffers(1)

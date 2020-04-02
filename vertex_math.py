@@ -27,14 +27,12 @@ def get_normals(vertex_data, right_hand=True):  # binary vertex data, 3 groups o
         normals = numpy.append(normals, norm)
     return normals
 
-
 def cross(a, b, c, x, y, z):
     """
     | i j k |
     | a b c | = <a, b, c> x <x, y, z>
     | x y z |
     """
-    print('crossing <%s, %s, %s> x <%s, %s, %s>'%(a, b, c, x, y, z))
     return numpy.array([b * z - y * c, c * x - z * a, a * y - x * b], dtype='float32')
 
 def dot (a, b, c, x, y, z):
@@ -49,3 +47,24 @@ def dot_array(a, b):
 def norm_vec3(vec):
     mag = max(numpy.sqrt(vec[0] * vec[0] + vec[1] * vec[1] + vec[2] * vec[2]), 0.01)
     return numpy.array([vec[0] / mag, vec[1] / mag, vec[2] / mag], dtype='float32')
+def concat (*args):
+    arr = numpy.array([], dtype='float32')
+    for a in args:
+        arr = numpy.append(arr, a)
+    return arr
+
+class ModelOp:
+    @staticmethod
+    def scale (model, scale_v:numpy.ndarray):
+        nm = numpy.array(model, dtype='float32')
+        nm[::3] = model[::3] * scale_v[0] # x
+        nm[1::3] = model[1::3] * scale_v[1] # y
+        nm[2::3] = model[2::3] * scale_v[2] # z
+        return nm
+    @staticmethod
+    def translate (model:numpy.ndarray, trans_v:numpy.ndarray):
+        nm = numpy.array([], dtype='float32')
+        nm[::3] = model[::3] + trans_v[0]
+        nm[1::3] = model[1::3] + trans_v[1]
+        nm[2::3] = model[2::3] + trans_v[2]
+        return nm

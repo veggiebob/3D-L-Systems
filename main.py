@@ -1,3 +1,5 @@
+import random
+
 import OpenGL
 
 OpenGL.USE_ACCELERATE = False
@@ -7,14 +9,20 @@ from uniforms import *
 import sys
 from vertex_math import *
 from matrix import *
+import test_objects
 import glm
 import texture_loading
+import obj_loader
+import camera
+import pygame
 from texture_loading import TEXTURES
 program = None
 vbo, nvbo, cvbo = None, None, None
 window = None
 
+clock = pygame.time.Clock()
 framecount = 0
+FPS = 120
 
 # add_uniform('mvp', 'mat4')
 add_uniform('modelViewMatrix', 'mat4')
@@ -80,46 +88,17 @@ vertex_pos = np.array(
     ],
     dtype='float32'
 )
-color = np.array(
-    [0.583,  0.771,  0.014,
-    0.609,  0.115,  0.436,
-    0.327,  0.483,  0.844,
-    0.822,  0.569,  0.201,
-    0.435,  0.602,  0.223,
-    0.310,  0.747,  0.185,
-    0.597,  0.770,  0.761,
-    0.559,  0.436,  0.730,
-    0.359,  0.583,  0.152,
-    0.483,  0.596,  0.789,
-    0.559,  0.861,  0.639,
-    0.195,  0.548,  0.859,
-    0.014,  0.184,  0.576,
-    0.771,  0.328,  0.970,
-    0.406,  0.615,  0.116,
-    0.676,  0.977,  0.133,
-    0.971,  0.572,  0.833,
-    0.140,  0.616,  0.489,
-    0.997,  0.513,  0.064,
-    0.945,  0.719,  0.592,
-    0.543,  0.021,  0.978,
-    0.279,  0.317,  0.505,
-    0.167,  0.620,  0.077,
-    0.347,  0.857,  0.137,
-    0.055,  0.953,  0.042,
-    0.714,  0.505,  0.345,
-    0.783,  0.290,  0.734,
-    0.722,  0.645,  0.174,
-    0.302,  0.455,  0.848,
-    0.225,  0.587,  0.040,
-    0.517,  0.713,  0.338,
-    0.053,  0.959,  0.120,
-    0.393,  0.621,  0.362,
-    0.673,  0.211,  0.457,
-    0.820,  0.883,  0.371,
-    0.982,  0.099,  0.879],
-    dtype='float32'
-)
+color = np.array([], dtype='float32')
 normals = get_normals(vertex_pos, right_hand=False)
+
+vertex_pos = test_objects.generate_sphere(thetaRes=80, phiRes=40)
+# vertex_pos = obj_loader.load_from_file('data/models/teapot.obj')
+# while len(vertex_pos)%9>0:
+#     vertex_pos = vertex_pos[:-1]
+color = np.array([], dtype='float32')
+while len(color) < len(vertex_pos):
+    color = np.append(color, np.array([random.random()], dtype='float32'))
+normals = get_normals(vertex_pos)
 
 
 def create_window(size, pos, title):
@@ -129,12 +108,15 @@ def create_window(size, pos, title):
 
 
 def render():
-    global framecount
+    global framecount, clock
     glClearColor(0.0, 0.0, 0.0, 0.0)
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
     glUseProgram(program)
     perspective_mat = glm.perspective(glm.radians(100.0), 4.0/3.0, 0.1, 100.0)
-    view_mat = glm.lookAt(3 * glm.vec3([np.sin(framecount * 0.001), np.sin(framecount * 0.0005), np.cos(framecount * 0.001)]), glm.vec3([0, 0, 0]), glm.vec3([0, 1, 0]))
+
+    cam = glm.vec3(camera.spin(framecount) * 2)
+    focus_point = glm.vec3([0, 0, 0])
+    view_mat = glm.lookAt(cam, focus_point, glm.vec3([0, 1, 0]))
     model_mat = np.identity(4, dtype='float32')
 
     update_uniform('modelViewMatrix', [1, GL_FALSE, model_mat])
@@ -171,8 +153,7 @@ def render():
     cvbo.bind()
     glVertexAttribPointer(2, 3, GL_FLOAT, GL_TRUE, 0, None)
 
-
-    glDrawArrays(GL_TRIANGLES, 0, int(len(vertex_pos)/3))
+    glDrawArrays(GL_TRIANGLES, 0, int(len(vertex_pos) / 3))
     glDisableVertexAttribArray(0)
     glDisableVertexAttribArray(1)
     glDisableVertexAttribArray(2)
@@ -180,6 +161,7 @@ def render():
     glUseProgram(0)
     glutSwapBuffers()
     framecount += 1
+    clock.tick(FPS)
     glutPostRedisplay()
 
 
