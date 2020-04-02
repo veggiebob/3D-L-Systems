@@ -24,6 +24,8 @@ window = None
 clock = pygame.time.Clock()
 framecount = 0
 FPS = 120
+WIDTH = 600
+HEIGHT = 400
 
 # add_uniform('mvp', 'mat4')
 add_uniform('modelViewMatrix', 'mat4')
@@ -50,7 +52,7 @@ def render():
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
     glUseProgram(program)
 
-    perspective_mat = glm.perspective(glm.radians(100.0), 4.0/3.0, 0.1, 100.0)
+    perspective_mat = glm.perspective(glm.radians(100.0), WIDTH/HEIGHT, 0.1, 100.0)
     cam = glm.vec3(camera.spin_xz(framecount) * 2)
     focus_point = glm.vec3([0, 0, 0])
     view_mat = glm.lookAt(cam, focus_point, glm.vec3([0, 1, 0]))
@@ -77,7 +79,6 @@ def render():
     #     glEnd()
 
     test_obj.render()
-    # visualization.draw(test_wav)
 
     glUseProgram(0)
     glutSwapBuffers()
@@ -87,7 +88,10 @@ def render():
 
 
 def reshape(w, h):
+    global WIDTH, HEIGHT
     glViewport(0, 0, w, h)
+    WIDTH = w
+    HEIGHT = h
 
 
 def keyboard(key, x, y):
@@ -106,7 +110,7 @@ def main():
     glutInit(sys.argv)
     display_mode = GLUT_DOUBLE | GLUT_ALPHA | GLUT_DEPTH | GLUT_STENCIL | GLUT_RGBA
     glutInitDisplayMode(display_mode)
-    window = create_window((640, 480), (0, 0), "Quake-like")
+    window = create_window((WIDTH, HEIGHT), (0, 0), "Quake-like")
     glEnable(GL_DEPTH_TEST)
     glEnable(GL_TEXTURE_2D)
     glDepthMask(GL_TRUE)
