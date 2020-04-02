@@ -69,9 +69,11 @@ class GameObject:
     def bind_float_attribute_vbo (self, data, attribute_name:str, static: bool, program): # must be 4 byte floats
         # print('received data %s' % data)
         self.bind_vao()
-        self.vertex_count = int(len(data) / 3)
+        if attribute_name=='position': # todo: is there a better way to do this?
+            self.vertex_count = int(len(data) / 3)
         vbo_id = GL.glGenBuffers(1)
         location = GL.glGetAttribLocation(program, attribute_name)
+        print('location isss %s for %s'%(location, attribute_name))
         self.attributes.add_attribute(name=attribute_name, location=location, vbo_id=vbo_id)
         GL.glBindBuffer(GL.GL_ARRAY_BUFFER, vbo_id) # bind it
         GL.glBufferData(GL.GL_ARRAY_BUFFER, data, GL.GL_STATIC_DRAW if static else GL.GL_DYNAMIC_DRAW) # add the data into it

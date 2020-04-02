@@ -1,7 +1,7 @@
 from game_object import GameObject
 import numpy as np
 
-def gen_box ():
+def gen_box (): # incomplete, lol
     g = GameObject()
     g.bind_float_attribute_vbo(np.array([
         -1, -1, -1,

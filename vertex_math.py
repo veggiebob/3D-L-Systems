@@ -27,6 +27,23 @@ def get_normals(vertex_data, right_hand=True):  # binary vertex data, 3 groups o
         normals = numpy.append(normals, norm)
     return normals
 
+def get_normals_from_faces (normals_per_face, faces):
+    # assume faces is a 2d array, not collapsed. dimensions of X by 3
+    # assuming normals are in the order of the faces,
+    # apply the normal to each vertex corresponding to the face
+    normals_per_vertex = [] # 2d list
+    f_index = -1
+    for norm in normals_per_face:
+        f_index += 1
+        f = faces[f_index]
+        for fv in f:
+            print('applying to vertex %s'%fv)
+            while len(normals_per_vertex) <= fv:
+                normals_per_vertex.append([0, 0, 0])
+            normals_per_vertex[fv] = norm
+    print(normals_per_vertex)
+    return numpy.asarray(normals_per_vertex, dtype='float32').flatten()
+
 def cross(a, b, c, x, y, z):
     """
     | i j k |

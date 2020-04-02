@@ -1,6 +1,7 @@
 import random
 
 import OpenGL
+from pywavefront import visualization
 
 OpenGL.USE_ACCELERATE = False
 from vbo import *
@@ -9,7 +10,6 @@ from uniforms import *
 import sys
 from vertex_math import *
 from matrix import *
-import test_objects
 import glm
 import texture_loading
 import obj_loader
@@ -35,7 +35,8 @@ add_uniform('viewMatrix', 'mat4')
 
 inputs = {'mouse': [0, 0]}  # this is probably bad
 
-teapot:GameObject = None
+test_obj:GameObject = None
+test_wav = obj_loader.load_wav_obj('data/models/teapot.obj')
 
 def create_window(size, pos, title):
     glutInitWindowSize(size[0], size[1])
@@ -50,7 +51,7 @@ def render():
     glUseProgram(program)
 
     perspective_mat = glm.perspective(glm.radians(100.0), 4.0/3.0, 0.1, 100.0)
-    cam = glm.vec3(camera.spin(framecount) * 80)
+    cam = glm.vec3(camera.spin_xz(framecount) * 2)
     focus_point = glm.vec3([0, 0, 0])
     view_mat = glm.lookAt(cam, focus_point, glm.vec3([0, 1, 0]))
     model_mat = np.identity(4, dtype='float32')
@@ -75,7 +76,8 @@ def render():
     #     glVertex3f(end[0], end[1], end[2])
     #     glEnd()
 
-    teapot.render()
+    test_obj.render()
+    # visualization.draw(test_wav)
 
     glUseProgram(0)
     glutSwapBuffers()
@@ -100,7 +102,7 @@ def continuous_mouse(x, y):
 
 def main():
     global program, window, vbo, nvbo, cvbo
-    global teapot
+    global test_obj
     glutInit(sys.argv)
     display_mode = GLUT_DOUBLE | GLUT_ALPHA | GLUT_DEPTH | GLUT_STENCIL | GLUT_RGBA
     glutInitDisplayMode(display_mode)
@@ -120,8 +122,7 @@ def main():
         }
     })
 
-    teapot = obj_loader.load_game_object_from_file('data/models/teapot.obj', program)
-    print(teapot.vertex_count)
+    test_obj = obj_loader.load_game_object_from_file('data/models/cooler_sphere.obj', program)
 
     glutDisplayFunc(render)
     glutReshapeFunc(reshape)
