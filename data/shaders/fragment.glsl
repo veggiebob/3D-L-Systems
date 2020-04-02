@@ -21,8 +21,8 @@ vec2 getTexPos (vec3 p, vec3 n) {
 void main()
 {
     vec3 col = vec3(1.0);
-    float diffuse = max(dot(look, fnormal), 0.);
-    float specular = pow(max(dot(look, reflect(fnormal, -look)), 0.), 4.);
-    col *= (ambient + diffuse * 0.5 + specular * 0.3);
+//    float diffuse = max(dot(look, fnormal), 0.);
+//    float specular = pow(max(dot(look, reflect(fnormal, -look)), 0.), 4.);
+//    col *= (ambient + diffuse * 0.5 + specular * 0.3);
     outputColor = vec4(col, 1.);
 }
