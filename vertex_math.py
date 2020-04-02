@@ -42,6 +42,63 @@ def get_normals_from_faces (normals_per_face, faces):
             normals_per_vertex[fv] = norm
     return numpy.asarray(normals_per_vertex, dtype='float32').flatten()
 
+def find_faces_for_vertex (vertex_index:int, faces:list):
+    # faces is 1d list
+    found_faces = []
+    for f in faces:
+        for fv in f:
+            if fv == vertex_index:
+                found_faces.append(f)
+                break
+    return found_faces
+def find_vertices_for_face (face, vertices):
+    # assume face is array
+    # assume vertices is 2d array
+    verts = []
+    for v in face:
+        verts.append(vertices[v])
+    return verts
+def get_normal_for_face (face, vertices):
+    # assume face is array
+    # assume vertices is 2d array
+    verts = find_vertices_for_face(face, vertices)
+    a, b, c = verts[0][0], verts[0][1], verts[0][2] # A
+    i, j, k = verts[1][0], verts[1][1], verts[1][2] # B
+    x, y, z = verts[2][0], verts[2][1], verts[2][2] # C
+    CA = [x - a, y - b, z - c]
+    CB = [x - i, y - j, z - k]
+    norm = cross(CB[0], CB[1], CB[2], CA[0], CA[1], CA[2])
+    return numpy.array(norm_vec3(norm), dtype='float32')
+def get_normals_from_obj (vertex_pos, faces):
+    # assume vertex_pos is 2d array
+    # assume faces is 2d array
+    # returns a 2d array of normals
+
+    # need a normal per vertex
+    # a vertex's normal is determined by the normals of the faces it's connected to
+    # thus, for each vertex index:
+    #   we must look it up in the faces,
+    #   find the other vertices,
+    #   determine the normal of each triangle it's connected to,
+    #   and average all of the collected normals, and store it at that index
+    print('all the faces are %s'%faces)
+    normals = []
+    vi = -1
+    for v in vertex_pos:
+        vi += 1
+        v_faces = find_faces_for_vertex(vi, faces)
+        norm = numpy.array([0, 0, 0], dtype='float32')
+        print('vertex %d'%vi)
+        print('    faces: %s'%v_faces)
+        for f in v_faces:
+            n = get_normal_for_face(f, vertex_pos)
+            norm += n
+            print('    adding normal: %s'%n)
+        norm /= len(v_faces) # average all the normals
+        norm = norm_vec3(norm) # normalize it
+        normals.append(norm)
+    return normals
+
 def cross(a, b, c, x, y, z):
     """
     | i j k |

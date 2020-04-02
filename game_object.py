@@ -46,8 +46,8 @@ class Attributes:
     def add_attribute(self, name:str, location, vbo_id:int):
         if not self.name_in_attributes(name) and not self.location_in_attributes(location) and not self.vbo_id_in_attributes(vbo_id):
             self.attributes.append(Attribute(name=name, location=location, vbo_id=vbo_id))
-class GameObject:
-    def __init__(self):
+class RenderableObject:
+    def __init__(self): # todo: add uniform control
         self.vaoID = GL.glGenVertexArrays(1)
         self.attributes = Attributes()
         self.vertex_count = 0
@@ -73,7 +73,7 @@ class GameObject:
             self.vertex_count = int(len(data) / 3)
         vbo_id = GL.glGenBuffers(1)
         location = GL.glGetAttribLocation(program, attribute_name)
-        print('location isss %s for %s'%(location, attribute_name))
+        # print('location isss %s for %s'%(location, attribute_name))
         self.attributes.add_attribute(name=attribute_name, location=location, vbo_id=vbo_id)
         GL.glBindBuffer(GL.GL_ARRAY_BUFFER, vbo_id) # bind it
         GL.glBufferData(GL.GL_ARRAY_BUFFER, data, GL.GL_STATIC_DRAW if static else GL.GL_DYNAMIC_DRAW) # add the data into it

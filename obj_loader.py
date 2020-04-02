@@ -3,19 +3,20 @@ import random
 import pywavefront
 import numpy as np
 
-from game_object import GameObject
-from vertex_math import get_normals_from_faces
+from game_object import RenderableObject
+from vertex_math import *
 
 
 def load_wav_obj (filename) -> pywavefront.Wavefront:
     return pywavefront.Wavefront(filename, collect_faces=True)
 
-def load_game_object_from_file(filename, program, scale=1.0, color=(0.5, 0.5, 0.5)) -> GameObject:
+def load_game_object_from_file(filename, program, scale=1.0, color=(0.5, 0.5, 0.5)) -> RenderableObject:
     wav = load_wav_obj(filename)
     verts = np.asarray(wav.vertices, dtype='float32').flatten() * scale
     faces = np.asarray(wav.mesh_list[0].faces, dtype='int32').flatten()
-    normals = get_normals_from_faces(wav.parser.normals, wav.mesh_list[0].faces)
-    go = GameObject()
+    # normals = get_normals_from_faces(wav.parser.normals, wav.mesh_list[0].faces) # todo: fix normal loading or at least test it
+    normals = np.asarray(get_normals_from_obj(wav.vertices, wav.mesh_list[0].faces)).flatten()
+    go = RenderableObject()
     go.bind_indices_vbo(faces)
     go.bind_float_attribute_vbo(verts, "position", True, program)
     go.bind_float_attribute_vbo(normals, "normal", True, program)
