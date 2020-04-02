@@ -37,11 +37,9 @@ def get_normals_from_faces (normals_per_face, faces):
         f_index += 1
         f = faces[f_index]
         for fv in f:
-            print('applying to vertex %s'%fv)
             while len(normals_per_vertex) <= fv:
                 normals_per_vertex.append([0, 0, 0])
             normals_per_vertex[fv] = norm
-    print(normals_per_vertex)
     return numpy.asarray(normals_per_vertex, dtype='float32').flatten()
 
 def cross(a, b, c, x, y, z):

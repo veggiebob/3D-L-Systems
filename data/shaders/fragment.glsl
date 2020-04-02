@@ -22,7 +22,8 @@ void main()
 {
     vec3 col = fcolor;
     float diffuse = max(dot(look, fnormal), 0.);
+//    diffuse = max(diffuse, 1.0);
     float specular = pow(max(dot(look, reflect(fnormal, -look)), 0.), 4.);
-    col *= (ambient + diffuse * 0.8 + specular * 0.3);
+    col *= (ambient + diffuse * 0.5 + specular * 0.8);
     outputColor = vec4(col, 1.);
 }

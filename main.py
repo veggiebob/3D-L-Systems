@@ -38,7 +38,7 @@ add_uniform('viewMatrix', 'mat4')
 inputs = {'mouse': [0, 0]}  # this is probably bad
 
 test_obj:GameObject = None
-test_wav = obj_loader.load_wav_obj('data/models/teapot.obj')
+test_obj_2:GameObject = None
 
 def create_window(size, pos, title):
     glutInitWindowSize(size[0], size[1])
@@ -78,6 +78,7 @@ def render():
     #     glVertex3f(end[0], end[1], end[2])
     #     glEnd()
 
+    test_obj_2.render()
     test_obj.render()
 
     glUseProgram(0)
@@ -106,7 +107,7 @@ def continuous_mouse(x, y):
 
 def main():
     global program, window, vbo, nvbo, cvbo
-    global test_obj
+    global test_obj, test_obj_2
     glutInit(sys.argv)
     display_mode = GLUT_DOUBLE | GLUT_ALPHA | GLUT_DEPTH | GLUT_STENCIL | GLUT_RGBA
     glutInitDisplayMode(display_mode)
@@ -126,7 +127,8 @@ def main():
         }
     })
 
-    test_obj = obj_loader.load_game_object_from_file('data/models/cooler_sphere.obj', program)
+    test_obj = obj_loader.load_game_object_from_file('data/models/cooler_sphere.obj', program, color=[1, 0, 0])
+    test_obj_2 = obj_loader.load_game_object_from_file('data/models/teapot.obj', program, scale=1/50, color=[0, 0, 1])
 
     glutDisplayFunc(render)
     glutReshapeFunc(reshape)
