@@ -19,7 +19,7 @@ uniform mat4 viewMatrix;
 void main()
 {
     fposition = position;
-    fnormal = normal;
+    fnormal = normalize((viewMatrix * vec4(normal, 0.)).xyz);
     vec4 cameraPos = vec4(position, 1.0);
     gl_Position = projectionMatrix * viewMatrix * modelViewMatrix * vec4(position, 1.);
     fcolor = color;
@@ -34,7 +34,11 @@ varying vec3 fnormal;
 varying vec3 fcolor;
 void main()
 {
-    outputColor = vec4(fcolor, 1.);
+    vec3 raydir = normalize(vec3(1., 1., 1.));
+    vec3 col = vec3(1.);
+    float diffuse = max(dot(raydir, fnormal), 0.);
+    float specular = pow(dot(raydir, reflect(fnormal, -raydir)), 4.);
+    outputColor = vec4(col * (0.2 + diffuse * 0. + specular * 0.8), 1.);
 }
 """
 
