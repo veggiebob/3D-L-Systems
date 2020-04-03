@@ -1,7 +1,12 @@
 from typing import List
-
+import numpy as np
 import OpenGL
 import OpenGL.GL as GL
+
+import matrix
+import vertex_math
+from uniforms import update_uniform
+
 """
 todo steps:
     initialization:
@@ -47,11 +52,15 @@ class Attributes:
         if not self.name_in_attributes(name) and not self.location_in_attributes(location) and not self.vbo_id_in_attributes(vbo_id):
             self.attributes.append(Attribute(name=name, location=location, vbo_id=vbo_id))
 class RenderableObject:
+    UP = np.array([0, 1, 0], dtype='float32')
     def __init__(self): # todo: add uniform control
         self.vaoID = GL.glGenVertexArrays(1)
         self.attributes = Attributes()
         self.vertex_count = 0
         self.face_count = 0
+
+        self.translation = np.array([0, 0, 0], dtype='float32')
+        self.direction = np.array([1, 0, 0], dtype='float32') # represents the model's x axis, thus having it set at <1, 0, 0> makes it un-rotated
         # 2 things to do on init:
         #   - bind_indices_vbo()
         #   - bind_float_attribute_vbo()
@@ -81,9 +90,23 @@ class RenderableObject:
         GL.glBindBuffer(GL.GL_ARRAY_BUFFER, 0) # unbind it
         self.unbind_vao()
 
+    def get_translation_matrix (self):
+        trans_mat = matrix.create_translation_matrix(self.translation)
+        print('trans_mat: \n%s'%trans_mat)
+        return trans_mat
+
+    def get_rotation_matrix (self):
+        T = vertex_math.norm_vec3(self.direction)
+        N = np.cross(RenderableObject.UP, self.direction)
+        B = np.cross(T, N)
+        rot_mat = matrix.create_rotation_matrix(T, N, B)
+        print('rot mat: \n%s'%rot_mat)
+        return rot_mat # rotate, then translate
 
     def render (self):
         # https://github.com/TheThinMatrix/OpenGL-Tutorial-3/blob/master/src/renderEngine/Renderer.java #render
+        print('model view matrix: %s'%self.get_model_view_matrix())
+        update_uniform('modelViewMatrix', [1, GL.GL_FALSE, self.get_model_view_matrix()])
         self.bind_vao()
         for a in self.attributes.attributes:
             GL.glEnableVertexAttribArray(a.location)
@@ -94,8 +117,6 @@ class RenderableObject:
         for a in self.attributes.attributes:
             GL.glDisableVertexAttribArray(a.location)
         self.unbind_vao()
-
-
 
     def bind_vao (self):
         GL.glBindVertexArray(self.vaoID)

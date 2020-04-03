@@ -81,19 +81,15 @@ def get_normals_from_obj (vertex_pos, faces):
     #   find the other vertices,
     #   determine the normal of each triangle it's connected to,
     #   and average all of the collected normals, and store it at that index
-    print('all the faces are %s'%faces)
     normals = []
     vi = -1
     for v in vertex_pos:
         vi += 1
         v_faces = find_faces_for_vertex(vi, faces)
         norm = numpy.array([0, 0, 0], dtype='float32')
-        print('vertex %d'%vi)
-        print('    faces: %s'%v_faces)
         for f in v_faces:
             n = get_normal_for_face(f, vertex_pos)
             norm += n
-            print('    adding normal: %s'%n)
         norm /= len(v_faces) # average all the normals
         norm = norm_vec3(norm) # normalize it
         normals.append(norm)

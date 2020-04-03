@@ -56,7 +56,7 @@ def render():
     cam = glm.vec3(camera.spin_xz(framecount) * 2)
     focus_point = glm.vec3([0, 0, 0])
     view_mat = glm.lookAt(cam, focus_point, glm.vec3([0, 1, 0]))
-    model_mat = np.identity(4, dtype='float32')
+    model_mat = np.identity(4, dtype='float32') # by default, no transformations applied
 
     update_uniform('modelViewMatrix', [1, GL_FALSE, model_mat])
     update_uniform('viewMatrix', [1, GL_FALSE, np.array(view_mat)])
@@ -127,7 +127,7 @@ def main():
         }
     })
 
-    test_obj = obj_loader.load_game_object_from_file('data/models/sub_box.obj', program, color=[1, 0, 0])
+    test_obj = obj_loader.load_game_object_from_file('data/models/cooler_sphere.obj', program, color=[1, 0, 0])
     # test_obj_2 = obj_loader.load_game_object_from_file('data/models/teapot.obj', program, scale=1/50, color=[0, 0, 1])
 
     glutDisplayFunc(render)
