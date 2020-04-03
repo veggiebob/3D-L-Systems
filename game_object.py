@@ -97,11 +97,16 @@ class RenderableObject:
 
     def get_rotation_matrix (self):
         T = vertex_math.norm_vec3(self.direction)
-        N = np.cross(RenderableObject.UP, self.direction)
-        B = np.cross(T, N)
-        rot_mat = matrix.create_rotation_matrix(T, N, B)
+        N = -np.cross(RenderableObject.UP, self.direction)
+        if N[0] == 0 and N[1] == 0 and N[2] == 0:
+            N = np.array([1, 0, 0], dtype='float32') # DON'T LOOK UP!!
+        B = np.cross(N, T)
+        rot_mat = matrix.create_rotation_matrix(T, B, N)
         print('rot mat: \n%s'%rot_mat)
         return rot_mat # rotate, then translate
+
+    def get_model_view_matrix (self):
+        return self.get_translation_matrix() * self.get_rotation_matrix()
 
     def render (self):
         # https://github.com/TheThinMatrix/OpenGL-Tutorial-3/blob/master/src/renderEngine/Renderer.java #render
