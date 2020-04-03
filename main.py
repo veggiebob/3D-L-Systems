@@ -1,7 +1,6 @@
 import random
 
 import OpenGL
-from pywavefront import visualization
 
 OpenGL.USE_ACCELERATE = False
 from vbo import *
@@ -17,6 +16,7 @@ import camera
 import pygame
 from texture_loading import TEXTURES
 from game_object import *
+
 program = None
 vbo, nvbo, cvbo = None, None, None
 window = None
@@ -37,8 +37,9 @@ add_uniform('viewMatrix', 'mat4')
 
 inputs = {'mouse': [0, 0]}  # this is probably bad
 
-test_obj:RenderableObject = None
-test_obj_2:RenderableObject = None
+test_obj: RenderableObject = None
+test_obj_2: RenderableObject = None
+
 
 def create_window(size, pos, title):
     glutInitWindowSize(size[0], size[1])
@@ -52,7 +53,7 @@ def render():
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
     glUseProgram(program)
 
-    perspective_mat = glm.perspective(glm.radians(100.0), WIDTH/HEIGHT, 0.1, 100.0)
+    perspective_mat = glm.perspective(glm.radians(100.0), WIDTH / HEIGHT, 0.1, 100.0)
     cam = glm.vec3(camera.spin_xz(framecount) * 2)
     focus_point = glm.vec3([0, 0, 0])
     view_mat = glm.lookAt(cam, focus_point, glm.vec3([0, 1, 0]))
@@ -104,6 +105,7 @@ def keyboard(key, x, y):
 
 def continuous_mouse(x, y):
     inputs['mouse'] = [x, y]
+
 
 def main():
     global program, window, vbo, nvbo, cvbo
