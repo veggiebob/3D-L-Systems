@@ -115,6 +115,34 @@ def dot_array(a, b):
 def norm_vec3(vec):
     mag = max(numpy.sqrt(vec[0] * vec[0] + vec[1] * vec[1] + vec[2] * vec[2]), 0.01)
     return numpy.array([vec[0] / mag, vec[1] / mag, vec[2] / mag], dtype='float32')
+
+# vec2 rotate2D (vec2 p, float angle){
+#     return vec2(p.x*cos(angle)-p.y*sin(angle), p.y*cos(angle)+p.x*sin(angle));
+# }
+# a + bi + cj + dk
+# ij = k
+# i^2 = j^2 = k^2 = -1
+# ki = j
+def rotate2D (v, angle):
+    return numpy.array([
+        v[0] * numpy.cos(angle) - v[1] * numpy.sin(angle),
+        v[1] * numpy.cos(angle) + v[0] * numpy.sin(angle)
+    ], dtype='float32')
+
+def euler (anglex, angley, anglez, v):
+    # print(v)
+    # y then x then z
+    yr = rotate2D([v[0], v[2]], angley)
+    v[0] = yr[0]
+    v[2] = yr[1]
+    xr = rotate2D([v[1], v[2]], anglex)
+    v[1] = xr[0]
+    v[2] = xr[1]
+    zr = rotate2D([v[0], v[1]], anglez)
+    v[0] = zr[0]
+    v[1] = zr[1]
+    return v
+
 def concat (*args):
     arr = numpy.array([], dtype='float32')
     for a in args:

@@ -51,6 +51,7 @@ class Attributes:
     def add_attribute(self, name:str, location, vbo_id:int):
         if not self.name_in_attributes(name) and not self.location_in_attributes(location) and not self.vbo_id_in_attributes(vbo_id):
             self.attributes.append(Attribute(name=name, location=location, vbo_id=vbo_id))
+
 class RenderableObject:
     UP = np.array([0, 1, 0], dtype='float32')
     def __init__(self): # todo: add uniform control
@@ -60,7 +61,8 @@ class RenderableObject:
         self.face_count = 0
 
         self.translation = np.array([0, 0, 0], dtype='float32')
-        self.direction = np.array([1, 0, 0], dtype='float32') # represents the model's x axis, thus having it set at <1, 0, 0> makes it un-rotated
+        self.heading = np.array([1, 0, 0], dtype='float32') # represents the model's x axis, thus having it set at <1, 0, 0> makes it un-rotated
+        self.euler_rot = np.array([0, 0, 0], dtype='float32')
         # 2 things to do on init:
         #   - bind_indices_vbo()
         #   - bind_float_attribute_vbo()
@@ -92,26 +94,28 @@ class RenderableObject:
 
     def get_translation_matrix (self):
         trans_mat = matrix.create_translation_matrix(self.translation)
-        print('trans_mat: \n%s'%trans_mat)
+        # print('trans_mat: \n%s'%trans_mat)
         return trans_mat
 
     def get_rotation_matrix (self):
-        T = vertex_math.norm_vec3(self.direction)
-        N = -np.cross(RenderableObject.UP, self.direction)
+        self.heading = vertex_math.euler(self.euler_rot[0], self.euler_rot[1], self.euler_rot[2], np.array([1, 0, 0], dtype='float32'))
+        # print(self.heading)
+        T = vertex_math.norm_vec3(self.heading)
+        N = -np.cross(RenderableObject.UP, self.heading)
         if N[0] == 0 and N[1] == 0 and N[2] == 0:
             N = np.array([1, 0, 0], dtype='float32') # DON'T LOOK UP!!
         B = np.cross(N, T)
         rot_mat = matrix.create_rotation_matrix(T, B, N)
-        print('rot mat: \n%s'%rot_mat)
+        # print('rot mat: \n%s'%rot_mat)
         return rot_mat # rotate, then translate
 
     def get_model_view_matrix (self):
-        return self.get_translation_matrix() * self.get_rotation_matrix()
+        return self.get_rotation_matrix().dot(self.get_translation_matrix())
 
     def render (self):
         # https://github.com/TheThinMatrix/OpenGL-Tutorial-3/blob/master/src/renderEngine/Renderer.java #render
-        print('model view matrix: %s'%self.get_model_view_matrix())
-        update_uniform('modelViewMatrix', [1, GL.GL_FALSE, self.get_model_view_matrix()])
+        # print('model view matrix: %s'%self.get_model_view_matrix())
+        update_uniform('modelViewMatrix', [1, GL.GL_FALSE, self.get_model_view_matrix().transpose()])
         self.bind_vao()
         for a in self.attributes.attributes:
             GL.glEnableVertexAttribArray(a.location)

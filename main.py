@@ -53,7 +53,7 @@ def render():
     glUseProgram(program)
 
     perspective_mat = glm.perspective(glm.radians(100.0), WIDTH/HEIGHT, 0.1, 100.0)
-    cam = glm.vec3(camera.spin_xz(framecount) * 2)
+    cam = glm.vec3(1., 1., 1.) * 3 # camera.spin_xz(framecount) * 2)
     focus_point = glm.vec3([0, 0, 0])
     view_mat = glm.lookAt(cam, focus_point, glm.vec3([0, 1, 0]))
     model_mat = np.identity(4, dtype='float32') # by default, no transformations applied
@@ -78,8 +78,11 @@ def render():
     #     glVertex3f(end[0], end[1], end[2])
     #     glEnd()
 
-    test_obj.render()
+    # test_obj.translation[1] = np.cos(framecount * 0.01)
+    # test_obj.translation[2] = np.sin(framecount * 0.01)
+    test_obj.euler_rot[1] = framecount * 0.002
     # test_obj_2.render()
+    test_obj.render()
 
     glUseProgram(0)
     glutSwapBuffers()
@@ -127,7 +130,7 @@ def main():
         }
     })
 
-    test_obj = obj_loader.load_game_object_from_file('data/models/cooler_sphere.obj', program, color=[1, 0, 0])
+    test_obj = obj_loader.load_game_object_from_file('data/models/cowboy.obj', program, scale=2, color=[0.0, 0.0, 0.0])
     # test_obj_2 = obj_loader.load_game_object_from_file('data/models/teapot.obj', program, scale=1/50, color=[0, 0, 1])
 
     glutDisplayFunc(render)

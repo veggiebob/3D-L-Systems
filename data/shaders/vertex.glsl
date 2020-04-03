@@ -14,11 +14,8 @@ uniform mat4 viewMatrix;
 
 void main()
 {
-//    fnormal = (projectionMatrix * vec4(normal, 1.)).xyz;
-    fnormal = normal;
-//    look = (projectionMatrix * viewMatrix * vec4(0., 0., 1., 1.)).xyz;
-//    look = vec3(0., 0., 1.);
+    fnormal = (modelViewMatrix * vec4(normal, 0.)).xyz;
     gl_Position = projectionMatrix * viewMatrix * modelViewMatrix * vec4(position, 1.);
-    fposition = gl_Position.xyz;
+    fposition = vec3(modelViewMatrix * vec4(position, 1.));
     fcolor = color;
 }
