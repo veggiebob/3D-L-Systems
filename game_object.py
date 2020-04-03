@@ -100,30 +100,23 @@ class RenderableObject:
     def get_rotation_matrix (self):
         self.heading = vertex_math.euler(self.euler_rot[0], self.euler_rot[1], self.euler_rot[2], np.array([1, 0, 0], dtype='float32'))
         norm = vertex_math.euler(self.euler_rot[0], self.euler_rot[1], self.euler_rot[2], np.array([0, 1, 0], dtype='float32'))
-        # print(self.heading.dot(RenderableObject.UP))
-        # print(self.heading)
         T = vertex_math.norm_vec3(self.heading)
-        N = norm # -np.cross(RenderableObject.UP, self.heading)
-        if N[0] == 0 and N[1] == 0 and N[2] == 0:
-            N = np.array([1, 0, 0], dtype='float32') # DON'T LOOK UP!!
+        N = norm
         B = np.cross(N, T)
         rot_mat = matrix.create_rotation_matrix(T, B, N)
-        # print('rot mat: \n%s'%rot_mat)
-        return rot_mat # rotate, then translate
+        return rot_mat
 
     def get_model_view_matrix (self):
         return self.get_rotation_matrix().dot(self.get_translation_matrix())
 
     def render (self):
         # https://github.com/TheThinMatrix/OpenGL-Tutorial-3/blob/master/src/renderEngine/Renderer.java #render
-        # print('model view matrix: %s'%self.get_model_view_matrix())
         update_uniform('modelViewMatrix', [1, GL.GL_FALSE, self.get_model_view_matrix().transpose()])
         self.bind_vao()
         for a in self.attributes.attributes:
             GL.glEnableVertexAttribArray(a.location)
             GL.glBindBuffer(GL.GL_ARRAY_BUFFER, a.vbo_id) # whyyyy
             GL.glVertexAttribPointer(a.location, 3, GL.GL_FLOAT, GL.GL_FALSE, 0, None) # this makes no sense
-        # GL.glDrawArrays(GL.GL_TRIANGLES, 0, self.vertex_count) # say goodbye to this
         GL.glDrawElements(GL.GL_TRIANGLES, self.vertex_count * 9, GL.GL_UNSIGNED_INT, None)
         for a in self.attributes.attributes:
             GL.glDisableVertexAttribArray(a.location)
