@@ -24,8 +24,8 @@ window = None
 clock = pygame.time.Clock()
 framecount = 0
 FPS = 120
-WIDTH = 600
-HEIGHT = 400
+WIDTH = 640
+HEIGHT = 480
 
 # add_uniform('mvp', 'mat4')
 add_uniform('modelViewMatrix', 'mat4')
