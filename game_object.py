@@ -99,9 +99,11 @@ class RenderableObject:
 
     def get_rotation_matrix (self):
         self.heading = vertex_math.euler(self.euler_rot[0], self.euler_rot[1], self.euler_rot[2], np.array([1, 0, 0], dtype='float32'))
+        norm = vertex_math.euler(self.euler_rot[0], self.euler_rot[1], self.euler_rot[2], np.array([0, 1, 0], dtype='float32'))
+        # print(self.heading.dot(RenderableObject.UP))
         # print(self.heading)
         T = vertex_math.norm_vec3(self.heading)
-        N = -np.cross(RenderableObject.UP, self.heading)
+        N = norm # -np.cross(RenderableObject.UP, self.heading)
         if N[0] == 0 and N[1] == 0 and N[2] == 0:
             N = np.array([1, 0, 0], dtype='float32') # DON'T LOOK UP!!
         B = np.cross(N, T)
