@@ -67,16 +67,6 @@ class RenderableObject:
         #   - bind_indices_vbo()
         #   - bind_float_attribute_vbo()
 
-    def bind_indices_vbo(self, data): # must be 4 byte ints # todo: this has to go
-        # print('received data %s'%data)
-        self.bind_vao()
-        self.face_count = len(data) / 3
-        vbo_id = GL.glGenBuffers(1)
-        GL.glBindBuffer(GL.GL_ELEMENT_ARRAY_BUFFER, vbo_id)
-        GL.glBufferData(GL.GL_ELEMENT_ARRAY_BUFFER, data, GL.GL_STATIC_DRAW)
-        self.unbind_vao()
-        # * apparently you don't unbind this vbo because it's SPECIAL
-
     def bind_float_attribute_vbo (self, data, attribute_name:str, static: bool, program): # must be 4 byte floats
         # print('received data %s' % data)
         # todo: should add support for index vs. attribute_name
@@ -116,9 +106,9 @@ class RenderableObject:
         self.bind_vao()
         for a in self.attributes.attributes:
             GL.glEnableVertexAttribArray(a.location)
-            GL.glBindBuffer(GL.GL_ARRAY_BUFFER, a.vbo_id) # whyyyy
-            GL.glVertexAttribPointer(a.location, 3, GL.GL_FLOAT, GL.GL_FALSE, 0, None) # this makes no sense
-        GL.glDrawElements(GL.GL_TRIANGLES, self.vertex_count * 9, GL.GL_UNSIGNED_INT, None)
+            GL.glBindBuffer(GL.GL_ARRAY_BUFFER, a.vbo_id)
+            GL.glVertexAttribPointer(a.location, 3, GL.GL_FLOAT, GL.GL_FALSE, 0, None)
+        GL.glDrawArrays(GL.GL_TRIANGLES, 0, self.vertex_count)
         # todo: GL.glDrawArrays; are there extra configurations for this call?
         for a in self.attributes.attributes:
             GL.glDisableVertexAttribArray(a.location)

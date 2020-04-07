@@ -38,7 +38,6 @@ add_uniform('viewMatrix', 'mat4')
 inputs = {'mouse': [0, 0]}  # this is probably bad
 
 test_obj:RenderableObject = None
-test_obj_2:RenderableObject = None
 
 def create_window(size, pos, title):
     glutInitWindowSize(size[0], size[1])
@@ -111,7 +110,7 @@ def continuous_mouse(x, y):
 
 def main():
     global program, window, vbo, nvbo, cvbo
-    global test_obj, test_obj_2
+    global test_obj
     glutInit(sys.argv)
     display_mode = GLUT_DOUBLE | GLUT_ALPHA | GLUT_DEPTH | GLUT_STENCIL | GLUT_RGBA
     glutInitDisplayMode(display_mode)
@@ -131,8 +130,7 @@ def main():
         }
     })
 
-    test_obj = obj_loader.load_game_object_from_file('data/models/blob.obj', program, scale=1, color=[0,0,1])
-    # test_obj_2 = obj_loader.load_game_object_from_file('data/models/teapot.obj', program, scale=1/50, color=[0, 0, 1])
+    test_obj = obj_loader.load_game_object_from_file('data/models/teapot.obj', program, scale=1/30, color=[1, 1, 1])
 
     glutDisplayFunc(render)
     glutReshapeFunc(reshape)

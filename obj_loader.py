@@ -2,31 +2,46 @@ import random
 
 import pywavefront
 import numpy as np
+import trimesh
 
 from game_object import RenderableObject
 from vertex_math import *
 
 
-def load_wav_obj (filename) -> pywavefront.Wavefront:
-    return pywavefront.Wavefront(filename, collect_faces=True)
+def load_wav_obj (filename) -> trimesh.Trimesh:
+    return trimesh.load(filename)
 
 def load_game_object_from_file(filename, program, scale=1.0, color=(0.5, 0.5, 0.5)) -> RenderableObject:
-    # https://github.com/pywavefront/PyWavefront/blob/caa2013d7026dd484ac8c5ca8273f2d680196130/pywavefront/visualization.py#L47-L56
-    # https://www.khronos.org/registry/OpenGL-Refpages/gl2.1/xhtml/glInterleavedArrays.xml
-    # switch to interleaved arrays?
-    # glTF . . .
-    # suggestion for parsing "watertight surfaces": https://github.com/mikedh/trimesh
     # todo: use trimesh
-    wav = load_wav_obj(filename)
-    verts = np.asarray(wav.vertices, dtype='float32').flatten() * scale
-    faces = np.asarray(wav.mesh_list[0].faces, dtype='int32').flatten()
-    normals = np.asarray(get_normals_from_obj(wav.vertices, wav.mesh_list[0].faces)).flatten()
+    obj = load_wav_obj(filename)
+    raw_verts = np.asarray(obj.vertices) # 2d array
+    raw_faces = np.asarray(obj.faces) # 2d array, indices
+    norm_per_vert = get_normals_from_obj(raw_verts, raw_faces)
+    verts = np.asarray(get_vertices_from_faces(raw_verts, raw_faces), dtype='float32').flatten()
+    normals = np.asarray(get_stl_normals_from_faces(norm_per_vert, raw_faces), dtype='float32').flatten()
+    colors = DummyBuffers.gen_color_buffer(len(verts), color)
+    verts *= scale
     go = RenderableObject()
-    go.bind_indices_vbo(faces) # todo: bye
-    go.bind_float_attribute_vbo(verts, "position", True, program) # todo: positions come in per-face: use trimesh.faces or something
-    go.bind_float_attribute_vbo(normals, "normal", True, program) # todo: yay even MORE configurations for normals
-    go.bind_float_attribute_vbo(DummyBuffers.gen_color_buffer(len(verts), color), "color", True, program) # todo: same
+    go.bind_float_attribute_vbo(verts, "position", True, program)
+    go.bind_float_attribute_vbo(normals, "normal", True, program)
+    go.bind_float_attribute_vbo(colors, "color", True, program)
     return go
+
+def get_vertices_from_faces (vertices, faces): # where vertices is a 2d array, and faces are indices (2d)
+    # obj -> stl
+    verts = []
+    for f in faces:
+        for fv in f:
+            verts.append(vertices[fv])
+    return verts
+
+def get_stl_normals_from_faces (normals, faces): # normals is per-vertex 2d array, faces is 2d array indices
+    # obj -> stl
+    norms = []
+    for f in faces:
+        for fv in f:
+            norms.append(normals[fv])
+    return norms
 
 class DummyBuffers:
     @staticmethod

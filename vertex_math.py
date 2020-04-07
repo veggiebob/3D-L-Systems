@@ -1,5 +1,6 @@
 import numpy
 
+# some of these are meant for obj format (elemented arrays), and stl formats (verticies per triangle)
 
 def get_normals(vertex_data, right_hand=True):  # binary vertex data, 3 groups of 3 float 32s represent a triangle
     """
@@ -51,6 +52,7 @@ def find_faces_for_vertex (vertex_index:int, faces:list):
                 found_faces.append(f)
                 break
     return found_faces
+
 def find_vertices_for_face (face, vertices):
     # assume face is array
     # assume vertices is 2d array
@@ -58,6 +60,7 @@ def find_vertices_for_face (face, vertices):
     for v in face:
         verts.append(vertices[v])
     return verts
+
 def get_normal_for_face (face, vertices):
     # assume face is array
     # assume vertices is 2d array
@@ -69,7 +72,8 @@ def get_normal_for_face (face, vertices):
     CB = [x - i, y - j, z - k]
     norm = cross(CB[0], CB[1], CB[2], CA[0], CA[1], CA[2])
     return numpy.array(norm_vec3(norm), dtype='float32')
-def get_normals_from_obj (vertex_pos, faces): # todo: this was cool and all, but now it has to go
+
+def get_normals_from_obj (vertex_pos, faces):
     # assume vertex_pos is 2d array
     # assume faces is 2d array
     # returns a 2d array of normals
