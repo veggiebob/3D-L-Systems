@@ -36,7 +36,10 @@ add_uniform('viewMatrix', 'mat4')
 add_uniform('isTextured', 'bool')
 
 # textures
-texture_loading.add_texture('texColor')
+texture_loading.add_texture('texColor', {
+    'sample_mode': GL_LINEAR,
+    'clamp_mode': GL_REPEAT
+})
 
 inputs = {'mouse': [0, 0]}  # this is probably bad
 
@@ -131,7 +134,7 @@ def main():
         }
     })
 
-    test_obj = obj_loader.load_game_object_from_file('data/models/test_models/trisout.obj', program, scale=3, color=[1, 1, 1])
+    test_obj = obj_loader.load_game_object_from_file('data/models/test_cube_with_texture.obj', program, scale=2, color=[1, 1, 1])
 
     glutDisplayFunc(render)
     glutReshapeFunc(reshape)
