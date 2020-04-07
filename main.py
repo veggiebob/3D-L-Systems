@@ -27,13 +27,16 @@ FPS = 120
 WIDTH = 640
 HEIGHT = 480
 
-# add_uniform('mvp', 'mat4')
+# Matricies
 add_uniform('modelViewMatrix', 'mat4')
 add_uniform('projectionMatrix', 'mat4')
 add_uniform('viewMatrix', 'mat4')
 
-# add_uniform('mouse', 'vec2')
-# add_uniform('time', 'float')
+# other
+add_uniform('isTextured', 'bool')
+
+# textures
+texture_loading.add_texture('texColor')
 
 inputs = {'mouse': [0, 0]}  # this is probably bad
 
@@ -60,8 +63,6 @@ def render():
     update_uniform('modelViewMatrix', [1, GL_FALSE, model_mat])
     update_uniform('viewMatrix', [1, GL_FALSE, np.array(view_mat)])
     update_uniform('projectionMatrix', [1, GL_FALSE, np.array(perspective_mat)])
-    # update_uniform('time', [float(framecount)])
-    # update_uniform('mouse', inputs['mouse'])
 
     # draw normals
     # glLineWidth(3.0)
@@ -130,7 +131,7 @@ def main():
         }
     })
 
-    test_obj = obj_loader.load_game_object_from_file('data/models/teapot.obj', program, scale=1/30, color=[1, 1, 1])
+    test_obj = obj_loader.load_game_object_from_file('data/models/test_models/trisout.obj', program, scale=3, color=[1, 1, 1])
 
     glutDisplayFunc(render)
     glutReshapeFunc(reshape)

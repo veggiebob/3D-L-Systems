@@ -5,16 +5,16 @@ out vec4 outputColor;
 in vec3 fnormal;
 varying vec3 fcolor;
 varying vec3 fposition;
+varying vec2 texCoord;
 
-uniform sampler2D noise_512;
-uniform sampler2D cat;
-uniform float time;
+uniform sampler2D texColor;
+uniform bool isTextured;
 
-const vec3 ambient = vec3(0.2);
+const vec3 ambient = vec3(0.5);
 
 const vec3 look = vec3(0., 0., 1.);
 const vec3 light = vec3(-5., -5., 5.);
-const vec3 light_col = vec3(1., 0., 0.);
+const vec3 light_col = vec3(1.);
 const float light_strength = 2.0;
 
 vec2 getTexPos (vec3 p, vec3 n) {
@@ -24,6 +24,8 @@ vec2 getTexPos (vec3 p, vec3 n) {
 void main()
 {
     vec3 col = fcolor * ambient;
+    if (isTextured)
+        col = texture2D(texColor, texCoord).rgb * ambient;
     vec3 normal = normalize(fnormal);
     vec3 light_dir = normalize(light - fposition);
     float diffuse = max(dot(light_dir, normal), 0.);

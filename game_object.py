@@ -1,11 +1,15 @@
 from typing import List
+
+import PIL
 import numpy as np
 import OpenGL
 import OpenGL.GL as GL
+from PIL import Image
 
 import matrix
+import texture_loading
 import vertex_math
-from uniforms import update_uniform
+from uniforms import update_uniform, Texture
 
 """
 todo steps:
@@ -60,13 +64,15 @@ class RenderableObject:
         self.vertex_count = 0
         self.face_count = 0
 
+        # uniforms
         self.translation = np.array([0, 0, 0], dtype='float32')
-        self.heading = np.array([1, 0, 0], dtype='float32') # represents the model's x axis, thus having it set at <1, 0, 0> makes it un-rotated
         self.euler_rot = np.array([0, 0, 0], dtype='float32')
-        # 2 things to do on init:
-        #   - bind_indices_vbo()
-        #   - bind_float_attribute_vbo()
-
+        self.has_uvs = False
+        self.image_data = None
+        self.image_size:tuple = None
+    def set_image (self, image:Image):
+        self.image_data = np.asarray(image, dtype='float32').flatten()
+        self.image_size = image.size
     def bind_float_attribute_vbo (self, data, attribute_name:str, static: bool, program): # must be 4 byte floats
         # print('received data %s' % data)
         # todo: should add support for index vs. attribute_name
@@ -89,9 +95,9 @@ class RenderableObject:
         return trans_mat
 
     def get_rotation_matrix (self):
-        self.heading = vertex_math.euler(self.euler_rot[0], self.euler_rot[1], self.euler_rot[2], np.array([1, 0, 0], dtype='float32'))
+        heading = vertex_math.euler(self.euler_rot[0], self.euler_rot[1], self.euler_rot[2], np.array([1, 0, 0], dtype='float32'))
         norm = vertex_math.euler(self.euler_rot[0], self.euler_rot[1], self.euler_rot[2], np.array([0, 1, 0], dtype='float32'))
-        T = vertex_math.norm_vec3(self.heading)
+        T = vertex_math.norm_vec3(heading)
         N = norm
         B = np.cross(N, T)
         rot_mat = matrix.create_rotation_matrix(T, N, B)
@@ -103,6 +109,9 @@ class RenderableObject:
     def render (self):
         # https://github.com/TheThinMatrix/OpenGL-Tutorial-3/blob/master/src/renderEngine/Renderer.java #render
         update_uniform('modelViewMatrix', [1, GL.GL_FALSE, self.get_model_view_matrix().transpose()])
+        update_uniform('isTextured', [self.has_uvs])
+        if self.has_uvs:
+            texture_loading.get_texture('texColor').update_data(self.image_data, self.image_size[0], self.image_size[1])
         self.bind_vao()
         for a in self.attributes.attributes:
             GL.glEnableVertexAttribArray(a.location)

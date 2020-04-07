@@ -11,6 +11,7 @@ u_types: Dict[str, Callable] = {
     'vec3': glUniform3f,
     'vec4': glUniform4f,
     'int': glUniform1i,
+    'bool': glUniform1i,
     'ivec2': glUniform2i,
     'ivec3': glUniform3i,
     'mat3': glUniformMatrix3fv,
@@ -80,11 +81,10 @@ def update_all_uniforms():
     for u in uniforms.values():
         u.call_uniform_func()
 
-
 # a texture is technically a uniform, of type "sampler2D"
 class Texture:
     index = 0
-    def __init__ (self, data:np.ndarray, name:str, width:int=0, height:int=0, sample_mode=GL_LINEAR, clamp_mode=GL_CLAMP):
+    def __init__ (self, data:np.ndarray, name:str, width:int=1, height:int=1, sample_mode=GL_LINEAR, clamp_mode=GL_CLAMP):
         self.data = data
         self.width = width if width > 0 else len(self.data[0])
         self.height = height if height > 0 else len(self.data)
@@ -109,17 +109,20 @@ class Texture:
             GL_UNSIGNED_BYTE, # type
             self.data, # pixels
         )
-    def init(self):
-        glActiveTexture(GL_TEXTURE0 + self.index)
-        self.texture = glGenTextures(1)
-        glBindTexture(GL_TEXTURE_2D, self.texture)
-        glPixelStorei(GL_UNPACK_ALIGNMENT, 1)
-        self.set_texture()
         glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, self.sample_mode)
         glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, self.sample_mode)
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, self.clamp_mode) # x
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, self.clamp_mode) # y
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, self.clamp_mode)  # x
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, self.clamp_mode)  # y
         glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL)
+
+    def bind (self):
+        glActiveTexture(GL_TEXTURE0 + self.index)
+        glBindTexture(GL_TEXTURE_2D, self.texture)
+    def init(self):
+        self.texture = glGenTextures(1)
+        self.bind()
+        glPixelStorei(GL_UNPACK_ALIGNMENT, 1)
+        self.set_texture()
         glGenerateMipmap(GL_TEXTURE_2D)
 
     def update(self, shader):
@@ -136,5 +139,10 @@ class Texture:
         if height > 0:
             self.height = height
         self.data = data
+        # self.init()
+        self.bind()
         self.set_texture()
+
+    def transfer (self, other_texture: 'Texture'):
+        self.update_data(other_texture.data, other_texture.width, other_texture.height)
 
