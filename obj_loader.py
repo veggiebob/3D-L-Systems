@@ -11,21 +11,21 @@ def load_wav_obj (filename) -> pywavefront.Wavefront:
     return pywavefront.Wavefront(filename, collect_faces=True)
 
 def load_game_object_from_file(filename, program, scale=1.0, color=(0.5, 0.5, 0.5)) -> RenderableObject:
-    # todo: https://github.com/pywavefront/PyWavefront/blob/caa2013d7026dd484ac8c5ca8273f2d680196130/pywavefront/visualization.py#L47-L56
+    # https://github.com/pywavefront/PyWavefront/blob/caa2013d7026dd484ac8c5ca8273f2d680196130/pywavefront/visualization.py#L47-L56
     # https://www.khronos.org/registry/OpenGL-Refpages/gl2.1/xhtml/glInterleavedArrays.xml
     # switch to interleaved arrays?
     # glTF . . .
     # suggestion for parsing "watertight surfaces": https://github.com/mikedh/trimesh
+    # todo: use trimesh
     wav = load_wav_obj(filename)
     verts = np.asarray(wav.vertices, dtype='float32').flatten() * scale
     faces = np.asarray(wav.mesh_list[0].faces, dtype='int32').flatten()
-    # normals = get_normals_from_faces(wav.parser.normals, wav.mesh_list[0].faces) # todo: fix normal loading or at least test it
     normals = np.asarray(get_normals_from_obj(wav.vertices, wav.mesh_list[0].faces)).flatten()
     go = RenderableObject()
-    go.bind_indices_vbo(faces)
-    go.bind_float_attribute_vbo(verts, "position", True, program)
-    go.bind_float_attribute_vbo(normals, "normal", True, program)
-    go.bind_float_attribute_vbo(DummyBuffers.gen_color_buffer(len(verts), color), "color", True, program)
+    go.bind_indices_vbo(faces) # todo: bye
+    go.bind_float_attribute_vbo(verts, "position", True, program) # todo: positions come in per-face: use trimesh.faces or something
+    go.bind_float_attribute_vbo(normals, "normal", True, program) # todo: yay even MORE configurations for normals
+    go.bind_float_attribute_vbo(DummyBuffers.gen_color_buffer(len(verts), color), "color", True, program) # todo: same
     return go
 
 class DummyBuffers:

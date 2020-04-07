@@ -69,7 +69,7 @@ def get_normal_for_face (face, vertices):
     CB = [x - i, y - j, z - k]
     norm = cross(CB[0], CB[1], CB[2], CA[0], CA[1], CA[2])
     return numpy.array(norm_vec3(norm), dtype='float32')
-def get_normals_from_obj (vertex_pos, faces):
+def get_normals_from_obj (vertex_pos, faces): # todo: this was cool and all, but now it has to go
     # assume vertex_pos is 2d array
     # assume faces is 2d array
     # returns a 2d array of normals
@@ -131,13 +131,13 @@ def rotate2D (v, angle):
 
 def euler (anglex, angley, anglez, v):
     # print(v)
-    # x then y then z
-    xr = rotate2D([v[1], v[2]], anglex)
-    v[1] = xr[0]
-    v[2] = xr[1]
+    # y then x then z
     yr = rotate2D([v[0], v[2]], angley)
     v[0] = yr[0]
     v[2] = yr[1]
+    xr = rotate2D([v[1], v[2]], anglex)
+    v[1] = xr[0]
+    v[2] = xr[1]
     zr = rotate2D([v[0], v[1]], anglez)
     v[0] = zr[0]
     v[1] = zr[1]
