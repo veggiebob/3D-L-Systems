@@ -80,9 +80,8 @@ def render():
 
     # test_obj.translation[1] = np.cos(framecount * 0.01)
     # test_obj.translation[2] = np.sin(framecount * 0.01)
-    test_obj.euler_rot[1] = 0
-    test_obj.euler_rot[2] = np.pi / 2
-    test_obj.euler_rot[0] = framecount * 0.001
+    test_obj.euler_rot[0] = np.pi / 2
+    test_obj.euler_rot[1] = framecount * 0.005
     # test_obj_2.render()
     test_obj.render()
 
@@ -132,7 +131,7 @@ def main():
         }
     })
 
-    test_obj = obj_loader.load_game_object_from_file('data/models/test_models/trisout.obj', program, scale=1/10, color=[1.0, 0.0, 0.0])
+    test_obj = obj_loader.load_game_object_from_file('data/models/teapot.obj', program, scale=1/30)
     # test_obj_2 = obj_loader.load_game_object_from_file('data/models/teapot.obj', program, scale=1/50, color=[0, 0, 1])
 
     glutDisplayFunc(render)

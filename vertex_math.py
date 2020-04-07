@@ -131,13 +131,13 @@ def rotate2D (v, angle):
 
 def euler (anglex, angley, anglez, v):
     # print(v)
-    # y then x then z
-    yr = rotate2D([v[0], v[2]], angley)
-    v[0] = yr[0]
-    v[2] = yr[1]
+    # x then y then z
     xr = rotate2D([v[1], v[2]], anglex)
     v[1] = xr[0]
     v[2] = xr[1]
+    yr = rotate2D([v[0], v[2]], angley)
+    v[0] = yr[0]
+    v[2] = yr[1]
     zr = rotate2D([v[0], v[1]], anglez)
     v[0] = zr[0]
     v[1] = zr[1]

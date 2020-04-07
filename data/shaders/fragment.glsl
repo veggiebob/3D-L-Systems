@@ -28,7 +28,7 @@ void main()
     float diffuse = max(dot(light_dir, normal), 0.);
     float specular = pow(max(dot(look, reflect(normal, light_dir)), 0.), 8.);
 //    float specular = 0.00001 * length(fnormal);
-    col += (ambient + diffuse * 0.5 + specular * 0.8);
+    col += (ambient + diffuse * 0.5 + specular * 0.3) * fcolor;
 //    col *= fposition * 5.;
 //    col *= mod(fposition, 0.3) * 3.33;
     outputColor = vec4(col, 1.);

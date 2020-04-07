@@ -11,6 +11,11 @@ def load_wav_obj (filename) -> pywavefront.Wavefront:
     return pywavefront.Wavefront(filename, collect_faces=True)
 
 def load_game_object_from_file(filename, program, scale=1.0, color=(0.5, 0.5, 0.5)) -> RenderableObject:
+    # todo: https://github.com/pywavefront/PyWavefront/blob/caa2013d7026dd484ac8c5ca8273f2d680196130/pywavefront/visualization.py#L47-L56
+    # https://www.khronos.org/registry/OpenGL-Refpages/gl2.1/xhtml/glInterleavedArrays.xml
+    # switch to interleaved arrays?
+    # glTF . . .
+    # suggestion for parsing "watertight surfaces": https://github.com/mikedh/trimesh
     wav = load_wav_obj(filename)
     verts = np.asarray(wav.vertices, dtype='float32').flatten() * scale
     faces = np.asarray(wav.mesh_list[0].faces, dtype='int32').flatten()
