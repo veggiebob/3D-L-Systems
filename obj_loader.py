@@ -8,7 +8,7 @@ from game_object import RenderableObject
 from vertex_math import *
 
 
-def load_wav_obj (filename) -> trimesh.Trimesh:
+def load_wav_obj (filename) -> trimesh.Trimesh: # except sometimes it's trimesh.Scene ?!!
     return trimesh.load(filename)
 
 def load_game_object_from_file(filename, program, scale=1.0, color=(0.5, 0.5, 0.5)) -> RenderableObject:

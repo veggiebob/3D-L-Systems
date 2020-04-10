@@ -134,7 +134,7 @@ def main():
         }
     })
 
-    test_obj = obj_loader.load_game_object_from_file('data/models/test_cube_with_texture.obj', program, scale=2, color=[1, 1, 1])
+    test_obj = obj_loader.load_game_object_from_file('data/models/test_models/punch.obj', program, scale=2, color=[1, 1, 1])
 
     glutDisplayFunc(render)
     glutReshapeFunc(reshape)
