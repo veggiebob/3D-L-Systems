@@ -114,6 +114,7 @@ class Texture:
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, self.clamp_mode)  # x
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, self.clamp_mode)  # y
         glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL)
+        glGenerateMipmap(GL_TEXTURE_2D)
 
     def bind (self):
         glActiveTexture(GL_TEXTURE0 + self.index)

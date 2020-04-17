@@ -11,7 +11,7 @@ from vertex_math import *
 def load_wav_obj (filename) -> trimesh.Trimesh: # except sometimes it's trimesh.Scene ?!!
     return trimesh.load(filename)
 
-def load_game_object_from_file(filename, program, scale=1.0, color=(0.5, 0.5, 0.5)) -> RenderableObject:
+def load_renderable_object_from_file(filename, program, scale=1.0, color=(0.5, 0.5, 0.5)) -> RenderableObject:
     # obtain relevant information from the loaded object
     obj = load_wav_obj(filename)
     raw_verts = np.asarray(obj.vertices) # 2d array
@@ -52,7 +52,7 @@ def get_vertices_from_faces (vertices, faces): # where vertices is a 2d array, a
     for f in faces:
         for fv in f:
             verts.append(vertices[fv])
-    return verts
+    return np.asarray(verts, dtype='float32')
 
 def get_stl_normals_from_faces (normals, faces): # normals is per-vertex 2d array, faces is 2d array indices
     # obj -> stl

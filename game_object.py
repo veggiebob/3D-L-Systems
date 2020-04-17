@@ -30,10 +30,11 @@ todo steps:
      - unbind it
 """
 class Attribute:
-    def __init__(self, location=0, name="none", vbo_id=0):
+    def __init__(self, location=0, name="none", vbo_id=0, size:int=3):
         self.name = name
         self.location = location
         self.vbo_id = vbo_id
+        self.size = size
 class Attributes:
     def __init__(self):
         self.attributes:List[Attribute] = []
@@ -52,9 +53,9 @@ class Attributes:
             if a.vbo_id == vbo_id:
                 return True
         return False
-    def add_attribute(self, name:str, location, vbo_id:int):
+    def add_attribute(self, name:str, location, vbo_id:int, size:int):
         if not self.name_in_attributes(name) and not self.location_in_attributes(location) and not self.vbo_id_in_attributes(vbo_id):
-            self.attributes.append(Attribute(name=name, location=location, vbo_id=vbo_id))
+            self.attributes.append(Attribute(name=name, location=location, vbo_id=vbo_id, size=size))
 
 class RenderableObject:
     UP = np.array([0, 1, 0], dtype='float32')
@@ -67,13 +68,17 @@ class RenderableObject:
         # uniforms
         self.translation = np.array([0, 0, 0], dtype='float32')
         self.euler_rot = np.array([0, 0, 0], dtype='float32')
+        self.scale = 1.0
         self.has_uvs = False
         self.image_data = None
         self.image_size:tuple = None
     def set_image (self, image:Image):
         self.image_data = np.asarray(image, dtype='float32').flatten()
         self.image_size = image.size
-    def bind_float_attribute_vbo (self, data, attribute_name:str, static: bool, program): # must be 4 byte floats
+    def set_texture (self, tex:Texture):
+        self.image_data = np.copy(tex.data.flatten())
+        self.image_size = (tex.width, tex.height)
+    def bind_float_attribute_vbo (self, data, attribute_name:str, static: bool, program, size:int=3): # must be 4 byte floats
         # print('received data %s' % data)
         # todo: should add support for index vs. attribute_name
         self.bind_vao()
@@ -81,11 +86,11 @@ class RenderableObject:
             self.vertex_count = int(len(data) / 3)
         vbo_id = GL.glGenBuffers(1)
         location = GL.glGetAttribLocation(program, attribute_name)
-        # print('location isss %s for %s'%(location, attribute_name))
-        self.attributes.add_attribute(name=attribute_name, location=location, vbo_id=vbo_id)
+        # print('location is %s for %s'%(location, attribute_name))
+        self.attributes.add_attribute(name=attribute_name, location=location, vbo_id=vbo_id, size=size)
         GL.glBindBuffer(GL.GL_ARRAY_BUFFER, vbo_id) # bind it
         GL.glBufferData(GL.GL_ARRAY_BUFFER, data, GL.GL_STATIC_DRAW if static else GL.GL_DYNAMIC_DRAW) # add the data into it
-        GL.glVertexAttribPointer(location, 3, GL.GL_FLOAT, GL.GL_FALSE, 0, None) # tell it how to parse it
+        GL.glVertexAttribPointer(location, size, GL.GL_FLOAT, GL.GL_FALSE, 0, None) # tell it how to parse it
         GL.glBindBuffer(GL.GL_ARRAY_BUFFER, 0) # unbind it
         self.unbind_vao()
 
@@ -100,6 +105,9 @@ class RenderableObject:
         T = vertex_math.norm_vec3(heading)
         N = norm
         B = np.cross(N, T)
+        T *= self.scale
+        N *= self.scale
+        B *= self.scale
         rot_mat = matrix.create_rotation_matrix(T, N, B)
         return rot_mat
 
@@ -110,15 +118,14 @@ class RenderableObject:
         # https://github.com/TheThinMatrix/OpenGL-Tutorial-3/blob/master/src/renderEngine/Renderer.java #render
         update_uniform('modelViewMatrix', [1, GL.GL_FALSE, self.get_model_view_matrix().transpose()])
         update_uniform('isTextured', [self.has_uvs])
-        if self.has_uvs:
-            texture_loading.get_texture('texColor').update_data(self.image_data, self.image_size[0], self.image_size[1])
+        if self.has_uvs: pass
+            # texture_loading.get_texture('texColor').update_data(self.image_data, self.image_size[0], self.image_size[1]) # todo: make this not so badddd
         self.bind_vao()
         for a in self.attributes.attributes:
             GL.glEnableVertexAttribArray(a.location)
             GL.glBindBuffer(GL.GL_ARRAY_BUFFER, a.vbo_id)
-            GL.glVertexAttribPointer(a.location, 3, GL.GL_FLOAT, GL.GL_FALSE, 0, None)
+            GL.glVertexAttribPointer(a.location, a.size, GL.GL_FLOAT, GL.GL_FALSE, 0, None)
         GL.glDrawArrays(GL.GL_TRIANGLES, 0, self.vertex_count)
-        # todo: GL.glDrawArrays; are there extra configurations for this call?
         for a in self.attributes.attributes:
             GL.glDisableVertexAttribArray(a.location)
         self.unbind_vao()

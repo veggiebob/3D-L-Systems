@@ -13,7 +13,7 @@ uniform bool isTextured;
 const vec3 ambient = vec3(0.2);
 
 const vec3 look = vec3(0., 0., 1.);
-const vec3 light = vec3(-5., -5., 5.);
+const vec3 light = vec3(-5., 5., 5.);
 const vec3 light_col = vec3(1.);
 const float light_strength = 1.0;
 
