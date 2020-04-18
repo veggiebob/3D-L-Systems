@@ -134,8 +134,8 @@ def rotate2D (v, angle):
     ], dtype='float32')
 
 def euler (anglex, angley, anglez, v):
-    # print(v)
     # y then x then z
+    # yxz
     yr = rotate2D([v[0], v[2]], angley)
     v[0] = yr[0]
     v[2] = yr[1]

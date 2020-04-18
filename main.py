@@ -96,7 +96,7 @@ def render():
     # test_obj2.render()
 
     for t in test_objs:
-        t.euler_rot[0] = framecount * np.pi / 2 / FPS # do one quater-turn per second
+        # t.euler_rot[1] = framecount * np.pi / 2 / FPS # do one quater-turn per second
         t.render()
 
     framecount += 1
@@ -152,7 +152,7 @@ def main():
 
     # test_obj = obj_loader.load_renderable_object_from_file('data/models/test_pyramid.obj', program, scale=5, color=[1, 1, 1])
     # test_obj2 = obj_loader.load_renderable_object_from_file('data/models/teapot.obj', program, scale=1/50, color=[1, 0, 0])
-    test_objs = gltf_loader.load_scene('data/gltf/cool_cube.glb', program, scale=2.5)
+    test_objs = gltf_loader.load_scene('data/gltf/retard_box.glb', program, scale=2.5)
     default_tex = texture_loading.get_texture('checkers')
     texture_loading.get_texture('texColor').update_data(default_tex.data, default_tex.width, default_tex.height)
 

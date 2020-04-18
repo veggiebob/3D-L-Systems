@@ -1,4 +1,5 @@
 from typing import Dict, List
+from scipy.spatial.transform import Rotation as R
 
 import pygltflib
 
@@ -38,14 +39,17 @@ def load_scene(filepath, program, scale=1) -> List[RenderableObject]:
         count = acc.count
         buffer_type = accessor_dtype(acc.componentType)
         buff = buffer_views[acc.bufferView]
-        byte_size = np.dtype(buffer_type).itemsize
         npbuff = np.frombuffer(buff, dtype=buffer_type)
         accessors.append(
             npbuff.reshape((count, vec)) # make it the right dimensions
         )
 
     renderables: List[RenderableObject] = []
-    for m in obj.meshes:
+    meshes = obj.meshes
+    for n in obj.nodes:
+        if n.mesh is None:
+            continue
+        m = meshes[n.mesh]
         # https://github.com/KhronosGroup/glTF/tree/master/specification/2.0#reference-indices
         # goto Meshes
         for prim in m.primitives:
@@ -69,13 +73,19 @@ def load_scene(filepath, program, scale=1) -> List[RenderableObject]:
                     uvs = accessors[texcoord]
                     flat_uvs = obj_loader.get_vertices_from_faces(uvs, raw_faces).flatten()
                     ro.has_uvs = True
-                    # ro.bind_float_attribute_vbo(obj_loader.get_vertices_from_faces(accessors[texcoord], raw_faces).flatten(), 'texcoord', True, program)
                     ro.bind_float_attribute_vbo(flat_uvs, 'texcoord', True, program, size=2)
                     default_tex = texture_loading.get_texture('checkers')
                     ro.set_texture(default_tex)
 
             ro.bind_float_attribute_vbo(positions.flatten(), 'position', True, program)
             ro.bind_float_attribute_vbo(normals.flatten(), 'normal', True, program)
+
+            ro.translation = n.translation
+            ro.scale = n.scale
+            # todo: rotation? gltf gives quaternions
+            # for now, use scipy
+            rotation = R.from_quat(n.rotation)
+            ro.euler_rot = rotation.as_euler('yxz', degrees=False)
 
             renderables.append(ro)
 
