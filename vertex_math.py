@@ -120,6 +120,18 @@ def norm_vec3(vec):
     mag = max(numpy.sqrt(vec[0] * vec[0] + vec[1] * vec[1] + vec[2] * vec[2]), 0.01)
     return numpy.array([vec[0] / mag, vec[1] / mag, vec[2] / mag], dtype='float32')
 
+def norm_vec(vec):
+    mag = max(numpy.sqrt(sum([n*n for n in vec])), 0.00001)
+    return numpy.asarray([n/mag for n in vec], dtype='float32')
+
+def quaternion_multiply(quaternion1, quaternion0):
+    w0, x0, y0, z0 = quaternion0
+    w1, x1, y1, z1 = quaternion1
+    return numpy.array([-x1 * x0 - y1 * y0 - z1 * z0 + w1 * w0,
+                     x1 * w0 + y1 * z0 - z1 * y0 + w1 * x0,
+                     -x1 * z0 + y1 * w0 + z1 * x0 + w1 * y0,
+                     x1 * y0 - y1 * x0 + z1 * w0 + w1 * z0], dtype=numpy.float32)
+
 # vec2 rotate2D (vec2 p, float angle){
 #     return vec2(p.x*cos(angle)-p.y*sin(angle), p.y*cos(angle)+p.x*sin(angle));
 # }

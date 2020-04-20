@@ -57,7 +57,6 @@ def load_scene(filepath, program, scale=1) -> List[RenderableObject]:
             positions = accessors[attr.POSITION]
             normals = accessors[attr.NORMAL]  # normals are per-vertex
             ro = RenderableObject()
-            ro.scale = scale
             face_index = prim.indices
             if face_index is not None:
                 l = len(accessors[face_index])
@@ -81,11 +80,15 @@ def load_scene(filepath, program, scale=1) -> List[RenderableObject]:
             ro.bind_float_attribute_vbo(normals.flatten(), 'normal', True, program)
 
             ro.translation = n.translation
-            ro.scale = n.scale
+            ro.scale = np.array([1, 1, 1], dtype='float32') * n.scale * scale
             # todo: rotation? gltf gives quaternions
             # for now, use scipy
-            rotation = R.from_quat(n.rotation)
-            ro.euler_rot = rotation.as_euler('yxz', degrees=False)
+            # rotation = R.from_quat(n.rotation)
+            # ro.euler_rot = rotation.as_euler('yxz', degrees=False)
+
+            ro.using_quaternions = True
+            ro.initial_quaternion = n.rotation
+            print('initial quaternion: %s'%n.rotation)
 
             renderables.append(ro)
 
