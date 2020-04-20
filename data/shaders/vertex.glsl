@@ -14,11 +14,13 @@ uniform mat4 modelViewMatrix;
 uniform mat4 projectionMatrix;
 uniform mat4 viewMatrix;
 
+uniform float time;
+
 void main()
 {
     fnormal = (modelViewMatrix * vec4(normal, 0.)).xyz;
-    gl_Position = projectionMatrix * viewMatrix * modelViewMatrix * vec4(position, 1.);
     fposition = vec3(modelViewMatrix * vec4(position, 1.));
+    gl_Position = projectionMatrix * viewMatrix * modelViewMatrix * vec4(position, 1.);
     fcolor = color;
     texCoord = texcoord;
 }

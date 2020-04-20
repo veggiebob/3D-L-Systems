@@ -9,6 +9,7 @@ varying vec2 texCoord;
 
 uniform sampler2D texColor;
 uniform bool isTextured;
+uniform float time;
 
 const vec3 ambient = vec3(0.2);
 
@@ -25,7 +26,7 @@ void main()
 {
     vec3 col = fcolor * ambient;
     if (isTextured)
-        col = texture2D(texColor, texCoord).rgb * ambient;
+        col = texture2D(texColor, texCoord + time * 0.1).rgb * ambient;
     vec3 normal = normalize(fnormal);
     vec3 light_dir = normalize(light - fposition);
     float diffuse = max(dot(light_dir, normal), 0.);

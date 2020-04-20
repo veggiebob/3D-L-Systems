@@ -33,6 +33,9 @@ add_uniform('modelViewMatrix', 'mat4')
 add_uniform('projectionMatrix', 'mat4')
 add_uniform('viewMatrix', 'mat4')
 
+# env
+add_uniform('time', 'float')
+
 # other
 add_uniform('isTextured', 'bool')
 
@@ -70,6 +73,8 @@ def render():
     update_uniform('viewMatrix', [1, GL_FALSE, np.array(view_mat)])
     update_uniform('projectionMatrix', [1, GL_FALSE, np.array(perspective_mat)])
 
+    update_uniform('time', [framecount / FPS]) # seconds
+
     # draw normals
     # glLineWidth(3.0)
     # for tri in range(0, len(vertex_pos), 9):
@@ -97,7 +102,7 @@ def render():
 
     for t in test_objs:
         # t.euler_rot[1] = framecount * np.pi / 2 / FPS # do one quater-turn per second
-        t.set_quat([1, 1, 0], framecount * np.pi / 2 / FPS)
+        t.set_quat([0, 1, 0], framecount * np.pi / 8 / FPS)
         t.render()
 
     framecount += 1
@@ -153,7 +158,7 @@ def main():
 
     # test_obj = obj_loader.load_renderable_object_from_file('data/models/test_pyramid.obj', program, scale=5, color=[1, 1, 1])
     # test_obj2 = obj_loader.load_renderable_object_from_file('data/models/teapot.obj', program, scale=1/50, color=[1, 0, 0])
-    test_objs = gltf_loader.load_scene('data/gltf/bottle.glb', program, scale=1/3)
+    test_objs = gltf_loader.load_scene('data/gltf/trisout.glb', program, scale=1/10)
     default_tex = texture_loading.get_texture('checkers')
     texture_loading.get_texture('texColor').update_data(default_tex.data, default_tex.width, default_tex.height)
 
