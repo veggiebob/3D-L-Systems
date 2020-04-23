@@ -25,8 +25,11 @@ vec2 getTexPos (vec3 p, vec3 n) {
 void main()
 {
     vec3 col = fcolor * ambient;
-    if (isTextured)
-        col = texture2D(texColor, texCoord + time * 0.1).rgb * ambient;
+    if (isTextured) {
+        vec4 t = texture2D(texColor, texCoord);
+        if (t.a < 0.1) discard;
+        col = t.rgb * ambient;
+    }
     vec3 normal = normalize(fnormal);
     vec3 light_dir = normalize(light - fposition);
     float diffuse = max(dot(light_dir, normal), 0.);

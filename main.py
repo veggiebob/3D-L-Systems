@@ -64,7 +64,7 @@ def render():
     glUseProgram(program)
 
     perspective_mat = glm.perspective(glm.radians(100.0), WIDTH/HEIGHT, 0.1, 100.0)
-    cam = glm.vec3(1., 1., 1.) * 3 # camera.spin_xz(framecount) * 2)
+    cam = glm.vec3(1., 1., 1.) * 2 # camera.spin_xz(framecount) * 2)
     focus_point = glm.vec3([0, 0, 0])
     view_mat = glm.lookAt(cam, focus_point, glm.vec3([0, 1, 0]))
     model_mat = np.identity(4, dtype='float32') # by default, no transformations applied
@@ -102,7 +102,8 @@ def render():
 
     for t in test_objs:
         # t.euler_rot[1] = framecount * np.pi / 2 / FPS # do one quater-turn per second
-        t.set_quat([0, 1, 0], framecount * np.pi / 8 / FPS)
+        t.set_quat([0, 1, 0], framecount * np.pi / 32 / FPS)
+        t.scale = np.array([1,1,1]) * (inputs['mouse'][0] / WIDTH + 0.5)
         t.render()
 
     framecount += 1
@@ -141,6 +142,8 @@ def main():
     display_mode = GLUT_DOUBLE | GLUT_ALPHA | GLUT_DEPTH | GLUT_STENCIL | GLUT_RGBA
     glutInitDisplayMode(display_mode)
     window = create_window((WIDTH, HEIGHT), (0, 0), "Quake-like")
+    glEnable(GL_CULL_FACE)
+    glCullFace(GL_BACK)
     glEnable(GL_DEPTH_TEST)
     glEnable(GL_TEXTURE_2D)
     glDepthMask(GL_TRUE)
@@ -158,7 +161,7 @@ def main():
 
     # test_obj = obj_loader.load_renderable_object_from_file('data/models/test_pyramid.obj', program, scale=5, color=[1, 1, 1])
     # test_obj2 = obj_loader.load_renderable_object_from_file('data/models/teapot.obj', program, scale=1/50, color=[1, 0, 0])
-    test_objs = gltf_loader.load_scene('data/gltf/trisout.glb', program, scale=1/10)
+    test_objs = gltf_loader.load_scene('data/gltf/test_gltf/bad_cube.glb', program)
     default_tex = texture_loading.get_texture('checkers')
     texture_loading.get_texture('texColor').update_data(default_tex.data, default_tex.width, default_tex.height)
 

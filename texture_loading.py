@@ -43,7 +43,7 @@ def load_all_textures(path='./data/textures', config:dict={}):
         print('loaded texture %s'%filename)
         load_texture('%s/%s'%(path, f), filename, config[filename] if filename in config else {})
 
-def get_texture (name:str):
+def get_texture (name:str) -> Texture:
     if not name in TEXTURES.keys():
         raise Exception('%s not in TEXTURES'%name)
     return TEXTURES[name]
