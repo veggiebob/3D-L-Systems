@@ -3,22 +3,24 @@
 layout(location = 0) in vec3 position;
 layout(location = 1) in vec3 normal;
 layout(location = 2) in vec3 color;
+layout(location = 3) in vec2 texcoord;
 
-out vec3 fposition;
-out vec3 fnormal;
-out vec3 fcolor;
+varying vec3 fposition;
+varying vec3 fnormal;
+varying vec3 fcolor;
+varying vec2 texCoord;
 
 uniform mat4 modelViewMatrix;
 uniform mat4 projectionMatrix;
 uniform mat4 viewMatrix;
 
+uniform float time;
+
 void main()
 {
-//    fnormal = (projectionMatrix * vec4(normal, 1.)).xyz;
-    fnormal = normal;
-//    look = (projectionMatrix * viewMatrix * vec4(0., 0., 1., 1.)).xyz;
-//    look = vec3(0., 0., 1.);
+    fnormal = (modelViewMatrix * vec4(normal, 0.)).xyz;
+    fposition = vec3(modelViewMatrix * vec4(position, 1.));
     gl_Position = projectionMatrix * viewMatrix * modelViewMatrix * vec4(position, 1.);
-    fposition = gl_Position.xyz;
     fcolor = color;
+    texCoord = texcoord;
 }

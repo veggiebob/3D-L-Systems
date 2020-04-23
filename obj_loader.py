@@ -2,26 +2,65 @@ import random
 
 import pywavefront
 import numpy as np
+import trimesh
 
 from game_object import RenderableObject
 from vertex_math import *
 
 
-def load_wav_obj (filename) -> pywavefront.Wavefront:
-    return pywavefront.Wavefront(filename, collect_faces=True)
+def load_wav_obj (filename) -> trimesh.Trimesh: # except sometimes it's trimesh.Scene ?!!
+    return trimesh.load(filename)
 
-def load_game_object_from_file(filename, program, scale=1.0, color=(0.5, 0.5, 0.5)) -> RenderableObject:
-    wav = load_wav_obj(filename)
-    verts = np.asarray(wav.vertices, dtype='float32').flatten() * scale
-    faces = np.asarray(wav.mesh_list[0].faces, dtype='int32').flatten()
-    # normals = get_normals_from_faces(wav.parser.normals, wav.mesh_list[0].faces) # todo: fix normal loading or at least test it
-    normals = np.asarray(get_normals_from_obj(wav.vertices, wav.mesh_list[0].faces)).flatten()
+def load_renderable_object_from_file(filename, program, scale=1.0, color=(0.5, 0.5, 0.5)) -> RenderableObject:
+    # obtain relevant information from the loaded object
+    obj = load_wav_obj(filename)
+    raw_verts = np.asarray(obj.vertices) # 2d array
+    raw_faces = np.asarray(obj.faces) # 2d array, indices
+    norm_per_vert = get_normals_from_obj(raw_verts, raw_faces)
+    has_uvs:bool = hasattr(obj.visual, 'uv')
+    raw_uvs = None
+    if has_uvs:
+        raw_uvs = np.asarray(obj.visual.uv)
+        raw_image = obj.visual.material.image
+    else:
+        raw_image = None
+
+    verts = np.asarray(get_vertices_from_faces(raw_verts, raw_faces), dtype='float32').flatten()
+    normals = np.asarray(get_stl_normals_from_faces(norm_per_vert, raw_faces), dtype='float32').flatten()
+    colors = DummyBuffers.gen_color_buffer(len(verts), color)
+    if has_uvs:
+        uvs = np.asarray(raw_uvs, dtype='float32').flatten()
+    else:
+        uvs = None
+
+    verts *= scale
     go = RenderableObject()
-    go.bind_indices_vbo(faces)
     go.bind_float_attribute_vbo(verts, "position", True, program)
     go.bind_float_attribute_vbo(normals, "normal", True, program)
-    go.bind_float_attribute_vbo(DummyBuffers.gen_color_buffer(len(verts), color), "color", True, program)
+    go.bind_float_attribute_vbo(colors, "color", True, program)
+    if has_uvs:
+        go.has_uvs = True
+        go.bind_float_attribute_vbo(uvs, "texcoord", True, program)
+        go.set_image(raw_image)
+    else:
+        go.has_uvs = False
     return go
+
+def get_vertices_from_faces (vertices, faces): # where vertices is a 2d array, and faces are indices (2d)
+    # obj -> stl
+    verts = []
+    for f in faces:
+        for fv in f:
+            verts.append(vertices[fv])
+    return np.asarray(verts, dtype='float32')
+
+def get_stl_normals_from_faces (normals, faces): # normals is per-vertex 2d array, faces is 2d array indices
+    # obj -> stl
+    norms = []
+    for f in faces:
+        for fv in f:
+            norms.append(normals[fv])
+    return norms
 
 class DummyBuffers:
     @staticmethod

@@ -1,5 +1,6 @@
 import numpy
 
+# some of these are meant for obj format (elemented arrays), and stl formats (verticies per triangle)
 
 def get_normals(vertex_data, right_hand=True):  # binary vertex data, 3 groups of 3 float 32s represent a triangle
     """
@@ -51,6 +52,7 @@ def find_faces_for_vertex (vertex_index:int, faces:list):
                 found_faces.append(f)
                 break
     return found_faces
+
 def find_vertices_for_face (face, vertices):
     # assume face is array
     # assume vertices is 2d array
@@ -58,6 +60,7 @@ def find_vertices_for_face (face, vertices):
     for v in face:
         verts.append(vertices[v])
     return verts
+
 def get_normal_for_face (face, vertices):
     # assume face is array
     # assume vertices is 2d array
@@ -69,6 +72,7 @@ def get_normal_for_face (face, vertices):
     CB = [x - i, y - j, z - k]
     norm = cross(CB[0], CB[1], CB[2], CA[0], CA[1], CA[2])
     return numpy.array(norm_vec3(norm), dtype='float32')
+
 def get_normals_from_obj (vertex_pos, faces):
     # assume vertex_pos is 2d array
     # assume faces is 2d array
@@ -81,19 +85,15 @@ def get_normals_from_obj (vertex_pos, faces):
     #   find the other vertices,
     #   determine the normal of each triangle it's connected to,
     #   and average all of the collected normals, and store it at that index
-    print('all the faces are %s'%faces)
     normals = []
     vi = -1
     for v in vertex_pos:
         vi += 1
         v_faces = find_faces_for_vertex(vi, faces)
         norm = numpy.array([0, 0, 0], dtype='float32')
-        print('vertex %d'%vi)
-        print('    faces: %s'%v_faces)
         for f in v_faces:
             n = get_normal_for_face(f, vertex_pos)
             norm += n
-            print('    adding normal: %s'%n)
         norm /= len(v_faces) # average all the normals
         norm = norm_vec3(norm) # normalize it
         normals.append(norm)
@@ -119,6 +119,46 @@ def dot_array(a, b):
 def norm_vec3(vec):
     mag = max(numpy.sqrt(vec[0] * vec[0] + vec[1] * vec[1] + vec[2] * vec[2]), 0.01)
     return numpy.array([vec[0] / mag, vec[1] / mag, vec[2] / mag], dtype='float32')
+
+def norm_vec(vec):
+    mag = max(numpy.sqrt(sum([n*n for n in vec])), 0.00001)
+    return numpy.asarray([n/mag for n in vec], dtype='float32')
+
+def quaternion_multiply(quaternion1, quaternion0):
+    w0, x0, y0, z0 = quaternion0
+    w1, x1, y1, z1 = quaternion1
+    return numpy.array([-x1 * x0 - y1 * y0 - z1 * z0 + w1 * w0,
+                     x1 * w0 + y1 * z0 - z1 * y0 + w1 * x0,
+                     -x1 * z0 + y1 * w0 + z1 * x0 + w1 * y0,
+                     x1 * y0 - y1 * x0 + z1 * w0 + w1 * z0], dtype=numpy.float32)
+
+# vec2 rotate2D (vec2 p, float angle){
+#     return vec2(p.x*cos(angle)-p.y*sin(angle), p.y*cos(angle)+p.x*sin(angle));
+# }
+# a + bi + cj + dk
+# ij = k
+# i^2 = j^2 = k^2 = -1
+# ki = j
+def rotate2D (v, angle):
+    return numpy.array([
+        v[0] * numpy.cos(angle) - v[1] * numpy.sin(angle),
+        v[1] * numpy.cos(angle) + v[0] * numpy.sin(angle)
+    ], dtype='float32')
+
+def euler (anglex, angley, anglez, v):
+    # y then x then z
+    # yxz
+    yr = rotate2D([v[0], v[2]], angley)
+    v[0] = yr[0]
+    v[2] = yr[1]
+    xr = rotate2D([v[1], v[2]], anglex)
+    v[1] = xr[0]
+    v[2] = xr[1]
+    zr = rotate2D([v[0], v[1]], anglez)
+    v[0] = zr[0]
+    v[1] = zr[1]
+    return v
+
 def concat (*args):
     arr = numpy.array([], dtype='float32')
     for a in args:

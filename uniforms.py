@@ -11,6 +11,7 @@ u_types: Dict[str, Callable] = {
     'vec3': glUniform3f,
     'vec4': glUniform4f,
     'int': glUniform1i,
+    'bool': glUniform1i,
     'ivec2': glUniform2i,
     'ivec3': glUniform3i,
     'mat3': glUniformMatrix3fv,
@@ -19,7 +20,7 @@ u_types: Dict[str, Callable] = {
 
 
 class Uniform:
-    def __init__(self, name:str, loc=None, values: list = None, u_type: str = ''):
+    def __init__(self, name: str, loc=None, values: list = None, u_type: str = ''):
         self.name = name
         self.loc = loc
         self.values: list = values
@@ -35,7 +36,7 @@ class Uniform:
         if not values is None:
             self.values = values
         if self.values is None or len(self.values) == 0:
-            print('no value set for uniform %s'%self.name)
+            print('no value set for uniform %s' % self.name)
             return
         self.get_uniform_func()(*self.get_args())
 
@@ -60,7 +61,7 @@ def update_uniform(name: str, values: list = None):
 
 
 def init_uniforms(program):
-    for n,u in uniforms.items():
+    for n, u in uniforms.items():
         u.loc = glGetUniformLocation(program, u.name)
 
 
@@ -84,7 +85,9 @@ def update_all_uniforms():
 # a texture is technically a uniform, of type "sampler2D"
 class Texture:
     index = 0
-    def __init__ (self, data:np.ndarray, name:str, width:int=0, height:int=0, sample_mode=GL_LINEAR, clamp_mode=GL_CLAMP):
+
+    def __init__(self, data: np.ndarray, name: str, width: int = 1, height: int = 1, sample_mode=GL_LINEAR,
+                 clamp_mode=GL_CLAMP, img_format=GL_RGB):
         self.data = data
         self.width = width if width > 0 else len(self.data[0])
         self.height = height if height > 0 else len(self.data)
@@ -92,35 +95,39 @@ class Texture:
         self.index = Texture.index
         self.sample_mode = sample_mode
         self.clamp_mode = clamp_mode
+        self.format = img_format
         self.texture = None
         self.init()
-        Texture.index += 1 # increment for other textures
+        Texture.index += 1  # increment for other textures
 
     def set_texture(self):
         # https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glTexImage2D.xhtml
         glTexImage2D(
-            GL_TEXTURE_2D, # target
-            0, # level
-            3, # internalformat
-            self.width, # width
-            self.height, # height
-            0, # border
-            GL_RGB, # format
-            GL_UNSIGNED_BYTE, # type
-            self.data, # pixels
+            GL_TEXTURE_2D,  # target
+            0,  # level
+            self.format,  # internalformat # was 3
+            self.width,  # width
+            self.height,  # height
+            0,  # border
+            self.format,  # format
+            GL_UNSIGNED_BYTE,  # type
+            self.data,  # pixels
         )
-    def init(self):
-        glActiveTexture(GL_TEXTURE0 + self.index)
-        self.texture = glGenTextures(1)
-        glBindTexture(GL_TEXTURE_2D, self.texture)
-        glPixelStorei(GL_UNPACK_ALIGNMENT, 1)
-        self.set_texture()
         glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, self.sample_mode)
         glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, self.sample_mode)
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, self.clamp_mode) # x
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, self.clamp_mode) # y
-        glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL)
-        glGenerateMipmap(GL_TEXTURE_2D)
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, self.clamp_mode)  # u
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, self.clamp_mode)  # v
+
+    def bind(self):
+        glActiveTexture(GL_TEXTURE0 + self.index)
+        glBindTexture(GL_TEXTURE_2D, self.texture)
+
+    def init(self):
+        self.texture = glGenTextures(1)
+        self.bind()
+        # glPixelStorei(GL_UNPACK_ALIGNMENT, 1)
+        self.set_texture()
+        # glGenerateMipmap(GL_TEXTURE_2D)
 
     def update(self, shader):
         glActiveTexture(GL_TEXTURE0 + self.index)
@@ -130,11 +137,24 @@ class Texture:
             self.index
         )
 
-    def update_data(self, data:np.ndarray, width:int=0, height:int=0): # not sure if you actually need to call this ever but we'll see
+    def update_data(self, data: np.ndarray, width: int = 0, height: int = 0):
         if width > 0:
             self.width = width
         if height > 0:
             self.height = height
         self.data = data
+        self.bind()
         self.set_texture()
 
+    def transfer(self, other_texture: 'Texture'):
+        self.set_format(other_texture.format)
+        self.sample_mode = other_texture.sample_mode
+        self.clamp_mode = other_texture.clamp_mode
+        self.update_data(other_texture.data, other_texture.width, other_texture.height)
+
+    def set_format(self, img_format):
+        self.format = img_format
+
+    def set_sampler(self, sampler):
+        self.sample_mode = sampler.sample_mode
+        self.clamp_mode = sampler.clamp_mode

@@ -35,6 +35,16 @@ def create_rotation_matrix(x, y, z):
                      [z[0], z[1], z[2], 0],
                      [0, 0, 0, 1]], dtype='float32')
 
+def create_scale_matrix (x, y=None, z=None):
+    if y is None or z is None:
+        y = x
+        z = x
+    m = np.identity(4, dtype='float32')
+    m[0][0] *= x
+    m[1][1] *= y
+    m[2][2] *= z
+    return m
+
 
 def look_at(position, target, up):
     zaxis = vertex_math.norm_vec3(target - position)

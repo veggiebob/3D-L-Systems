@@ -10,26 +10,6 @@ TEXTURES:Dict[str, Texture] = {}
 # https://pillow.readthedocs.io/en/stable/handbook/image-file-formats.html
 acceptable_file_types = ['bmp', 'png', 'jpg', 'jpeg', 'ppm']
 
-# numpy has it's own flatten lol
-def iterable(p):
-    try:
-        iter(p)
-    except TypeError:
-        return False
-    return True
-
-
-def flatten(l):  # flatten any-type iterables
-    if iterable(l):
-        index = -1
-        for p in iter(l):
-            index += 1
-            if iterable(p):
-                l = l[:index] + flatten(p) + l[index + 1:]
-        return l
-    else:
-        return l
-
 
 def get_image_data(filepath):
     try:
@@ -38,6 +18,9 @@ def get_image_data(filepath):
         print(e)
         return
     return np.array(img, dtype='float32')
+
+def add_texture (name:str, config:dict={}):
+    load_texture('data/textures/defaults/default.jpg', name, config)
 
 def load_texture(filepath, name:str=None, config:dict={}):
     if name is None: name = filepath
@@ -59,6 +42,11 @@ def load_all_textures(path='./data/textures', config:dict={}):
         filename = f[:f.index('.')]
         print('loaded texture %s'%filename)
         load_texture('%s/%s'%(path, f), filename, config[filename] if filename in config else {})
+
+def get_texture (name:str) -> Texture:
+    if not name in TEXTURES.keys():
+        raise Exception('%s not in TEXTURES'%name)
+    return TEXTURES[name]
 
 if __name__ == '__main__':
     load_all_textures()

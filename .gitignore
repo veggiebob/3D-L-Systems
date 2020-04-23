@@ -1,2 +1,4 @@
 __pycache__
 .idea/
+data/models/test_models/*
+data/gltf/test_gltf/*
