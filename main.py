@@ -142,13 +142,17 @@ def main():
     # global test_obj, test_obj2
     global test_objs
     glutInit(sys.argv)
+    glutInitContextVersion(4, 6)
+    glutInitContextProfile(GLUT_CORE_PROFILE)
+    glutInitContextFlags(GLUT_FORWARD_COMPATIBLE)
+    print("OPENGL VERSION: ", glGetIntegerv(GL_MAJOR_VERSION), ".", glGetIntegerv(GL_MINOR_VERSION), sep="")
+    print("OPENGL MAX_TEXTURE_SIZE:", glGetIntegerv(GL_MAX_TEXTURE_SIZE))
     display_mode = GLUT_DOUBLE | GLUT_ALPHA | GLUT_DEPTH | GLUT_STENCIL | GLUT_RGBA
     glutInitDisplayMode(display_mode)
     window = create_window((WIDTH, HEIGHT), (0, 0), "Quake-like")
     glEnable(GL_CULL_FACE)
     glCullFace(GL_BACK)
     glEnable(GL_DEPTH_TEST)
-    glEnable(GL_TEXTURE_2D)
     glDepthMask(GL_TRUE)
     glDepthFunc(GL_LEQUAL)
     glDepthRange(0.0, 1.0)
@@ -164,7 +168,7 @@ def main():
 
     # test_obj = obj_loader.load_renderable_object_from_file('data/models/test_pyramid.obj', program, scale=5, color=[1, 1, 1])
     # test_obj2 = obj_loader.load_renderable_object_from_file('data/models/teapot.obj', program, scale=1/50, color=[1, 0, 0])
-    test_objs = gltf_loader.load_scene('data/gltf/test_gltf/bad_cube.glb', program)
+    test_objs = gltf_loader.load_scene('data/gltf/trisout.glb', program)
     default_tex = texture_loading.get_texture('checkers')
     texture_loading.get_texture('texColor').update_data(default_tex.data, default_tex.width, default_tex.height)
 

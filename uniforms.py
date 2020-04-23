@@ -18,6 +18,16 @@ u_types: Dict[str, Callable] = {
     'mat4': glUniformMatrix4fv
 }
 
+gl_compressed_format: Dict[int, int] = {
+    GL_R: GL_COMPRESSED_RED,
+    GL_RG: GL_COMPRESSED_RG,
+    GL_RGB: GL_COMPRESSED_RGB,
+    GL_RGBA: GL_COMPRESSED_RGBA,
+    GL_SRGB: GL_COMPRESSED_SRGB,
+    GL_SRGB_ALPHA: GL_COMPRESSED_SRGB_ALPHA
+    # exotic formats omitted
+}
+
 
 class Uniform:
     def __init__(self, name: str, loc=None, values: list = None, u_type: str = ''):
@@ -105,7 +115,7 @@ class Texture:
         glTexImage2D(
             GL_TEXTURE_2D,  # target
             0,  # level
-            self.format,  # internalformat # was 3
+            gl_compressed_format[self.format],  # internalformat
             self.width,  # width
             self.height,  # height
             0,  # border
@@ -115,8 +125,9 @@ class Texture:
         )
         glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, self.sample_mode)
         glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, self.sample_mode)
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, self.clamp_mode)  # u
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, self.clamp_mode)  # v
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, self.clamp_mode)  # x
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, self.clamp_mode)  # y
+        glGenerateMipmap(GL_TEXTURE_2D)
 
     def bind(self):
         glActiveTexture(GL_TEXTURE0 + self.index)

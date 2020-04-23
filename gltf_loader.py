@@ -25,7 +25,7 @@ def glb_object(filepath) -> pygltflib.GLTF2:
     try:
         f = open(filepath)
     except FileNotFoundError:
-        raise Exception('bad file stupid')
+        raise Exception('The specified file ' + filepath + ' could not be found')
     return GLTF.load_binary(filepath)
 
 

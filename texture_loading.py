@@ -17,7 +17,7 @@ def get_image_data(filepath):
     except PIL.UnidentifiedImageError as e:
         print(e)
         return
-    return np.array(img, dtype='float32')
+    return np.array(img, dtype='uint8')
 
 def add_texture (name:str, config:dict={}):
     load_texture('data/textures/defaults/default.jpg', name, config)

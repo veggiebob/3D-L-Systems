@@ -3,9 +3,9 @@
 out vec4 outputColor;
 
 in vec3 fnormal;
-varying vec3 fcolor;
-varying vec3 fposition;
-varying vec2 texCoord;
+in vec3 fcolor;
+in vec3 fposition;
+in vec2 texCoord;
 
 uniform sampler2D texColor;
 uniform bool isTextured;

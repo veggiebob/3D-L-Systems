@@ -5,10 +5,10 @@ layout(location = 1) in vec3 normal;
 layout(location = 2) in vec3 color;
 layout(location = 3) in vec2 texcoord;
 
-varying vec3 fposition;
-varying vec3 fnormal;
-varying vec3 fcolor;
-varying vec2 texCoord;
+out vec3 fposition;
+out vec3 fnormal;
+out vec3 fcolor;
+out vec2 texCoord;
 
 uniform mat4 modelViewMatrix;
 uniform mat4 projectionMatrix;
