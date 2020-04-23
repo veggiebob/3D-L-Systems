@@ -40,10 +40,7 @@ add_uniform('time', 'float')
 add_uniform('isTextured', 'bool')
 
 # textures
-texture_loading.add_texture('texColor', {
-    'sample_mode': GL_LINEAR,
-    'clamp_mode': GL_REPEAT
-})
+
 
 inputs = {'mouse': [0, 0]}  # this is probably bad
 
@@ -145,11 +142,11 @@ def main():
     glutInitContextVersion(4, 6)
     glutInitContextProfile(GLUT_CORE_PROFILE)
     glutInitContextFlags(GLUT_FORWARD_COMPATIBLE)
-    print("OPENGL VERSION: ", glGetIntegerv(GL_MAJOR_VERSION), ".", glGetIntegerv(GL_MINOR_VERSION), sep="")
-    print("OPENGL MAX_TEXTURE_SIZE:", glGetIntegerv(GL_MAX_TEXTURE_SIZE))
     display_mode = GLUT_DOUBLE | GLUT_ALPHA | GLUT_DEPTH | GLUT_STENCIL | GLUT_RGBA
     glutInitDisplayMode(display_mode)
     window = create_window((WIDTH, HEIGHT), (0, 0), "Quake-like")
+    print("OPENGL VERSION: ", glGetIntegerv(GL_MAJOR_VERSION), ".", glGetIntegerv(GL_MINOR_VERSION), sep="")
+    print("OPENGL MAX_TEXTURE_SIZE:", glGetIntegerv(GL_MAX_TEXTURE_SIZE))
     glEnable(GL_CULL_FACE)
     glCullFace(GL_BACK)
     glEnable(GL_DEPTH_TEST)
@@ -158,6 +155,10 @@ def main():
     glDepthRange(0.0, 1.0)
     program = create_all_shaders()
     init_uniforms(program)  # create uniforms for the frag shader
+    texture_loading.add_texture('texColor', {
+        'sample_mode': GL_LINEAR,
+        'clamp_mode': GL_REPEAT
+    })
     texture_loading.load_all_textures('data/textures', {
         # https://open.gl/textures
         'noise_512': {
