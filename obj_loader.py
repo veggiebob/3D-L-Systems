@@ -3,14 +3,18 @@ import random
 import numpy as np
 import trimesh
 
+import shaders
 from game_object import RenderableObject
+from shaders import MeshShader
 from vertex_math import *
 
 
 def load_wav_obj (filename) -> trimesh.Trimesh: # except sometimes it's trimesh.Scene ?!!
     return trimesh.load(filename)
 
-def load_renderable_object_from_file(filename, program, scale=1.0, color=(0.5, 0.5, 0.5)) -> RenderableObject:
+def load_renderable_object_from_file(filename, program:MeshShader=None, scale=1.0, color=(0.5, 0.5, 0.5)) -> RenderableObject:
+    if program is None:
+        program = shaders.get_default_program()
     # obtain relevant information from the loaded object
     obj = load_wav_obj(filename)
     raw_verts = np.asarray(obj.vertices) # 2d array
@@ -33,14 +37,15 @@ def load_renderable_object_from_file(filename, program, scale=1.0, color=(0.5, 0
         uvs = None
 
     verts *= scale
-    go = RenderableObject()
-    go.bind_float_attribute_vbo(verts, "position", True, program)
-    go.bind_float_attribute_vbo(normals, "normal", True, program)
-    go.bind_float_attribute_vbo(colors, "color", True, program)
+    go = RenderableObject(program)
+    go.bind_float_attribute_vbo(verts, "position", True)
+    go.bind_float_attribute_vbo(normals, "normal", True)
+    go.bind_float_attribute_vbo(colors, "color", True)
     if has_uvs:
         go.has_uvs = True
-        go.bind_float_attribute_vbo(uvs, "texcoord", True, program)
-        go.set_image(raw_image)
+        go.bind_float_attribute_vbo(uvs, "texcoord", True)
+        if raw_image is not None:
+            go.set_image(raw_image)
     else:
         go.has_uvs = False
     return go

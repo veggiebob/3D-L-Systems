@@ -10,9 +10,11 @@ import OpenGL.GL as GL
 from PIL import Image
 
 import matrix
+import shaders
 import texture_loading
+import uniforms
 import vertex_math
-from uniforms import update_uniform, Texture
+from uniforms import Texture
 
 """
 todo steps:
@@ -62,14 +64,16 @@ class Attributes:
 
 class RenderableObject:
     UP = np.array([0, 1, 0], dtype='float32')
-    def __init__(self):
+    def __init__(self, program: shaders.MeshShader =None):
         self.vaoID = GL.glGenVertexArrays(1)
         self.attributes = Attributes()
         self.vertex_count = 0
         self.face_count = 0
 
-        # uniforms
+        # display
         self.material = Material()
+        self.program: shaders.MeshShader = shaders.get_default_program() if program is None else program
+        self.gl_program = self.program.program
 
         # initials
         self.initial_translation = np.array([0, 0, 0], dtype='float32')
@@ -89,25 +93,21 @@ class RenderableObject:
         self.material = material
 
     def set_image (self, image:Image):
-        # self.image_data = np.asarray(image, dtype='float32').flatten()
-        # self.image_size = image.size
         data = np.asarray(image, dtype='float32').flatten()
         mode = image.mode.lower()
         form = GL.GL_RGBA if mode=='rgba' else (GL.GL_RGB if mode=='rgb' else print('unknown format %s'%mode)) # default is RGB
-        tex = Texture(data, name='unnamed', width=image.width(), height=image.height(), img_format=form)
+        tex = Texture(data, name='unnamed', width=image.width, height=image.height, img_format=form)
         self.set_texture(tex)
 
     def set_texture (self, tex:Texture):
         self.material.set_texture(tex, MaterialTexture.COLOR)
 
-    def bind_float_attribute_vbo (self, data, attribute_name:str, static: bool, program, size:int=3): # must be 4 byte floats
-        # print('received data %s' % data)
-        # todo: should add support for index vs. attribute_name
+    def bind_float_attribute_vbo (self, data, attribute_name:str, static: bool, size:int=3): # must be 4 byte floats
         self.bind_vao()
-        if attribute_name=='position':
+        if attribute_name=='position': # aaaaaaaaaaaaaaaaaaaaaa
             self.vertex_count = int(len(data) / 3)
         vbo_id = GL.glGenBuffers(1)
-        location = GL.glGetAttribLocation(program, attribute_name)
+        location = GL.glGetAttribLocation(self.gl_program, attribute_name)
         # print('location is %s for %s'%(location, attribute_name))
         self.attributes.add_attribute(name=attribute_name, location=location, vbo_id=vbo_id, size=size)
         GL.glBindBuffer(GL.GL_ARRAY_BUFFER, vbo_id) # bind it
@@ -155,11 +155,16 @@ class RenderableObject:
 
     def render (self):
         # https://github.com/TheThinMatrix/OpenGL-Tutorial-3/blob/master/src/renderEngine/Renderer.java #render
-        update_uniform('modelViewMatrix', [1, GL.GL_FALSE, self.get_model_view_matrix().transpose()])
-        update_uniform('isTextured', [self.has_uvs])
-        if self.material.has_texture(MaterialTexture.COLOR):
-            texture_loading.get_texture('texColor').transfer(self.material.get_texture(MaterialTexture.COLOR)) # todo: bad
+        GL.glUseProgram(self.gl_program)
+        self.program.update_uniform('modelViewMatrix', [1, GL.GL_FALSE, self.get_model_view_matrix().transpose()])
+        self.program.update_uniform('isTextured', [self.has_uvs])
         self.bind_vao()
+        for mat_tex in self.material.get_all_mat_textures():
+            mat_tex.texture.bind()
+            GL.glUniform1i(
+                GL.glGetUniformLocation(self.gl_program, mat_tex.tex_type),
+                self.material.get_texture(MaterialTexture.COLOR).index
+            )
         for a in self.attributes.attributes:
             GL.glEnableVertexAttribArray(a.location)
             GL.glBindBuffer(GL.GL_ARRAY_BUFFER, a.vbo_id)
@@ -176,14 +181,14 @@ class RenderableObject:
         GL.glBindVertexArray(0)
 
 class Material:
-    LightingModels:Dict[str, Dict[str, type]] = { # currently unused, but might be helpful for shaders or something
-        'PHONG': {
-            'diffuse': float,
-            'specular': float,
-            'ambient': float,
-            'shinyness': float
-        }
-    }
+    # LightingModels:Dict[str, Dict[str, type]] = { # currently unused, but might be helpful for shaders or something
+    #     'PHONG': { # maybe do something like this with MeshPrograms instead
+    #         'diffuse': float,
+    #         'specular': float,
+    #         'ambient': float,
+    #         'shinyness': float
+    #     }
+    # }
     @staticmethod
     def from_gltf_material (gltf_mat:pygltflib.Material, color_texture:Texture=None, metallic_texture:Texture=None, normal_texture:Texture=None) -> 'Material':
         mat = Material(gltf_mat.name)
@@ -205,7 +210,7 @@ class Material:
         self.name = name
 
         # the textures
-        self.textures:Dict[int, MaterialTexture] = {
+        self.textures:Dict[str, MaterialTexture] = {
             MaterialTexture.COLOR: MaterialTexture(MaterialTexture.COLOR),
             MaterialTexture.METALLIC: MaterialTexture(MaterialTexture.METALLIC),
             MaterialTexture.NORMAL: MaterialTexture(MaterialTexture.NORMAL)
@@ -223,10 +228,10 @@ class Material:
     def set_mat_texture (self, mat_texture:'MaterialTexture') -> None:
         self.textures[mat_texture.tex_type] = mat_texture
 
-    def set_texture (self, texture:Texture, tex_type:int) -> None: # helper for set_mat_texture. they do the same thing
+    def set_texture (self, texture:Texture, tex_type:str) -> None: # helper for set_mat_texture. they do the same thing
         self.set_mat_texture(MaterialTexture(tex_type, texture))
 
-    def get_mat_texture (self, mat_texture_type:int=None) -> 'MaterialTexture':
+    def get_mat_texture (self, mat_texture_type:str=None) -> 'MaterialTexture':
         if mat_texture_type is None:
             mat_texture_type = MaterialTexture.COLOR
         mat_tex = self.textures[mat_texture_type]
@@ -235,21 +240,28 @@ class Material:
         else:
             raise Exception(f'material texture {mat_texture_type} does not exist')
 
-    def get_texture (self, mat_texture_type:int=None) -> Texture:
+    def get_texture (self, mat_texture_type:str=None) -> Texture:
         if mat_texture_type is None:
             mat_texture_type = MaterialTexture.COLOR
         return self.get_mat_texture(mat_texture_type).texture
 
-    def has_texture (self, mat_texture_type:int) -> bool:
+    def has_texture (self, mat_texture_type:str) -> bool:
         return self.textures[mat_texture_type].exists
 
+    def get_all_mat_textures (self) -> List['MaterialTexture']:
+        return [tex for tex in self.textures.values() if tex.exists]
+
+    def get_all_textures (self) -> List[Texture]:
+        return [tex.texture for tex in self.get_all_mat_textures()]
+
+
 class MaterialTexture:
-    COLOR = 0
-    METALLIC = 1
-    NORMAL = 2
-    def __init__ (self, tex_type:int, texture:Texture=None):
+    COLOR = 'texColor' # these correspond to uniform names
+    METALLIC = 'texMetallic'
+    NORMAL = 'texNormal'
+    def __init__ (self, tex_type:str, texture:Texture=None):
         self.exists:bool = texture is not None
-        self.tex_type:int = tex_type
+        self.tex_type:str = tex_type
         self.texture:Texture = texture
 
 class Transform:

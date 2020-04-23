@@ -1,3 +1,4 @@
+import glm
 import numpy as np
 def spin (time): # puts camera on unit circle, spinning around the origin
     cam = np.array([
@@ -11,11 +12,11 @@ def spin (time): # puts camera on unit circle, spinning around the origin
     cam[1] *= np.sin(time * 0.005)
     return cam
 
-def spin_xz (time): # puts camera on unit circle, spinning around the origin
+def spin_xz (time: float) -> np.array: # puts camera on unit circle, spinning around the origin
     cam = np.array([
-        np.sin(time * 0.01),
+        np.sin(time),
         1,
-        np.cos(time * 0.01)
+        np.cos(time)
     ])
     return cam
 

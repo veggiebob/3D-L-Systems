@@ -2,6 +2,7 @@ import OpenGL
 
 import glfw
 
+import camera
 import game_clock
 import gltf_loader
 
@@ -17,8 +18,6 @@ import texture_loading
 from texture_loading import TEXTURES
 from game_object import *
 import configuration
-
-program = None
 vbo, nvbo, cvbo = None, None, None
 window = None
 
@@ -27,17 +26,6 @@ MAX_FPS = None
 fps_clock = game_clock.FPSController()
 WIDTH = None
 HEIGHT = None
-
-# Matricies
-add_uniform('modelViewMatrix', 'mat4')
-add_uniform('projectionMatrix', 'mat4')
-add_uniform('viewMatrix', 'mat4')
-
-# env
-add_uniform('time', 'float')
-
-# other
-add_uniform('isTextured', 'bool')
 
 inputs = {'mouse': [0, 0]}  # this is probably bad
 
@@ -58,55 +46,38 @@ def create_window(size, pos, title, hints, screen_size, monitor=None, share=None
     glfw.make_context_current(win)
     return win
 
+def create_uniforms ():
+    # Matricies
+    add_uniform_to_all('modelViewMatrix', 'mat4')
+    add_uniform_to_all('projectionMatrix', 'mat4')
+    add_uniform_to_all('viewMatrix', 'mat4')
+
+    # env
+    add_uniform_to_all('time', 'float')
+
+    # other
+    add_uniform_to_all('isTextured', 'bool')
 
 def render():
     global framecount, clock
     glClearColor(0.0, 0.0, 0.0, 0.0)
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
-    glUseProgram(program)
-
-    perspective_mat = glm.perspective(glm.radians(100.0), WIDTH / HEIGHT, 0.1, 100.0)
-    cam = glm.vec3(1., 1., 1.) * 2 # camera.spin_xz(framecount) * 2)
-
+    perspective_mat = glm.perspective(glm.radians(100.0), WIDTH/HEIGHT, 0.1, 100.0)
+    cam:glm.vec3 = glm.vec3(1, 1, 1)
+        #glm.vec3(camera.spin_xz(-inputs['mouse'][0] / WIDTH * 3.14159 * 2) * 2)
     focus_point = glm.vec3([0, 0, 0])
     view_mat = glm.lookAt(cam, focus_point, glm.vec3([0, 1, 0]))
     model_mat = np.identity(4, dtype='float32') # by default, no transformations applied
+    update_all_uniform('modelViewMatrix', [1, GL_FALSE, model_mat])
+    update_all_uniform('viewMatrix', [1, GL_FALSE, np.array(view_mat)])
+    update_all_uniform('projectionMatrix', [1, GL_FALSE, np.array(perspective_mat)])
 
-    update_uniform('modelViewMatrix', [1, GL_FALSE, model_mat])
-    update_uniform('viewMatrix', [1, GL_FALSE, np.array(view_mat)])
-    update_uniform('projectionMatrix', [1, GL_FALSE, np.array(perspective_mat)])
-
-    update_uniform('time', [framecount / MAX_FPS]) # seconds
-
-    # draw normals
-    # glLineWidth(3.0)
-    # for tri in range(0, len(vertex_pos), 9):
-    #     v1 = vertex_pos[tri:tri + 3]
-    #     v2 = vertex_pos[tri + 3:tri + 6]
-    #     v3 = vertex_pos[tri + 6:tri + 9]
-    #     vert = (v1 + v2 + v3) / 3
-    #     norm = normals[tri:tri + 3]
-    #     end = vert + norm
-    #     glBegin(GL_LINES)
-    #     glVertex3f(vert[0], vert[1], vert[2])
-    #     glVertex3f(end[0], end[1], end[2])
-    #     glEnd()
-
-    # test_obj.translation[1] = np.cos(framecount * 0.01)
-    # test_obj.translation[2] = np.sin(framecount * 0.01)
-
-    # test_obj.euler_rot[0] = framecount * 0.003
-    # test_obj.euler_rot[1] = framecount * 0.005
-    #
-    # test_obj2.translation[0] = np.sin(framecount * 0.005)
-    #
-    # test_obj.render()
-    # test_obj2.render()
+    update_all_uniform('time', [framecount / MAX_FPS]) # seconds
 
     for t in test_objs:
         # t.euler_rot[1] = framecount * np.pi / 2 / FPS # do one quater-turn per second
-        t.set_quat([0, 1, 0], framecount * np.pi / 2 / MAX_FPS)
-        t.scale = np.array([1,1,1]) * (inputs['mouse'][0] / WIDTH + 0.5)
+        t.set_quat([0, 1, 0], -inputs['mouse'][0] / WIDTH * 3.14159 * 2)
+        t.scale = np.array([1,1,1]) * (inputs['mouse'][1] / HEIGHT + 0.5)
         t.render()
 
     framecount += 1
@@ -139,11 +110,10 @@ def mouseclick_callback(window, button, action, modifiers):
     print(fps_clock.average_fps)
 
 def error_callback(error, description):
-    print(error+" : "+description, file=sys.stderr)
+    print(str(error)+" : "+description.decode(), file=sys.stderr)
 
 def main():
-
-    global program, window, vbo, nvbo, cvbo
+    global window, vbo, nvbo, cvbo
     global test_objs
     global WIDTH, HEIGHT, MAX_FPS
 
@@ -171,7 +141,7 @@ def main():
         glfw.DECORATED: glfw.TRUE,
         glfw.RESIZABLE: glfw.FALSE,
         glfw.CONTEXT_VERSION_MAJOR: 4,
-        glfw.CONTEXT_VERSION_MINOR: 6,
+        glfw.CONTEXT_VERSION_MINOR: 5,
         glfw.OPENGL_DEBUG_CONTEXT: glfw.TRUE,
         glfw.OPENGL_PROFILE: glfw.OPENGL_CORE_PROFILE
     }
@@ -186,25 +156,26 @@ def main():
     glDepthMask(GL_TRUE)
     glDepthFunc(GL_LEQUAL)
     glDepthRange(0.0, 1.0)
-    program = create_all_shaders()
-    init_uniforms(program)  # create uniforms for the frag shader
-    texture_loading.add_texture('texColor', {
-        'sample_mode': GL_LINEAR,
-        'clamp_mode': GL_REPEAT
-    })
+    create_all_programs()
+
+    # create the uniforms
+    create_uniforms()
+    # initialize all the uniforms for all the prpograms
+    init_all_uniforms()
+
     texture_loading.load_all_textures('data/textures', {
         # https://open.gl/textures
         'noise_512': {
-            'sample_mode': GL_LINEAR,
             'clamp_mode': GL_REPEAT
         }
     })
 
-    # test_obj = obj_loader.load_renderable_object_from_file('data/models/test_pyramid.obj', program, scale=5, color=[1, 1, 1])
+    # test_obj = obj_loader.load_renderable_object_from_file('data/models/test_pyramid.obj', get_default_program(), scale=5, color=[1, 1, 1])
     # test_obj2 = obj_loader.load_renderable_object_from_file('data/models/teapot.obj', program, scale=1/50, color=[1, 0, 0])
-    test_objs = gltf_loader.load_scene('data/gltf/trisout.glb', program)
-    default_tex = texture_loading.get_texture('checkers')
-    texture_loading.get_texture('texColor').update_data(default_tex.data, default_tex.width, default_tex.height)
+    # test_objs = gltf_loader.load_scene('data/gltf/test_gltf/bad_cube.glb', program=get_default_program())
+    test_objs = gltf_loader.load_scene('data/gltf/test_gltf/CesiumMan.glb', program=get_default_program())
+    # test_objs.append(obj_loader.load_renderable_object_from_file('data/models/teapot.obj', get_default_program(), scale=1/50))
+    # test_objs[-1].translation = [0, -3, 0]
 
     fps_clock.start()
 
@@ -219,7 +190,6 @@ def main():
         glfw.poll_events()
 
     glfw.terminate()
-
 
 if __name__ == "__main__":
     main()
