@@ -1,6 +1,5 @@
 import random
 
-import pywavefront
 import numpy as np
 import trimesh
 

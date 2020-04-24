@@ -4,7 +4,6 @@ import PIL
 from OpenGL import GL
 from PIL import *
 from PIL import Image as PIL_Image
-from scipy.spatial.transform import Rotation as R
 from io import BytesIO
 
 import pygltflib
