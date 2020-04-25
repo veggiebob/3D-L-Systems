@@ -1,17 +1,24 @@
+import time
+
 import OpenGL
+
+from tremor.core.scene import Scene
+from tremor.core.entity import Entity
+
+OpenGL.USE_ACCELERATE = False
 
 import glfw
 
-from tremor.loader import gltf_loader, texture_loading
+from tremor.loader import gltf_loader, texture_loading, scene_loader
 from tremor.util import glutil, configuration
 from tremor.core import game_clock
 
-OpenGL.USE_ACCELERATE = False
 from tremor.graphics.shaders import *
 from tremor.graphics.uniforms import *
 import sys
 import glm
-from tremor.core.game_object import *
+from tremor.graphics import screen_utils, scene_renderer
+from tremor.math import matrix
 
 vbo, nvbo, cvbo = None, None, None
 window = None
@@ -19,17 +26,15 @@ window = None
 framecount = 0
 MAX_FPS: int = None
 fps_clock = game_clock.FPSController()
-WIDTH: int = None
-HEIGHT: int = None
 
 inputs = {'mouse': [0, 0]}  # this is probably bad
 
-test_objs:List[RenderableObject] = None
+current_scene: Scene = None
 
 
 def create_window(size, pos, title, hints, screen_size, monitor=None, share=None, ):
     if pos == "centered":
-        pos = (screen_size[0]/2, screen_size[1]/2)
+        pos = (screen_size[0] / 2, screen_size[1] / 2)
     glfw.default_window_hints()
     for hint, value in hints.items():
         if hint in [glfw.COCOA_FRAME_NAME, glfw.X11_CLASS_NAME, glfw.X11_INSTANCE_NAME]:
@@ -41,7 +46,8 @@ def create_window(size, pos, title, hints, screen_size, monitor=None, share=None
     glfw.make_context_current(win)
     return win
 
-def create_uniforms ():
+
+def create_uniforms():
     # Matricies
     add_uniform_to_all('modelViewMatrix', 'mat4')
     add_uniform_to_all('projectionMatrix', 'mat4')
@@ -51,52 +57,41 @@ def create_uniforms ():
     add_uniform_to_all('time', 'float')
 
     # other
-    add_uniform_to_all('isTextured', 'bool')
+    add_uniform_to_all('useTexColor', 'bool')
+
+    add_uniform_to_all('light_pos', 'vec3')
+
 
 def render():
-    global framecount, clock
-    glClearColor(0.0, 0.0, 0.0, 0.0)
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
-    perspective_mat = glm.perspective(glm.radians(100.0), WIDTH/HEIGHT, 0.1, 100.0)
-    cam:glm.vec3 = glm.vec3(2, 2, 2)
-        #glm.vec3(camera.spin_xz(-inputs['mouse'][0] / WIDTH * 3.14159 * 2) * 2)
-    focus_point = glm.vec3([0, 0, 0])
-    view_mat = glm.lookAt(cam, focus_point, glm.vec3([0, 1, 0]))
-    model_mat = np.identity(4, dtype='float32') # by default, no transformations applied
-    update_all_uniform('modelViewMatrix', [1, GL_FALSE, model_mat])
-    update_all_uniform('viewMatrix', [1, GL_FALSE, np.array(view_mat)])
-    update_all_uniform('projectionMatrix', [1, GL_FALSE, np.array(perspective_mat)])
-
-    update_all_uniform('time', [framecount / MAX_FPS]) # seconds
-
-    for t in test_objs:
-        # t.euler_rot[1] = framecount * np.pi / 2 / FPS # do one quater-turn per second
-        angle = -inputs['mouse'][0] / WIDTH * 3.14159 * 2
-        # t.transform.set_rotation(matrix.quaternion_from_angles(np.array([0, angle, 0])))
-        t.transform.set_scale(np.array([1, 1, 1]) * (0.5 + 0.5) * 0.05)
-        t.render()
-
-    framecount += 1
-    fps_clock.capFPS(MAX_FPS)
-
-    glUseProgram(0)
+    #current_scene.active_camera.transform.translate_local([0, 0.01, 0])
+    scene_renderer.render(current_scene)
+    fps_clock.capFPS(screen_utils.MAX_FPS)
 
 
 def reshape(w, h):
-    global WIDTH, HEIGHT
     glViewport(0, 0, w, h)
-    WIDTH = w
-    HEIGHT = h
+    screen_utils.WIDTH = w
+    screen_utils.HEIGHT = h
 
+wireframe = False
 
 def keyboard_callback(window, key, scancode, action, mods):
+    global wireframe
     if key == glfw.KEY_ESCAPE:
         glfw.set_window_should_close(window, glfw.TRUE)
         return
     if action == glfw.RELEASE:
         return
-    magnitude = 0.1 if mods == 0 else 0.5
-    tform = test_objs[0].transform
+    if key == glfw.KEY_F:
+        if action == glfw.REPEAT:
+            return
+        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL if wireframe else GL_LINE)
+        wireframe = not wireframe
+    magnitude = 0.1
+    if mods == 1:
+        tform = current_scene.active_camera.transform
+    else:
+        tform = current_scene.active_camera.transform
     if key == glfw.KEY_UP:
         tform.translate_local([magnitude, 0, 0])
     if key == glfw.KEY_DOWN:
@@ -125,39 +120,43 @@ def keyboard_callback(window, key, scancode, action, mods):
         tform.set_translation([0, 0, 0])
         tform.set_rotation([0, 0, 0, 1])
 
+
+
     inputs['key'] = key
 
 
 def mouse_callback(window, x, y):
     inputs['mouse'] = [x, y]
+    current_scene.active_camera.transform.set_rotation(matrix.quaternion_from_angles([0, np.pi * np.mod(x/20.0 + 90, 360)/180, 0]))
 
 
 def mouseclick_callback(window, button, action, modifiers):
     print(fps_clock.average_fps)
 
+
 def error_callback(error, description):
-    print(str(error)+" : "+description.decode(), file=sys.stderr)
+    print(str(error) + " : " + description.decode(), file=sys.stderr)
+
 
 def main():
     global window, vbo, nvbo, cvbo
-    global test_objs
-    global WIDTH, HEIGHT, MAX_FPS
+    global current_scene
 
     glfw.set_error_callback(error_callback)
-
     if not glfw.init():
         print("GLFW Initialization fail!")
         return
 
     graphics_settings = configuration.get_graphics_settings()
+    loader_settings = configuration.get_loader_settings()
 
     if graphics_settings is None:
         print("bla")
         return
 
-    WIDTH = graphics_settings.getint("width")
-    HEIGHT = graphics_settings.getint("height")
-    MAX_FPS = graphics_settings.getint("max_fps")
+    screen_utils.WIDTH = graphics_settings.getint("width")
+    screen_utils.HEIGHT = graphics_settings.getint("height")
+    screen_utils.MAX_FPS = graphics_settings.getint("max_fps")
 
     screen = None
     if graphics_settings.getboolean("full_screen"):
@@ -172,8 +171,10 @@ def main():
         glfw.OPENGL_PROFILE: glfw.OPENGL_CORE_PROFILE
     }
 
-    window = create_window(size=(WIDTH, HEIGHT), pos="centered", title="Quake-like", monitor=screen, hints=hints,
+    window = create_window(size=(screen_utils.WIDTH, screen_utils.HEIGHT), pos="centered", title="tremor",
+                           monitor=screen, hints=hints,
                            screen_size=glfw.get_monitor_physical_size(glfw.get_primary_monitor()))
+    glfw.set_input_mode(window, glfw.CURSOR, glfw.CURSOR_DISABLED)
     glutil.log_capabilities()
     glEnable(GL_CULL_FACE)
     glCullFace(GL_BACK)
@@ -181,6 +182,8 @@ def main():
     glDepthMask(GL_TRUE)
     glDepthFunc(GL_LEQUAL)
     glDepthRange(0.0, 1.0)
+    glEnable(GL_BLEND)
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
     create_all_programs()
 
     # create the uniforms
@@ -188,14 +191,18 @@ def main():
     # initialize all the uniforms for all the prpograms
     init_all_uniforms()
 
-    texture_loading.load_all_textures('data/textures', {
-        # https://open.gl/textures
-        'noise_512': {
-            'clamp_mode': GL_REPEAT
-        }
-    })
-
-    test_objs = gltf_loader.load_scene('data/gltf/trisout.glb', program=get_default_program())
+    # texture_loading.load_all_textures('data/textures', {
+    #     # https://open.gl/textures
+    #     'noise_512': {
+    #         'clamp_mode': GL_REPEAT
+    #     }
+    # })
+    scene_file = open("data/scenes/debug.tsf", "r", encoding="utf-8")
+    current_scene = scene_loader.load_scene(scene_file)
+    cam = Entity("camera")
+    cam.transform.set_translation([3, 3, 3])
+    cam.transform.set_rotation(matrix.quaternion_from_angles([0, np.pi/2, 0]))
+    current_scene.active_camera = cam
 
     fps_clock.start()
 
@@ -210,6 +217,7 @@ def main():
         glfw.poll_events()
 
     glfw.terminate()
+
 
 if __name__ == "__main__":
     print("Do not run this package directly!")

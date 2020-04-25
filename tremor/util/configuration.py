@@ -41,24 +41,33 @@ def is_boolean(d, name):
         return False
     return True
 
+schema_t:type = Dict[str, Callable[[Dict[str, object], str], bool]]
 
-graphics_schema: Dict[str, Callable[[Dict[str, object], str], bool]] = {
+graphics_schema: schema_t = {
     "width": is_integer_nonzero_positive,
     "height": is_integer_nonzero_positive,
     "full_screen": is_boolean,
     "max_fps": lambda x, y: is_integer_nonzero_positive(x, y) and int(x[y]) >= 30,  # minimum fps
 }
 
+loading_schema: schema_t = {
+    "max_texture_dimension": is_integer_nonzero_positive
+}
+
 
 def get_graphics_settings():
-    settings = configparser.ConfigParser()
-    settings.read("settings.ini")
-    graphics_settings = settings["graphics"]
-    if validate_section(graphics_settings, graphics_schema, True):
-        return graphics_settings
-    else:
-        return None
+    return get_settings('graphics', graphics_schema)
 
+def get_loader_settings():
+    return get_settings('loader', loading_schema)
+
+def get_settings (section:str, schema: schema_t, strict=True):
+    settings = configparser.ConfigParser()
+    settings.read('settings.ini')
+    section_settings = settings[section]
+    if validate_section(section_settings, schema, strict):
+        return section_settings
+    else: return None
 
 def validate_section(section, schema, strict):
     if strict:
