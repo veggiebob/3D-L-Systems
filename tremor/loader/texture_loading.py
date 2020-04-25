@@ -1,10 +1,10 @@
 from typing import Dict
 
-import PIL, os, yaml
+import PIL, os
 import numpy as np
 from PIL import Image
 
-from uniforms import Texture
+from tremor.graphics.uniforms import Texture
 
 TEXTURES:Dict[str, Texture] = {}
 # https://pillow.readthedocs.io/en/stable/handbook/image-file-formats.html
@@ -20,7 +20,7 @@ def get_image_data(filepath):
     return np.array(img, dtype='uint8')
 
 def add_texture (name:str, config:dict={}):
-    load_texture('data/textures/defaults/default.jpg', name, config)
+    load_texture('../../data/textures/defaults/default.jpg', name, config)
 
 def load_texture(filepath, name:str=None, config:dict={}):
     if name is None: name = filepath

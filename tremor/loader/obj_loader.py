@@ -3,10 +3,10 @@ import random
 import numpy as np
 import trimesh
 
-import shaders
-from game_object import RenderableObject
-from shaders import MeshShader
-from vertex_math import *
+from tremor.graphics import shaders
+from tremor.core.game_object import RenderableObject
+from tremor.graphics.shaders import MeshShader
+from tremor.math.vertex_math import *
 
 
 def load_wav_obj (filename) -> trimesh.Trimesh: # except sometimes it's trimesh.Scene ?!!

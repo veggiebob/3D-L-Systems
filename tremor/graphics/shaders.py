@@ -1,14 +1,8 @@
 import configparser
-import string
 from typing import List
 
 from OpenGL.GL.shaders import ShaderCompilationError
-from OpenGL.GLUT import *
-from OpenGL.GLU import *
-from OpenGL.GL import *
-from uniforms import *
-from array import array
-import numpy as np
+from tremor.graphics.uniforms import *
 
 PROGRAMS: Dict[str, 'MeshShader'] = {}
 

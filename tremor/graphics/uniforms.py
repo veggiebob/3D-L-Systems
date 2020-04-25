@@ -1,11 +1,10 @@
 from typing import Dict, Callable
 
 from OpenGL.GL import *
-from array import array
 import numpy as np
 
 # https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glUniform.xhtml
-import shaders
+from tremor.graphics import shaders
 
 u_types: Dict[str, Callable] = {
     'float': glUniform1f,

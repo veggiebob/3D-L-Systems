@@ -2,19 +2,17 @@ import OpenGL
 
 import glfw
 
-import game_clock
-import gltf_loader
-import texture_loading
+from tremor.loader import gltf_loader, texture_loading
+from tremor.util import glutil, configuration
+from tremor.core import game_clock
 
 OpenGL.USE_ACCELERATE = False
-from shaders import *
-from uniforms import *
+from tremor.graphics.shaders import *
+from tremor.graphics.uniforms import *
 import sys
-import matrix
 import glm
-from game_object import *
-import configuration
-import glutil
+from tremor.core.game_object import *
+
 vbo, nvbo, cvbo = None, None, None
 window = None
 
@@ -188,4 +186,4 @@ def main():
     glfw.terminate()
 
 if __name__ == "__main__":
-    main()
+    print("Do not run this package directly!")

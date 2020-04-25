@@ -7,10 +7,9 @@ import numpy as np
 import OpenGL.GL as GL
 from PIL import Image
 
-import matrix
-import vertex_math
-import shaders
-from uniforms import Texture
+from tremor.graphics import shaders
+from tremor.math import vertex_math, matrix
+from tremor.graphics.uniforms import Texture
 
 """
 todo steps:

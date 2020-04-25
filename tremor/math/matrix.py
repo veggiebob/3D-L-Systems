@@ -1,5 +1,5 @@
 import numpy as np
-import vertex_math
+from tremor.math import vertex_math
 
 
 def create_new_projection_matrix(fFrustumScale, fzNear, fzFar):

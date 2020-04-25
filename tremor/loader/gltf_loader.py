@@ -1,21 +1,17 @@
 from typing import Dict, List
 
-import PIL
 from OpenGL import GL
-from PIL import *
 from PIL import Image as PIL_Image
 from io import BytesIO
 
 import pygltflib
 
-import obj_loader
-import shaders
-import texture_loading
-from game_object import RenderableObject, Material
+from tremor.graphics import shaders
+from tremor.loader import obj_loader
+from tremor.core.game_object import RenderableObject, Material
 import numpy as np
 
-from obj_loader import DummyBuffers
-from uniforms import Texture
+from tremor.graphics.uniforms import Texture
 
 GLTF = pygltflib.GLTF2()
 
@@ -119,7 +115,8 @@ def load_scene(filepath, program: shaders.MeshShader=None) -> List[RenderableObj
 
                 colors = attr.COLOR_0
                 if colors is not None:
-                    ro.bind_float_attribute_vbo(obj_loader.get_vertices_from_faces(accessors[colors], raw_faces).flatten(), 'color', True)
+                    ro.bind_float_attribute_vbo(
+                        obj_loader.get_vertices_from_faces(accessors[colors], raw_faces).flatten(), 'color', True)
                 texcoord = attr.TEXCOORD_0
                 if texcoord is not None:
                     uvs = accessors[texcoord]
