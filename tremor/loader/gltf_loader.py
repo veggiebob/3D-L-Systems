@@ -93,14 +93,18 @@ def load_scene(filepath, program: shaders.MeshShader=None) -> List[RenderableObj
 
     renderables: List[RenderableObject] = []
     meshes = obj.meshes
+    node_idx = 0
+    node_stubs = {}
     for n in obj.nodes:
         if n.mesh is None:
+            node_idx += 1
             continue
         m = meshes[n.mesh]
         # https://github.com/KhronosGroup/glTF/tree/master/specification/2.0#reference-indices
         # goto Meshes
         for prim in m.primitives:
             if prim.mode != 4: # 4 is for triangles
+                node_idx += 1
                 continue
             attr = prim.attributes
             positions = accessors[attr.POSITION]
@@ -136,7 +140,29 @@ def load_scene(filepath, program: shaders.MeshShader=None) -> List[RenderableObj
             ro.using_quaternions = True
             ro.initial_quaternion = n.rotation
 
+            ro.node_idx = node_idx
+            # todo completely broken until RO is generalized
+            if n.children is not None:
+                for child_idx in n.children:
+                    if node_idx == child_idx:
+                        raise Exception("Node is its own child???")
+                    if node_idx > child_idx:
+                        for r in renderables:
+                            if r.node_idx == child_idx:
+                                ro.children.append(r)
+                                break
+                    else:
+                        if child_idx in node_stubs.keys():
+                            raise Exception("Node is a child of multiple nodes???")
+                        node_stubs[child_idx] = node_idx  # make a note to fill in the child ref when we get there
+            if node_idx in node_stubs.keys():  # resolve stub
+                for r in renderables:
+                    if r.node_idx == node_stubs[node_idx]:
+                        r.children.append(ro)
+                        break
+                node_stubs.pop(node_idx)
             renderables.append(ro)
+            node_idx += 1
 
     return renderables
 

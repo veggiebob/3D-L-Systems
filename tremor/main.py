@@ -17,10 +17,10 @@ vbo, nvbo, cvbo = None, None, None
 window = None
 
 framecount = 0
-MAX_FPS = None
+MAX_FPS: int = None
 fps_clock = game_clock.FPSController()
-WIDTH = None
-HEIGHT = None
+WIDTH: int = None
+HEIGHT: int = None
 
 inputs = {'mouse': [0, 0]}  # this is probably bad
 
@@ -167,7 +167,7 @@ def main():
     # test_obj = obj_loader.load_renderable_object_from_file('data/models/test_pyramid.obj', get_default_program(), scale=5, color=[1, 1, 1])
     # test_obj2 = obj_loader.load_renderable_object_from_file('data/models/teapot.obj', program, scale=1/50, color=[1, 0, 0])
     # test_objs = gltf_loader.load_scene('data/gltf/test_gltf/bad_cube.glb', program=get_default_program())
-    test_objs = gltf_loader.load_scene('data/gltf/trisout.glb', program=get_default_program())
+    test_objs = gltf_loader.load_scene('data/gltf/test_gltf/CesiumMilkTruck.glb', program=get_default_program())
     # test_objs.append(obj_loader.load_renderable_object_from_file('data/models/teapot.obj', get_default_program(), scale=1/50))
     # test_objs[-1].translation = [0, -3, 0]
 
@@ -178,7 +178,7 @@ def main():
     glfw.set_key_callback(window, keyboard_callback)
 
     while not glfw.window_should_close(window):
-        #todo call an update method as well
+        # todo call an update method as well
         render()
         glfw.swap_buffers(window)
         glfw.poll_events()

@@ -95,6 +95,9 @@ class RenderableObject:
 
         self.has_uvs = False
 
+        self.children = []
+        self.node_idx = -1
+
     def set_material(self, material: 'Material') -> None:
         self.material = material
 
