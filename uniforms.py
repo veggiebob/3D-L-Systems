@@ -115,7 +115,6 @@ class Texture:
         self.bind()
         # glPixelStorei(GL_UNPACK_ALIGNMENT, 1)
         self.set_texture()
-        glGenerateMipmap(GL_TEXTURE_2D)
 
     def update_data(self, data: np.ndarray, width: int = 0, height: int = 0):
         if width > 0:
