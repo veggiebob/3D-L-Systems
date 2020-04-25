@@ -1,7 +1,6 @@
 from typing import List, Dict
 
 import pygltflib
-from scipy.spatial.transform import Rotation as R
 
 import numpy as np
 import OpenGL.GL as GL
@@ -10,6 +9,7 @@ from PIL import Image
 from tremor.graphics import shaders
 from tremor.math import vertex_math, matrix
 from tremor.graphics.uniforms import Texture
+from tremor.math.transform import Transform
 
 """
 todo steps:
@@ -81,17 +81,7 @@ class RenderableObject:
         self.program: shaders.MeshShader = shaders.get_default_program() if program is None else program
         self.gl_program = self.program.program
 
-        # initials
-        self.initial_translation = np.array([0, 0, 0], dtype='float32')
-        self.initial_quaternion = np.array([0, 0, 0, 1], dtype='float32')
-
-        # realtime
-        self.translation = np.array([0, 0, 0], dtype='float32')
-        self.scale: np.array = np.array([1, 1, 1])
-
-        self.euler_rot = np.array([0, 0, 0], dtype='float32')
-        self.quaternion = np.array([0, 0, 0, 1], dtype='float32')
-        self.using_quaternions = True
+        self.transform = Transform()
 
         self.has_uvs = False
 
@@ -127,49 +117,10 @@ class RenderableObject:
         GL.glBindBuffer(GL.GL_ARRAY_BUFFER, 0)  # unbind it
         self.unbind_vao()
 
-    def get_translation_matrix(self):
-        trans_mat = matrix.create_translation_matrix(self.translation + self.initial_translation)
-        # print('trans_mat: \n%s'%trans_mat)
-        return trans_mat
-
-    def get_euler_matrix(self):
-        heading = vertex_math.euler(self.euler_rot[0], self.euler_rot[1], self.euler_rot[2],
-                                    np.array([1, 0, 0], dtype='float32'))
-        norm = vertex_math.euler(self.euler_rot[0], self.euler_rot[1], self.euler_rot[2],
-                                 np.array([0, 1, 0], dtype='float32'))
-        T = vertex_math.norm_vec3(heading)
-        N = norm
-        B = np.cross(N, T)
-        rot_mat = matrix.create_rotation_matrix(T, N, B)
-        return rot_mat
-
-    def set_quat(self, forward, angle_rad):
-        self.quaternion = np.append(
-            np.asarray(forward) * np.sin(angle_rad),
-            np.cos(angle_rad)
-        )
-
-    def get_quat_matrix(self):
-        rot = np.zeros((4, 4), dtype='float32')
-        quat = vertex_math.quaternion_multiply(self.initial_quaternion, self.quaternion)
-        # quat = self.quaternion
-        rot[:3, :3] = R.from_quat(quat).as_matrix()
-        rot[3, 3] = 1  # be a good bean
-        return rot
-
-    def get_scale_matrix(self):
-        return matrix.create_scale_matrix(*self.scale)
-
-    def get_model_view_matrix(self):
-        rot = self.get_quat_matrix() if self.using_quaternions else self.get_euler_matrix()
-        return self.get_scale_matrix().dot(  # scale it
-            rot.dot(  # rotate it
-                self.get_translation_matrix()))  # translate it
-
     def render(self):
         # https://github.com/TheThinMatrix/OpenGL-Tutorial-3/blob/master/src/renderEngine/Renderer.java #render
         GL.glUseProgram(self.gl_program)
-        self.program.update_uniform('modelViewMatrix', [1, GL.GL_FALSE, self.get_model_view_matrix().transpose()])
+        self.program.update_uniform('modelViewMatrix', [1, GL.GL_FALSE, self.transform.to_model_view_matrix().transpose()])
         self.program.update_uniform('isTextured', [self.material.get_mat_texture().exists])
         self.bind_vao()
         for mat_tex in self.material.get_all_mat_textures():
@@ -281,8 +232,3 @@ class MaterialTexture:
         self.exists: bool = texture is not None
         self.tex_type: str = tex_type
         self.texture: Texture = texture
-
-
-class Transform:
-    def __init__(self):
-        pass

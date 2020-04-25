@@ -1,6 +1,7 @@
 import numpy as np
 from tremor.math import vertex_math
 
+from scipy.spatial.transform import Rotation as R
 
 def create_new_projection_matrix(fFrustumScale, fzNear, fzFar):
     arr = np.zeros(16, dtype='float32')
@@ -29,12 +30,27 @@ def create_translation_matrix(translation_vec):
     arr[2][3] = translation_vec[2]
     return arr
 
+def translation_from_matrix(mv_mat):
+    return np.array([mv_mat[0][3], mv_mat[1][3], mv_mat[2][3]], dtype='float32')
 
-def create_rotation_matrix(x, y, z):
+def create_rotation_matrix_euler(x, y, z):
     return np.array([[x[0], x[1], x[2], 0],
                      [y[0], y[1], y[2], 0],
                      [z[0], z[1], z[2], 0],
                      [0, 0, 0, 1]], dtype='float32')
+
+def create_rotation_matrix_from_quaternion(q):
+    rot = np.zeros((4, 4), dtype='float32')
+    rot[:3, :3] = R.from_quat(q).as_matrix()
+    rot[3, 3] = 1
+    return rot
+
+def quaternion_from_matrix(mat: np.ndarray):
+    return R.from_matrix(mat[:3, :3]).as_quat()
+
+def quaternion_from_angles(angles):
+    # angles is angles (rad) around x y z
+    return R.from_euler('xyz', angles).as_quat()
 
 def create_scale_matrix (x, y=None, z=None):
     if y is None or z is None:
@@ -51,7 +67,7 @@ def look_at(position, target, up):
     zaxis = vertex_math.norm_vec3(target - position)
     xaxis = vertex_math.norm_vec3(vertex_math.cross_array(vertex_math.norm_vec3(up), zaxis))
     yaxis = vertex_math.cross_array(zaxis, xaxis)  # quick maths
-    rotation = create_rotation_matrix(xaxis, yaxis, zaxis)
+    rotation = create_rotation_matrix_euler(xaxis, yaxis, zaxis)
     translation = create_translation_matrix(position * -1)
     #rotation[3] = [-np.dot(xaxis, position), -np.dot(zaxis, position), -np.dot(yaxis, position), 1]
     return translation * rotation
