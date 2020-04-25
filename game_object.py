@@ -157,7 +157,7 @@ class RenderableObject:
         # https://github.com/TheThinMatrix/OpenGL-Tutorial-3/blob/master/src/renderEngine/Renderer.java #render
         GL.glUseProgram(self.gl_program)
         self.program.update_uniform('modelViewMatrix', [1, GL.GL_FALSE, self.get_model_view_matrix().transpose()])
-        self.program.update_uniform('isTextured', [self.has_uvs])
+        self.program.update_uniform('isTextured', [self.material.get_mat_texture().exists])
         self.bind_vao()
         for mat_tex in self.material.get_all_mat_textures():
             mat_tex.texture.bind()
@@ -235,10 +235,7 @@ class Material:
         if mat_texture_type is None:
             mat_texture_type = MaterialTexture.COLOR
         mat_tex = self.textures[mat_texture_type]
-        if mat_tex.exists:
-            return mat_tex
-        else:
-            raise Exception(f'material texture {mat_texture_type} does not exist')
+        return mat_tex # todo note to self: check if exists!!!!!!!!!!
 
     def get_texture (self, mat_texture_type:str=None) -> Texture:
         if mat_texture_type is None:

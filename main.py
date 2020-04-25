@@ -63,7 +63,7 @@ def render():
     glClearColor(0.0, 0.0, 0.0, 0.0)
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
     perspective_mat = glm.perspective(glm.radians(100.0), WIDTH/HEIGHT, 0.1, 100.0)
-    cam:glm.vec3 = glm.vec3(1, 1, 1)
+    cam:glm.vec3 = glm.vec3(2, 2, 2)
         #glm.vec3(camera.spin_xz(-inputs['mouse'][0] / WIDTH * 3.14159 * 2) * 2)
     focus_point = glm.vec3([0, 0, 0])
     view_mat = glm.lookAt(cam, focus_point, glm.vec3([0, 1, 0]))
@@ -77,7 +77,7 @@ def render():
     for t in test_objs:
         # t.euler_rot[1] = framecount * np.pi / 2 / FPS # do one quater-turn per second
         t.set_quat([0, 1, 0], -inputs['mouse'][0] / WIDTH * 3.14159 * 2)
-        t.scale = np.array([1,1,1]) * (inputs['mouse'][1] / HEIGHT + 0.5)
+        t.scale = np.array([1,1,1]) * (inputs['mouse'][1] / HEIGHT + 0.5) * 0.05
         t.render()
 
     framecount += 1
@@ -173,7 +173,7 @@ def main():
     # test_obj = obj_loader.load_renderable_object_from_file('data/models/test_pyramid.obj', get_default_program(), scale=5, color=[1, 1, 1])
     # test_obj2 = obj_loader.load_renderable_object_from_file('data/models/teapot.obj', program, scale=1/50, color=[1, 0, 0])
     # test_objs = gltf_loader.load_scene('data/gltf/test_gltf/bad_cube.glb', program=get_default_program())
-    test_objs = gltf_loader.load_scene('data/gltf/test_gltf/CesiumMan.glb', program=get_default_program())
+    test_objs = gltf_loader.load_scene('data/gltf/trisout.glb', program=get_default_program())
     # test_objs.append(obj_loader.load_renderable_object_from_file('data/models/teapot.obj', get_default_program(), scale=1/50))
     # test_objs[-1].translation = [0, -3, 0]
 
