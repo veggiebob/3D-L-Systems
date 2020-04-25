@@ -1,6 +1,7 @@
 import numpy as np
 import vertex_math
 
+
 def create_new_projection_matrix(fFrustumScale, fzNear, fzFar):
     arr = np.zeros(16, dtype='float32')
     arr[0] = fFrustumScale

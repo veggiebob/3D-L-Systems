@@ -2,22 +2,19 @@ import OpenGL
 
 import glfw
 
-import camera
 import game_clock
 import gltf_loader
+import texture_loading
 
 OpenGL.USE_ACCELERATE = False
-from vbo import *
 from shaders import *
 from uniforms import *
 import sys
-from vertex_math import *
-from matrix import *
+import matrix
 import glm
-import texture_loading
-from texture_loading import TEXTURES
 from game_object import *
 import configuration
+import glutil
 vbo, nvbo, cvbo = None, None, None
 window = None
 
@@ -148,8 +145,7 @@ def main():
 
     window = create_window(size=(WIDTH, HEIGHT), pos="centered", title="Quake-like", monitor=screen, hints=hints,
                            screen_size=glfw.get_monitor_physical_size(glfw.get_primary_monitor()))
-    print("OPENGL VERSION: ", glGetIntegerv(GL_MAJOR_VERSION), ".", glGetIntegerv(GL_MINOR_VERSION), sep="")
-    print("OPENGL MAX_TEXTURE_SIZE:", glGetIntegerv(GL_MAX_TEXTURE_SIZE))
+    glutil.log_capabilities()
     glEnable(GL_CULL_FACE)
     glCullFace(GL_BACK)
     glEnable(GL_DEPTH_TEST)
