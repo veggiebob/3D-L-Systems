@@ -49,6 +49,15 @@ class Attributes:
 
 
 class ElementRenderer:
+    def __init__(self):
+        self.meshes: List[Mesh] = []
+
+    def render(self):
+        for mesh in self.meshes:
+            mesh.render()
+
+
+class Mesh:
     UP = np.array([0, 1, 0], dtype='float32')
 
     def __init__(self, parent_element, program: shaders.MeshShader = None):
@@ -98,7 +107,7 @@ class ElementRenderer:
         # https://github.com/TheThinMatrix/OpenGL-Tutorial-3/blob/master/src/renderEngine/Renderer.java #render
         GL.glUseProgram(self.gl_program)
         self.program.update_uniform('modelViewMatrix',
-                                    [1, GL.GL_FALSE, self.parent.transform.to_model_view_matrix().transpose()])
+                                    [1, GL.GL_FALSE, self.parent.transform.to_model_view_matrix_global().transpose()])
         self.program.update_uniform('isTextured', [self.material.get_mat_texture().exists])
         self.bind_vao()
         for mat_tex in self.material.get_all_mat_textures():

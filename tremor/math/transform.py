@@ -5,12 +5,13 @@ from tremor.math import vertex_math, matrix
 
 # A transform is a translation, rotation, and scale
 class Transform:
-    def __init__(self):
+    def __init__(self, scene_elem):
         self._translation = np.array([0, 0, 0], dtype='float32')  # x y z
         self._rotation = np.array([0, 0, 0, 1], dtype='float32')  # w z y x
         self._scale = np.array([1, 1, 1])  # x y z
         self._mv_needs_rebuild = True
         self._mv: np.ndarray = None
+        self._elem = scene_elem
 
     def to_model_view_matrix(self):
         # cache mv matrix
@@ -21,6 +22,18 @@ class Transform:
                 ))
             self._mv_needs_rebuild = False
         return self._mv
+
+    def to_model_view_matrix_global(self):
+        # non-recursive, could probably be
+        hierarchy = [self._elem]
+        ce = self._elem
+        while ce.parent is not None:
+            hierarchy.insert(0, ce.parent)
+            ce = ce.parent
+        mvmat = np.identity(4, dtype='float32')
+        for elem in hierarchy:
+            mvmat = mvmat.dot(elem.transform.to_model_view_matrix())
+        return mvmat
 
     def _get_rotation_matrix(self):
         rot = np.zeros((4, 4), dtype='float32')

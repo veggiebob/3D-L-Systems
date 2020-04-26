@@ -9,7 +9,7 @@ import pygltflib
 from tremor.core.scene_element import SceneElement
 from tremor.graphics import shaders
 from tremor.loader import obj_loader
-from tremor.graphics.element_renderer import ElementRenderer, Material
+from tremor.graphics.element_renderer import ElementRenderer, Material, Mesh
 import numpy as np
 
 from tremor.graphics.uniforms import Texture
@@ -102,6 +102,8 @@ def load_gltf(filepath, program: shaders.MeshShader = None) -> List[SceneElement
         elem = SceneElement(n.name)
         if n.mesh is not None:
             m = meshes[n.mesh]
+            elem_renderer = ElementRenderer()
+            elem.renderer = elem_renderer
             # https://github.com/KhronosGroup/glTF/tree/master/specification/2.0#reference-indices
             for prim in m.primitives:
                 if prim.mode != 4:  # 4 is for triangles
@@ -109,7 +111,7 @@ def load_gltf(filepath, program: shaders.MeshShader = None) -> List[SceneElement
                 attr = prim.attributes
                 positions = accessors[attr.POSITION]
                 normals = accessors[attr.NORMAL]  # normals are per-vertex
-                elem_renderer = ElementRenderer(elem, program)
+                mesh = Mesh(elem, program)
                 face_index = prim.indices
                 if face_index is not None:
                     l = len(accessors[face_index])
@@ -119,23 +121,25 @@ def load_gltf(filepath, program: shaders.MeshShader = None) -> List[SceneElement
 
                     colors = attr.COLOR_0
                     if colors is not None:
-                        elem_renderer.bind_float_attribute_vbo(
+                        mesh.bind_float_attribute_vbo(
                             obj_loader.get_vertices_from_faces(accessors[colors], raw_faces).flatten(), 'color', True)
                     texcoord = attr.TEXCOORD_0
                     if texcoord is not None:
                         uvs = accessors[texcoord]
                         flat_uvs = obj_loader.get_vertices_from_faces(uvs, raw_faces).flatten()
-                        elem_renderer.has_uvs = True
-                        elem_renderer.bind_float_attribute_vbo(flat_uvs, 'texcoord', True, size=2)
+                        mesh.has_uvs = True
+                        mesh.bind_float_attribute_vbo(flat_uvs, 'texcoord', True, size=2)
 
                         if prim.material is not None:
-                            elem_renderer.set_material(materials[prim.material])
+                            mesh.set_material(materials[prim.material])
 
-                elem_renderer.bind_float_attribute_vbo(positions.flatten(), 'position', True)
-                elem_renderer.bind_float_attribute_vbo(normals.flatten(), 'normal', True)
+                mesh.bind_float_attribute_vbo(positions.flatten(), 'position', True)
+                mesh.bind_float_attribute_vbo(normals.flatten(), 'normal', True)
 
-                elem.renderer = elem_renderer
+                elem.renderer.meshes.append(mesh)
         elem.transform.scale = np.array([1, 1, 1], dtype='float32') * n.scale
+        elem.transform.set_rotation(n.rotation)
+        elem.transform.set_translation(n.translation)
         elem._node_idx = node_idx
         if n.children is not None:
             for child_idx in n.children:

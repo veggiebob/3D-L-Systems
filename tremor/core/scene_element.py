@@ -6,7 +6,7 @@ from tremor.math.transform import Transform
 
 class SceneElement:
     def __init__(self, name):
-        self.transform = Transform()
+        self.transform = Transform(self)
         self.renderer: ElementRenderer = None
         self.name = name
         self._node_idx = -1
