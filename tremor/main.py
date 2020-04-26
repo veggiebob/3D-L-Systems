@@ -71,15 +71,25 @@ def reshape(w, h):
     screen_utils.WIDTH = w
     screen_utils.HEIGHT = h
 
+wireframe = False
 
 def keyboard_callback(window, key, scancode, action, mods):
+    global wireframe
     if key == glfw.KEY_ESCAPE:
         glfw.set_window_should_close(window, glfw.TRUE)
         return
     if action == glfw.RELEASE:
         return
+    if key == glfw.KEY_F:
+        if action == glfw.REPEAT:
+            return
+        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL if wireframe else GL_LINE)
+        wireframe = not wireframe
     magnitude = 0.1
-    tform = test_objs[0].transform if mods == 0 else current_scene.active_camera.transform
+    if mods == 1:
+        tform = current_scene.active_camera.transform
+    else:
+        tform = test_objs[0].transform
     if key == glfw.KEY_UP:
         tform.translate_local([magnitude, 0, 0])
     if key == glfw.KEY_DOWN:
@@ -182,7 +192,7 @@ def main():
         }
     })
 
-    test_objs = gltf_loader.load_scene('data/gltf/trisout.glb', program=get_default_program())
+    test_objs = gltf_loader.load_gltf('data/gltf/trisout.glb', program=get_default_program())
     current_scene = Scene("debug")
     test_objs[0].transform.set_scale([0.1, 0.1, 0.1])
     current_scene.elements.append(test_objs[0])

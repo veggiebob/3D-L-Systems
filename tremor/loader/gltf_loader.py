@@ -25,7 +25,7 @@ def glb_object(filepath) -> pygltflib.GLTF2:
     return GLTF.load_binary(filepath)
 
 
-def load_scene(filepath, program: shaders.MeshShader=None) -> List[RenderableObject]:
+def load_gltf(filepath, program: shaders.MeshShader=None) -> List[RenderableObject]:
     if program is None:
         program = shaders.get_default_program()
     obj = glb_object(filepath)
