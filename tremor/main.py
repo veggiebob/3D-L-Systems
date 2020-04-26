@@ -7,7 +7,7 @@ OpenGL.USE_ACCELERATE = False
 
 import glfw
 
-from tremor.loader import gltf_loader, texture_loading
+from tremor.loader import gltf_loader, texture_loading, scene_loader
 from tremor.util import glutil, configuration
 from tremor.core import game_clock
 
@@ -190,10 +190,8 @@ def main():
             'clamp_mode': GL_REPEAT
         }
     })
-
-    objects: List[SceneElement] = gltf_loader.load_gltf('data/gltf/test_gltf/CesiumMilkTruck.glb', program=get_default_program())
-    current_scene = Scene("debug")
-    current_scene.elements = objects
+    scene_file = open("data/scenes/debug.tsf", "r", encoding="utf-8")
+    current_scene = scene_loader.load_scene(scene_file)
     cam = SceneElement("camera")
     cam.transform.set_translation([3, 3, 3])
     cam.transform.set_rotation(matrix.quaternion_from_angles([0, np.pi/2, 0]))

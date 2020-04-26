@@ -48,9 +48,9 @@ def create_rotation_matrix_from_quaternion(q):
 def quaternion_from_matrix(mat: np.ndarray):
     return R.from_matrix(mat[:3, :3]).as_quat()
 
-def quaternion_from_angles(angles):
+def quaternion_from_angles(angles, degrees=False):
     # angles is angles (rad) around x y z
-    return R.from_euler('xyz', angles).as_quat()
+    return R.from_euler('xyz', angles, degrees=degrees).as_quat()
 
 def create_scale_matrix (x, y=None, z=None):
     if y is None or z is None:

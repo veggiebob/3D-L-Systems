@@ -1,0 +1,2 @@
+def CVar(**kwargs):
+    pass
