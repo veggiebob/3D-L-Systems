@@ -32,7 +32,8 @@ def render(scene: Scene):
     update_all_uniform('time', [framecount / screen_utils.MAX_FPS])  # seconds
 
     for element in scene.elements:
-        element.render()
+        if element.is_renderable():
+            element.renderer.render()
 
     framecount += 1
 

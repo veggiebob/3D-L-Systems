@@ -11,25 +11,6 @@ from tremor.math import vertex_math, matrix
 from tremor.graphics.uniforms import Texture
 from tremor.math.transform import Transform
 
-"""
-todo steps:
-    initialization:
-     - create a vao
-     - create/update vbos
-        - bind vao
-        - generate vbo
-        - bind vbo
-        - add data to vbo
-        - unbind vbo*
-        - unbind vao
-    rendering:
-     - bind vao
-     - enable vao
-     - draw it
-     - disable vao
-     - unbind it
-"""
-
 
 class Attribute:
     def __init__(self, location=0, name="none", vbo_id=0, size: int = 3):
@@ -67,10 +48,10 @@ class Attributes:
             self.attributes.append(Attribute(name=name, location=location, vbo_id=vbo_id, size=size))
 
 
-class RenderableObject:
+class ElementRenderer:
     UP = np.array([0, 1, 0], dtype='float32')
 
-    def __init__(self, program: shaders.MeshShader = None):
+    def __init__(self, parent_element, program: shaders.MeshShader = None):
         self.vaoID = GL.glGenVertexArrays(1)
         self.attributes = Attributes()
         self.vertex_count = 0
@@ -81,12 +62,8 @@ class RenderableObject:
         self.program: shaders.MeshShader = shaders.get_default_program() if program is None else program
         self.gl_program = self.program.program
 
-        self.transform = Transform()
-
         self.has_uvs = False
-
-        self.children = []
-        self.node_idx = -1
+        self.parent = parent_element
 
     def set_material(self, material: 'Material') -> None:
         self.material = material
@@ -120,7 +97,8 @@ class RenderableObject:
     def render(self):
         # https://github.com/TheThinMatrix/OpenGL-Tutorial-3/blob/master/src/renderEngine/Renderer.java #render
         GL.glUseProgram(self.gl_program)
-        self.program.update_uniform('modelViewMatrix', [1, GL.GL_FALSE, self.transform.to_model_view_matrix().transpose()])
+        self.program.update_uniform('modelViewMatrix',
+                                    [1, GL.GL_FALSE, self.parent.transform.to_model_view_matrix().transpose()])
         self.program.update_uniform('isTextured', [self.material.get_mat_texture().exists])
         self.bind_vao()
         for mat_tex in self.material.get_all_mat_textures():

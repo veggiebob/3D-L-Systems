@@ -15,8 +15,8 @@ from tremor.graphics.shaders import *
 from tremor.graphics.uniforms import *
 import sys
 import glm
-from tremor.core.game_object import *
-from tremor.graphics import screen_utils, renderer
+from tremor.graphics import screen_utils, scene_renderer
+from tremor.math import matrix
 
 vbo, nvbo, cvbo = None, None, None
 window = None
@@ -26,8 +26,6 @@ MAX_FPS: int = None
 fps_clock = game_clock.FPSController()
 
 inputs = {'mouse': [0, 0]}  # this is probably bad
-
-test_objs: List[RenderableObject] = None
 
 current_scene: Scene = None
 
@@ -62,7 +60,7 @@ def create_uniforms():
 
 def render():
     #current_scene.active_camera.transform.translate_local([0, 0.01, 0])
-    renderer.render(current_scene)
+    scene_renderer.render(current_scene)
     fps_clock.capFPS(screen_utils.MAX_FPS)
 
 
@@ -89,7 +87,7 @@ def keyboard_callback(window, key, scancode, action, mods):
     if mods == 1:
         tform = current_scene.active_camera.transform
     else:
-        tform = test_objs[0].transform
+        tform = current_scene.active_camera.transform
     if key == glfw.KEY_UP:
         tform.translate_local([magnitude, 0, 0])
     if key == glfw.KEY_DOWN:
@@ -124,6 +122,7 @@ def keyboard_callback(window, key, scancode, action, mods):
 
 def mouse_callback(window, x, y):
     inputs['mouse'] = [x, y]
+    current_scene.active_camera.transform.set_rotation(matrix.quaternion_from_angles([0, np.pi * np.mod(x/20.0 + 90, 360)/180, 0]))
 
 
 def mouseclick_callback(window, button, action, modifiers):
@@ -136,7 +135,6 @@ def error_callback(error, description):
 
 def main():
     global window, vbo, nvbo, cvbo
-    global test_objs
     global current_scene
 
     glfw.set_error_callback(error_callback)
@@ -171,6 +169,7 @@ def main():
     window = create_window(size=(screen_utils.WIDTH, screen_utils.HEIGHT), pos="centered", title="Quake-like",
                            monitor=screen, hints=hints,
                            screen_size=glfw.get_monitor_physical_size(glfw.get_primary_monitor()))
+    glfw.set_input_mode(window, glfw.CURSOR, glfw.CURSOR_DISABLED)
     glutil.log_capabilities()
     glEnable(GL_CULL_FACE)
     glCullFace(GL_BACK)
@@ -192,10 +191,9 @@ def main():
         }
     })
 
-    test_objs = gltf_loader.load_gltf('data/gltf/trisout.glb', program=get_default_program())
+    objects: List[SceneElement] = gltf_loader.load_gltf('data/gltf/test_gltf/CesiumMilkTruck.glb', program=get_default_program())
     current_scene = Scene("debug")
-    test_objs[0].transform.set_scale([0.1, 0.1, 0.1])
-    current_scene.elements.append(test_objs[0])
+    current_scene.elements = objects
     cam = SceneElement("camera")
     cam.transform.set_translation([3, 3, 3])
     cam.transform.set_rotation(matrix.quaternion_from_angles([0, np.pi/2, 0]))
