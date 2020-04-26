@@ -11,6 +11,7 @@ class SceneElement:
         self.name = name
         self._node_idx = -1
         self.children: List[SceneElement] = []
+        self.parent: SceneElement = None
 
     def __str__(self):
         return self.name + " (SceneElement-" + str(self.__hash__()) + ")"

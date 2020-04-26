@@ -134,13 +134,8 @@ def load_gltf(filepath, program: shaders.MeshShader = None) -> List[SceneElement
                 elem_renderer.bind_float_attribute_vbo(positions.flatten(), 'position', True)
                 elem_renderer.bind_float_attribute_vbo(normals.flatten(), 'normal', True)
 
-                elem_renderer.initial_translation = n.translation
-                elem_renderer.scale = np.array([1, 1, 1], dtype='float32') * n.scale
-
-                elem_renderer.using_quaternions = True
-                elem_renderer.initial_quaternion = n.rotation
-
                 elem.renderer = elem_renderer
+        elem.transform.scale = np.array([1, 1, 1], dtype='float32') * n.scale
         elem._node_idx = node_idx
         if n.children is not None:
             for child_idx in n.children:
@@ -150,6 +145,7 @@ def load_gltf(filepath, program: shaders.MeshShader = None) -> List[SceneElement
                     for r in scene_elements:
                         if r._node_idx == child_idx:
                             elem.children.append(r)
+                            r.parent = elem
                             break
                 else:
                     if child_idx in node_stubs.keys():
@@ -159,6 +155,7 @@ def load_gltf(filepath, program: shaders.MeshShader = None) -> List[SceneElement
             for r in scene_elements:
                 if r._node_idx == node_stubs[node_idx]:
                     r.children.append(elem)
+                    elem.parent = r
                     break
             node_stubs.pop(node_idx)
         scene_elements.append(elem)
