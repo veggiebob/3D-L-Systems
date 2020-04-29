@@ -13,3 +13,5 @@ trimesh 3.6.33
 scipy 1.4.1
 
 glfw 1.11.0
+
+imgui[glfw] 1.1.0

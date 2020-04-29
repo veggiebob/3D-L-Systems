@@ -1,8 +1,12 @@
+from collections import Callable
+
 from OpenGL.GL import *
+
+from tremor.core import console
 
 
 def log_capabilities():
-    print("OPENGL VERSION: ", glGetIntegerv(GL_MAJOR_VERSION), ".", glGetIntegerv(GL_MINOR_VERSION), sep="")
+    console.conprint("OPENGL VERSION: " + str(glGetIntegerv(GL_MAJOR_VERSION)) + "." + str(glGetIntegerv(GL_MINOR_VERSION)))
     caps = {
         GL_MAX_TEXTURE_SIZE,
         GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS,
@@ -15,4 +19,4 @@ def log_capabilities():
         GL_MAX_CULL_DISTANCES
     }
     for cap in caps:
-        print(cap.name + " = " + str(glGetIntegerv(cap)))
+        console.conprint(cap.name + " = " + str(glGetIntegerv(cap)))

@@ -9,7 +9,7 @@ import glfw
 
 from tremor.loader import gltf_loader, texture_loading, scene_loader
 from tremor.util import glutil, configuration
-from tremor.core import game_clock
+from tremor.core import game_clock, console, key_input
 
 from tremor.graphics.shaders import *
 from tremor.graphics.uniforms import *
@@ -17,6 +17,10 @@ import sys
 import glm
 from tremor.graphics import screen_utils, scene_renderer
 from tremor.math import matrix
+
+import imgui
+
+from imgui.integrations.glfw import GlfwRenderer
 
 vbo, nvbo, cvbo = None, None, None
 window = None
@@ -28,6 +32,8 @@ fps_clock = game_clock.FPSController()
 inputs = {'mouse': [0, 0]}  # this is probably bad
 
 current_scene: Scene = None
+
+imgui_renderer: GlfwRenderer = None
 
 
 def create_window(size, pos, title, hints, screen_size, monitor=None, share=None, ):
@@ -59,7 +65,7 @@ def create_uniforms():
 
 
 def render():
-    #current_scene.active_camera.transform.translate_local([0, 0.01, 0])
+    # current_scene.active_camera.transform.translate_local([0, 0.01, 0])
     scene_renderer.render(current_scene)
     fps_clock.capFPS(screen_utils.MAX_FPS)
 
@@ -69,14 +75,30 @@ def reshape(w, h):
     screen_utils.WIDTH = w
     screen_utils.HEIGHT = h
 
+
 wireframe = False
+
 
 def keyboard_callback(window, key, scancode, action, mods):
     global wireframe
+    imgui_renderer.keyboard_callback(window, key, scancode, action, mods)
     if key == glfw.KEY_ESCAPE:
         glfw.set_window_should_close(window, glfw.TRUE)
         return
+    if key in key_input.bind_map.keys():
+        con_cmd = key_input.bind_map[key]
+        if str.startswith(con_cmd, "+"):
+            if action == glfw.PRESS:
+                console.handle_input(con_cmd)
+            elif action == glfw.RELEASE:
+                console.handle_input(str.replace(con_cmd, "+", "-", 1))
+        elif action == glfw.PRESS:
+            console.handle_input(con_cmd)
     if action == glfw.RELEASE:
+        return
+    if console.SHOW_CONSOLE:
+        if key == glfw.KEY_ENTER:
+            console.ENTER_PRESSED = True
         return
     if key == glfw.KEY_F:
         if action == glfw.REPEAT:
@@ -116,13 +138,14 @@ def keyboard_callback(window, key, scancode, action, mods):
         tform.set_translation([0, 0, 0])
         tform.set_rotation([0, 0, 0, 1])
 
-
     inputs['key'] = key
 
 
 def mouse_callback(window, x, y):
+    imgui_renderer.mouse_callback(window, x, y)
     inputs['mouse'] = [x, y]
-    current_scene.active_camera.transform.set_rotation(matrix.quaternion_from_angles([0, np.pi * np.mod(x/20.0 + 90, 360)/180, 0]))
+    current_scene.active_camera.transform.set_rotation(
+        matrix.quaternion_from_angles([0, np.pi * np.mod(x / 20.0 + 90, 360) / 180, 0]))
 
 
 def mouseclick_callback(window, button, action, modifiers):
@@ -133,12 +156,26 @@ def error_callback(error, description):
     print(str(error) + " : " + description.decode(), file=sys.stderr)
 
 
+def scroll_callback(window, x, y):
+    imgui_renderer.scroll_callback(window, x, y)
+
+
+def resize_callback(window, w, h):
+    imgui_renderer.resize_callback(window, w, h)
+
+
+def char_callback(window, char):
+    imgui_renderer.char_callback(window, char)
+
+
 def main():
     global window, vbo, nvbo, cvbo
     global current_scene
+    global imgui_renderer
 
     glfw.set_error_callback(error_callback)
 
+    imgui.create_context()
     if not glfw.init():
         print("GLFW Initialization fail!")
         return
@@ -166,10 +203,13 @@ def main():
         glfw.OPENGL_PROFILE: glfw.OPENGL_CORE_PROFILE
     }
 
+    console.load_startup("startup.rc")
+
     window = create_window(size=(screen_utils.WIDTH, screen_utils.HEIGHT), pos="centered", title="Quake-like",
                            monitor=screen, hints=hints,
                            screen_size=glfw.get_monitor_physical_size(glfw.get_primary_monitor()))
-    glfw.set_input_mode(window, glfw.CURSOR, glfw.CURSOR_DISABLED)
+    # glfw.set_input_mode(window, glfw.CURSOR, glfw.CURSOR_DISABLED)
+    imgui_renderer = GlfwRenderer(window, attach_callbacks=False)
     glutil.log_capabilities()
     glEnable(GL_CULL_FACE)
     glCullFace(GL_BACK)
@@ -194,7 +234,7 @@ def main():
     current_scene = scene_loader.load_scene(scene_file)
     cam = SceneElement("camera")
     cam.transform.set_translation([3, 3, 3])
-    cam.transform.set_rotation(matrix.quaternion_from_angles([0, np.pi/2, 0]))
+    cam.transform.set_rotation(matrix.quaternion_from_angles([0, np.pi / 2, 0]))
     current_scene.active_camera = cam
 
     fps_clock.start()
@@ -202,12 +242,42 @@ def main():
     glfw.set_mouse_button_callback(window, mouseclick_callback)
     glfw.set_cursor_pos_callback(window, mouse_callback)
     glfw.set_key_callback(window, keyboard_callback)
+    glfw.set_scroll_callback(window, scroll_callback)
+    glfw.set_window_size_callback(window, resize_callback)
+    glfw.set_char_callback(window, char_callback)
+    console.conprint("qgqg")
 
     while not glfw.window_should_close(window):
         # todo call an update method as well
-        render()
-        glfw.swap_buffers(window)
         glfw.poll_events()
+        imgui_renderer.process_inputs()
+        render()
+        imgui.new_frame()
+        if console.SHOW_CONSOLE:
+            imgui.set_next_window_bg_alpha(0.35)
+            imgui.set_next_window_position(0, 0)
+            imgui.set_next_window_size(screen_utils.WIDTH, 110)
+            imgui.begin("ConsoleWindow", False,
+                        imgui.WINDOW_NO_MOVE | imgui.WINDOW_NO_RESIZE | imgui.WINDOW_NO_COLLAPSE | imgui.WINDOW_NO_TITLE_BAR | imgui.WINDOW_NO_SAVED_SETTINGS)
+            imgui.begin_child("ConsoleOutput", 0, -25, False)
+            for text, color in console.text_buffer:
+                if color is None:
+                    color = (0.25, 0.75, 1)
+                imgui.text_colored(text, color[0], color[1], color[2], 0.8)
+            imgui.text("")
+            imgui.set_scroll_y(imgui.get_scroll_max_y())
+            imgui.end_child()
+            enter, text = imgui.input_text("Input", "", 256, imgui.INPUT_TEXT_ENTER_RETURNS_TRUE)
+            if enter:
+                if str.startswith(text, "/"):
+                    text = str.replace(text, "/", "", 1)
+                    console.handle_input(text)
+
+            imgui.end()
+        imgui.render()
+        imgui_renderer.render(imgui.get_draw_data())
+        imgui.end_frame()
+        glfw.swap_buffers(window)
 
     glfw.terminate()
 
