@@ -207,7 +207,8 @@ def main():
         glfw.CONTEXT_VERSION_MAJOR: 4,
         glfw.CONTEXT_VERSION_MINOR: 5,
         glfw.OPENGL_DEBUG_CONTEXT: glfw.TRUE,
-        glfw.OPENGL_PROFILE: glfw.OPENGL_CORE_PROFILE
+        glfw.OPENGL_PROFILE: glfw.OPENGL_CORE_PROFILE,
+        glfw.SAMPLES: 4
     }
 
     console.load_startup("startup.rc")
@@ -224,6 +225,7 @@ def main():
     glDepthMask(GL_TRUE)
     glDepthFunc(GL_LEQUAL)
     glDepthRange(0.0, 1.0)
+    glEnable(GL_MULTISAMPLE)
     create_all_programs()
 
     # create the uniforms
