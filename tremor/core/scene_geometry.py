@@ -31,7 +31,7 @@ class Plane:
         # n1 dot n2 cross n3 == 0, single point of intersection
         # n1 dot n2 cross n3 != 0, no points or infinite points of intersection
         a = p2.normal.dot(np.cross(self.normal, p1.normal))
-        if a == 0:
+        if abs(a) < 0.0000002:
             #print("no single point intersection")
             return None
         A = np.array([
@@ -57,10 +57,9 @@ class Brush:
 
     def point_in_brush(self, point):
         for p in self.planes:
-            if p.point_dist(point) > 0:
+            if p.point_dist(point) > 0.001:
                 return False
         return True
-        pass
 
     def get_vertices(self):
         all_points = []
@@ -79,9 +78,11 @@ class Brush:
                     if j > k:
                         continue
                     point = p1.intersect_point(p2, p3)
-                    if point is not None:
+                    if point is not None and self.point_in_brush(point):
                         #print(i,j,k)
                         p1_points.append(point)
+            if len(p1_points) < 3:
+                continue
             com = center_of_mass(p1_points)
             vals = []
             tangent_vec = p1_points[0] - com
@@ -122,6 +123,8 @@ class Brush:
                 continue
             if len(face) == 3:
                 tris = np.append(tris, face)
+                norm = self.planes[j].normal
+                normals = np.append(normals, [norm, norm, norm])
             for i in range(2, len(face)):
                 v0 = face[i - 1]
                 v1 = face[i]
