@@ -254,9 +254,9 @@ def main():
     planes.append(Plane(np.array([1, 1, 1]), np.array([0, 1, 0])))
     planes.append(Plane(np.array([1, 1, 1]), np.array([1, 0, 0])))
     planes.append(Plane(np.array([1, 1, 1]), np.array([0, 0, 1])))
-    # for i in range(20):
-    #     v = np.array(random_unit_sphere_vec())
-    #     planes.append(Plane(v, v))
+    for i in range(20):
+        v = np.array(random_unit_sphere_vec())
+        planes.append(Plane(v, v))
     b = Brush(planes)
     tris, normals = b.make_data()
     test_brush = Mesh(parent)

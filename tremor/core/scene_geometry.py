@@ -16,12 +16,8 @@ def center_of_mass(points: np.array) -> np.array:
     return np.array([x_accum, y_accum, z_accum]) / n
 
 
-def check_order(v0, v1, v2, p, order):
-    a = (v1 - v0)
-    b = (v2 - v0)
-    n = norm_vec3(np.cross(a, b)) if order else norm_vec3(np.cross(b, a))
-    val = n.dot(p.normal)
-    if val < 0:
+def check_ccw(v0, v1, v2, p):
+    if Plane.plane_from_points(v0, v1, v2).normal.dot(p.normal) < 0:
         # bad normal!
         print("bad normal detected!")
 
@@ -30,6 +26,11 @@ class Plane:
     def __init__(self, point: np.ndarray, normal: np.ndarray):
         self.point = point
         self.normal = norm_vec3(normal)
+
+    @staticmethod
+    def plane_from_points(v0: np.ndarray, v1: np.ndarray, v2: np.ndarray) -> "Plane":
+        n = norm_vec3(np.cross((v1 - v0), (v2 - v0)))
+        return Plane(v0, n)
 
     def point_dist(self, point: np.ndarray):
         return self.normal.dot(point - self.point)
@@ -127,7 +128,7 @@ class Brush:
             for i in range(2, len(face)):
                 v0 = face[i - 1]
                 v1 = face[i]
-                check_order(fan_point, v0, v1, self.planes[j], True)
+                check_ccw(fan_point, v0, v1, self.planes[j])
                 tris = np.append(tris, [fan_point, v0, v1])
                 norm = self.planes[j].normal
                 normals = np.append(normals, [norm, norm, norm])
