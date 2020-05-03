@@ -2,6 +2,8 @@ import OpenGL
 
 from tremor.core.scene import Scene
 from tremor.core.scene_element import SceneElement
+from tremor.core.scene_geometry import Plane, Brush
+from tremor.graphics.element_renderer import Mesh, ElementRenderer
 
 OpenGL.USE_ACCELERATE = False
 
@@ -230,12 +232,31 @@ def main():
             'clamp_mode': GL_REPEAT
         }
     })
-    scene_file = open("data/scenes/debug.tsf", "r", encoding="utf-8")
+
+    scene_file = open("data/scenes/empty.tsf", "r", encoding="utf-8")
     current_scene = scene_loader.load_scene(scene_file)
     cam = SceneElement("camera")
+
     cam.transform.set_translation([3, 3, 3])
     cam.transform.set_rotation(matrix.quaternion_from_angles([0, np.pi / 2, 0]))
     current_scene.active_camera = cam
+
+    parent = SceneElement("yeet")
+    p1 = Plane(np.array([0, 0, 0]), np.array([0, -1, 0]))
+    p2 = Plane(np.array([0, 0, 0]), np.array([-1, 0, 0]))
+    p3 = Plane(np.array([0, 0, 0]), np.array([0, 0, -1]))
+    p4 = Plane(np.array([1, 1, 1]), np.array([0, 1, 0]))
+    p5 = Plane(np.array([1, 1, 1]), np.array([1, 0, 0]))
+    p6 = Plane(np.array([1, 1, 1]), np.array([0, 1, 1]))
+    b = Brush([p1, p2, p3, p4, p5, p6])
+    tris, normals = b.make_data()
+    test_brush = Mesh(parent)
+    test_brush.bind_float_attribute_vbo(np.array(tris, dtype='float32'), "position", True, 3)
+    test_brush.bind_float_attribute_vbo(np.array(normals, dtype='float32'), "normal", True, 3)
+    renderer = ElementRenderer()
+    renderer.meshes.append(test_brush)
+    parent.renderer = renderer
+    current_scene.elements.append(parent)
 
     fps_clock.start()
 

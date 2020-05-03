@@ -20,7 +20,7 @@ const float light_strength = 1.0;
 
 void main()
 {
-    vec3 col = fcolor * ambient;
+    vec3 col = vec3(1, 1, 1) * ambient;
     if (isTextured) {
         vec4 t = texture2D(texColor, texCoord);
         if (t.a < 0.1) discard;

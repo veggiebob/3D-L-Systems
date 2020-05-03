@@ -91,7 +91,7 @@ class Mesh:
     def bind_float_attribute_vbo(self, data, attribute_name: str, static: bool, size: int = 3):  # must be 4 byte floats
         self.bind_vao()
         if attribute_name == 'position':  # aaaaaaaaaaaaaaaaaaaaaa
-            self.vertex_count = int(len(data) / 3)
+            self.vertex_count = int(len(data) // 3)
         vbo_id = GL.glGenBuffers(1)
         location = GL.glGetAttribLocation(self.gl_program, attribute_name)
         # print('location is %s for %s'%(location, attribute_name))
