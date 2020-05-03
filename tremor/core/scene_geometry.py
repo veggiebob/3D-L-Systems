@@ -1,6 +1,4 @@
 import numpy as np
-import math
-
 from tremor.math.vertex_math import norm_vec3
 
 
@@ -18,6 +16,16 @@ def center_of_mass(points: np.array) -> np.array:
     return np.array([x_accum, y_accum, z_accum]) / n
 
 
+def check_order(v0, v1, v2, p, order):
+    a = (v1 - v0)
+    b = (v2 - v0)
+    n = norm_vec3(np.cross(a, b)) if order else norm_vec3(np.cross(b, a))
+    val = n.dot(p.normal)
+    if val < 0:
+        # bad normal!
+        print("bad normal detected!")
+
+
 class Plane:
     def __init__(self, point: np.ndarray, normal: np.ndarray):
         self.point = point
@@ -26,13 +34,12 @@ class Plane:
     def point_dist(self, point: np.ndarray):
         return self.normal.dot(point - self.point)
 
-
     def intersect_point(self, p1: "Plane", p2: "Plane"):
         # n1 dot n2 cross n3 == 0, single point of intersection
         # n1 dot n2 cross n3 != 0, no points or infinite points of intersection
         a = p2.normal.dot(np.cross(self.normal, p1.normal))
         if abs(a) < 0.0000002:
-            #print("no single point intersection")
+            # print("no single point intersection")
             return None
         A = np.array([
             self.normal,
@@ -46,8 +53,6 @@ class Plane:
         ])
         x = np.linalg.solve(A, B)
         return x
-
-
 
 
 class Brush:
@@ -70,7 +75,7 @@ class Brush:
             j = 0
             for p2 in self.planes:
                 j += 1
-                #if i > j:
+                # if i > j:
                 #    continue
                 k = 0
                 for p3 in self.planes:
@@ -79,19 +84,19 @@ class Brush:
                         continue
                     point = p1.intersect_point(p2, p3)
                     if point is not None and self.point_in_brush(point):
-                        #print(i,j,k)
+                        # print(i,j,k)
                         p1_points.append(point)
             if len(p1_points) < 3:
                 continue
             com = center_of_mass(p1_points)
             vals = []
-            tangent_vec = p1_points[0] - com
+            tangent_vec = norm_vec3(p1_points[0] - com)
             quad_1 = []
             quad_2 = []
             quad_3 = []
             quad_4 = []
             for i in range(0, len(p1_points)):
-                point = p1_points[i] - com
+                point = norm_vec3(p1_points[i] - com)
                 values = (p1.point_dist(np.cross(tangent_vec, point) + com), tangent_vec.dot(point))
                 if values[0] >= 0:
                     if values[1] >= 0:
@@ -119,28 +124,11 @@ class Brush:
         for j in range(len(vertices)):
             face = vertices[j]
             fan_point = face[0]
-            if len(face) == 2:
-                continue
-            if len(face) == 3:
-                tris = np.append(tris, face)
-                norm = self.planes[j].normal
-                normals = np.append(normals, [norm, norm, norm])
             for i in range(2, len(face)):
                 v0 = face[i - 1]
                 v1 = face[i]
+                check_order(fan_point, v0, v1, self.planes[j], True)
                 tris = np.append(tris, [fan_point, v0, v1])
                 norm = self.planes[j].normal
                 normals = np.append(normals, [norm, norm, norm])
         return tris, normals
-
-
-if __name__ == "__main__":
-    p1 = Plane(np.array([0, 0, 0]), np.array([0, -1, 0]))
-    p2 = Plane(np.array([0, 0, 0]), np.array([-1, 0, 0]))
-    p3 = Plane(np.array([0, 0, 0]), np.array([0, 0, -1]))
-    p4 = Plane(np.array([1, 1, 1]), np.array([0, 1, 0]))
-    p5 = Plane(np.array([1, 1, 1]), np.array([1, 0, 0]))
-    p6 = Plane(np.array([1, 1, 1]), np.array([0, 0, 1]))
-    b = Brush([p1, p2, p3, p4, p5, p6])
-    tris, normals = b.make_data()
-    print("H")

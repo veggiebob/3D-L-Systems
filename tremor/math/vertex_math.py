@@ -117,7 +117,7 @@ def dot_array(a, b):
     return dot(a[0], a[1], a[2], b[0], b[1], b[2])
 
 def norm_vec3(vec):
-    mag = max(numpy.sqrt(vec[0] * vec[0] + vec[1] * vec[1] + vec[2] * vec[2]), 0.01)
+    mag = max(numpy.sqrt(vec[0] * vec[0] + vec[1] * vec[1] + vec[2] * vec[2]), 0.0001)
     return numpy.array([vec[0] / mag, vec[1] / mag, vec[2] / mag], dtype='float32')
 
 def norm_vec(vec):

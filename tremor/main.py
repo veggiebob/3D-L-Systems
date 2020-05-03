@@ -1,9 +1,12 @@
+from random import random
+
 import OpenGL
 
 from tremor.core.scene import Scene
 from tremor.core.scene_element import SceneElement
 from tremor.core.scene_geometry import Plane, Brush
 from tremor.graphics.element_renderer import Mesh, ElementRenderer
+from tremor.math.vertex_math import norm_vec3
 
 OpenGL.USE_ACCELERATE = False
 
@@ -169,6 +172,8 @@ def resize_callback(window, w, h):
 def char_callback(window, char):
     imgui_renderer.char_callback(window, char)
 
+def random_unit_sphere_vec () -> np.ndarray:
+    return norm_vec3([random()*2-1, random()*2-1, random()*2-1])
 
 def main():
     global window, vbo, nvbo, cvbo
@@ -242,13 +247,17 @@ def main():
     current_scene.active_camera = cam
 
     parent = SceneElement("yeet")
-    p1 = Plane(np.array([0, 0, 0]), np.array([0, -1, 0]))
-    p2 = Plane(np.array([0, 0, 0]), np.array([-1, 0, 0]))
-    p3 = Plane(np.array([0, 0, 0]), np.array([0, 0, -1]))
-    p4 = Plane(np.array([1, 1, 1]), np.array([0, 1, 0]))
-    p5 = Plane(np.array([1, 1, 1]), np.array([1, 0, 0]))
-    p6 = Plane(np.array([1, 1, 1]), np.array([0, 1, 1]))
-    b = Brush([p1, p2, p3, p4, p5, p6])
+    planes = []
+    planes.append(Plane(np.array([-1, -1, -1]), np.array([0, -1, 0])))
+    planes.append(Plane(np.array([-1, -1, -1]), np.array([-1, 0, 0])))
+    planes.append(Plane(np.array([-1, -1, -1]), np.array([0, 0, -1])))
+    planes.append(Plane(np.array([1, 1, 1]), np.array([0, 1, 0])))
+    planes.append(Plane(np.array([1, 1, 1]), np.array([1, 0, 0])))
+    planes.append(Plane(np.array([1, 1, 1]), np.array([0, 0, 1])))
+    # for i in range(20):
+    #     v = np.array(random_unit_sphere_vec())
+    #     planes.append(Plane(v, v))
+    b = Brush(planes)
     tris, normals = b.make_data()
     test_brush = Mesh(parent)
     test_brush.bind_float_attribute_vbo(np.array(tris, dtype='float32'), "position", True, 3)
