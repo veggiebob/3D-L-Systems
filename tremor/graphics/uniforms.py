@@ -15,9 +15,37 @@ u_types: Dict[str, Callable] = {
     'bool': glUniform1i,
     'ivec2': glUniform2i,
     'ivec3': glUniform3i,
-    'mat3': glUniformMatrix3fv,
-    'mat4': glUniformMatrix4fv
+    'mat3': glUniformMatrix3fv, # values as single parameter
+    'mat4': glUniformMatrix4fv # values as single parameter
 }
+u_type_default_value_args:Dict[str, list] = { # outer list matches parameter mapping for gl uniform functions. see u_types
+    'float': [0.0],
+    'vec2': [0., 0.],
+    'vec3': [0., 0., 0.],
+    'vec4': [0., 0., 0., 0.],
+    'int': [0],
+    'bool': [False],
+    'ivec2': [0, 0],
+    'ivec3': [0, 0, 0],
+    'mat3': [[[0,0,0],[0,0,0],[0,0,0]]],
+    'mat4': [[[0,0,0],[0,0,0],[0,0,0],[0,0,0]]]
+}
+u_type_default_args:Dict[str, list] = { # anything not present in this list can be assumed []
+    'mat3': [1, GL_FALSE],
+    'mat4': [1, GL_FALSE]
+}
+# u_type_convert_func:Dict[str, Callable] = { # given a string, with values separated by commas, serialize that string value using this dict
+#     'float': float,
+#     'vec2': float,
+#     'vec3': float,
+#     'vec4': float,
+#     'int': int,
+#     'bool': bool,
+#     'ivec2': int,
+#     'ivec3': int,
+#     'mat3': float,
+#     'mat4': float
+# }
 
 gl_compressed_format: Dict[int, int] = {  # todo: reconsider
     GL_R: GL_COMPRESSED_RED,
@@ -61,75 +89,3 @@ class Uniform:
             print('no value set for uniform %s' % self.name)
             return
         self.get_uniform_func()(*self.get_args())
-
-
-
-
-# a texture is technically a uniform, of type "sampler2D"
-class Texture:
-    index = 0
-
-    def __init__(self, data: np.ndarray, name: str, width: int = 1, height: int = 1, min_filter=GL_LINEAR, mag_filter=GL_LINEAR,
-                 clamp_mode=GL_CLAMP_TO_EDGE, img_format=GL_RGB):
-        self.data = data
-        self.width = width if width > 0 else len(self.data[0])
-        self.height = height if height > 0 else len(self.data)
-        self.name = name
-        self.index = Texture.index
-        self.min_filter = min_filter
-        self.mag_filter = mag_filter
-        self.clamp_mode = clamp_mode
-        self.format = img_format
-        self.texture = None
-        self.init()
-        Texture.index += 1  # increment for other textures
-
-    def set_texture(self):
-        # https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glTexImage2D.xhtml
-        glTexImage2D(
-            GL_TEXTURE_2D,  # target
-            0,  # level
-            gl_compressed_format[self.format],  # internalformat
-            self.width,  # width
-            self.height,  # height
-            0,  # border
-            self.format,  # format
-            GL_UNSIGNED_BYTE,  # type
-            self.data,  # pixels
-        )
-        
-        glGenerateMipmap(GL_TEXTURE_2D)
-
-        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, self.mag_filter)
-        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, self.min_filter)
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, self.clamp_mode)  # u
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, self.clamp_mode)  # v
-
-    def bind(self):
-        glActiveTexture(GL_TEXTURE0 + self.index)
-        glBindTexture(GL_TEXTURE_2D, self.texture)
-
-    def init(self):
-        self.texture = glGenTextures(1)
-        self.bind()
-        # glPixelStorei(GL_UNPACK_ALIGNMENT, 1)
-        self.set_texture()
-
-    def update_data(self, data: np.ndarray, width: int = 0, height: int = 0):
-        if width > 0:
-            self.width = width
-        if height > 0:
-            self.height = height
-        self.data = data
-        self.bind()
-        self.set_texture()
-
-    def transfer(self, other_texture: 'Texture'):
-        self.set_format(other_texture.format)
-        self.min_filter = other_texture.min_filter
-        self.mag_filter = other_texture.mag_filter
-        self.clamp_mode = other_texture.clamp_mode
-        self.update_data(other_texture.data, other_texture.width, other_texture.height)
-
-    def set_format(self, img_format):
-        self.format = img_format

@@ -1,12 +1,13 @@
 from random import random
+import time
 
 import OpenGL
 
 from tremor.core.scene import Scene
-from tremor.core.scene_element import SceneElement
 from tremor.core.scene_geometry import Plane, Brush
 from tremor.graphics.element_renderer import Mesh, ElementRenderer
 from tremor.math.vertex_math import norm_vec3
+from tremor.core.entity import Entity
 
 OpenGL.USE_ACCELERATE = False
 
@@ -66,11 +67,13 @@ def create_uniforms():
     add_uniform_to_all('time', 'float')
 
     # other
-    add_uniform_to_all('isTextured', 'bool')
+    add_uniform_to_all('useTexColor', 'bool')
+
+    add_uniform_to_all('light_pos', 'vec3')
+
 
 
 def render():
-    # current_scene.active_camera.transform.translate_local([0, 0.01, 0])
     scene_renderer.render(current_scene)
     fps_clock.capFPS(screen_utils.MAX_FPS)
 
@@ -80,9 +83,7 @@ def reshape(w, h):
     screen_utils.WIDTH = w
     screen_utils.HEIGHT = h
 
-
 wireframe = False
-
 
 def keyboard_callback(window, key, scancode, action, mods):
     global wireframe
@@ -142,19 +143,18 @@ def keyboard_callback(window, key, scancode, action, mods):
     if key == glfw.KEY_R:
         tform.set_translation([0, 0, 0])
         tform.set_rotation([0, 0, 0, 1])
-
     inputs['key'] = key
 
 
 def mouse_callback(window, x, y):
     imgui_renderer.mouse_callback(window, x, y)
     inputs['mouse'] = [x, y]
-    current_scene.active_camera.transform.set_rotation(
-        matrix.quaternion_from_angles([0, np.pi * np.mod(x / 20.0 + 90, 360) / 180, 0]))
+    current_scene.active_camera.transform.set_rotation(matrix.quaternion_from_angles([0, np.pi * np.mod(x/20.0 + 90, 360)/180, 0]))
 
 
 def mouseclick_callback(window, button, action, modifiers):
-    print(fps_clock.average_fps)
+    # print(fps_clock.average_fps)
+    pass
 
 
 def error_callback(error, description):
@@ -188,6 +188,7 @@ def main():
         return
 
     graphics_settings = configuration.get_graphics_settings()
+    loader_settings = configuration.get_loader_settings()
 
     if graphics_settings is None:
         print("bla")
@@ -226,6 +227,8 @@ def main():
     glDepthFunc(GL_LEQUAL)
     glDepthRange(0.0, 1.0)
     glEnable(GL_MULTISAMPLE)
+    glEnable(GL_BLEND)
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
     create_all_programs()
 
     # create the uniforms
@@ -233,41 +236,18 @@ def main():
     # initialize all the uniforms for all the prpograms
     init_all_uniforms()
 
-    texture_loading.load_all_textures('data/textures', {
-        # https://open.gl/textures
-        'noise_512': {
-            'clamp_mode': GL_REPEAT
-        }
-    })
-
-    scene_file = open("data/scenes/empty.tsf", "r", encoding="utf-8")
+    # texture_loading.load_all_textures('data/textures', {
+    #     # https://open.gl/textures
+    #     'noise_512': {
+    #         'clamp_mode': GL_REPEAT
+    #     }
+    # })
+    scene_file = open("data/scenes/debug.tsf", "r", encoding="utf-8")
     current_scene = scene_loader.load_scene(scene_file)
-    cam = SceneElement("camera")
-
+    cam = Entity("camera")
     cam.transform.set_translation([3, 3, 3])
-    cam.transform.set_rotation(matrix.quaternion_from_angles([0, np.pi / 2, 0]))
+    cam.transform.set_rotation(matrix.quaternion_from_angles([0, np.pi/2, 0]))
     current_scene.active_camera = cam
-
-    parent = SceneElement("yeet")
-    planes = []
-    planes.append(Plane(np.array([-1, -1, -1]), np.array([0, -1, 0])))
-    planes.append(Plane(np.array([-1, -1, -1]), np.array([-1, 0, 0])))
-    planes.append(Plane(np.array([-1, -1, -1]), np.array([0, 0, -1])))
-    planes.append(Plane(np.array([1, 1, 1]), np.array([0, 1, 0])))
-    planes.append(Plane(np.array([1, 1, 1]), np.array([1, 0, 0])))
-    planes.append(Plane(np.array([1, 1, 1]), np.array([0, 0, 1])))
-    for i in range(20):
-        v = np.array(random_unit_sphere_vec())
-        planes.append(Plane(v, v))
-    b = Brush(planes)
-    tris, normals = b.make_data()
-    test_brush = Mesh(parent)
-    test_brush.bind_float_attribute_vbo(np.array(tris, dtype='float32'), "position", True, 3)
-    test_brush.bind_float_attribute_vbo(np.array(normals, dtype='float32'), "normal", True, 3)
-    renderer = ElementRenderer()
-    renderer.meshes.append(test_brush)
-    parent.renderer = renderer
-    current_scene.elements.append(parent)
 
     fps_clock.start()
 
@@ -277,7 +257,6 @@ def main():
     glfw.set_scroll_callback(window, scroll_callback)
     glfw.set_window_size_callback(window, resize_callback)
     glfw.set_char_callback(window, char_callback)
-    console.conprint("qgqg")
 
     while not glfw.window_should_close(window):
         # todo call an update method as well

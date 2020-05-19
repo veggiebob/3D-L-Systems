@@ -31,9 +31,14 @@ def render(scene: Scene):
 
     update_all_uniform('time', [framecount / screen_utils.MAX_FPS])  # seconds
 
+    light_pos = [np.sin(framecount * 0.01) * 5, np.cos(framecount * 0.01) * 5, np.cos(framecount * 0.001)]
+    update_all_uniform('light_pos', light_pos)
+
+
     for element in scene.elements:
         if element.is_renderable():
-            element.renderer.render()
-
+            if element.name == 'LIGHT':
+                element.transform.set_translation(light_pos)
+            element.mesh.render(element.transform)
     framecount += 1
 
