@@ -242,3 +242,113 @@ class MeshShader:
             else:
                 inp.set_value(mat.get_property(inp.name))
                 self.update_uniform(inp.name, inp.get_uniform_args())
+
+
+class BranchedProgram:
+    """
+    This class uses a FlaggedShader for a VERTEX and FRAGMENT shader
+    It compiles every program for every branched combination of the two together
+    """
+class FlaggedShader:
+    """
+    This is a class not containing DIFFERENT shaders, just different compilations of ONE shader.
+    This class relies on the use of `#define [var]` in a shader to introduce branching.
+    This branching is characterized at compile time in this class.
+
+    Also I anticipate using this class in place of shader objects (mostly fragment)
+    """
+    @staticmethod
+    def from_shader_source (frag_source:str, shader_type) -> 'FlaggedShader':
+        expr_define = regex.compile(r'#define\s+([_\w]+)\s*$')
+        expr_ver = regex.compile(r'#version\s+(\d+)\s*$')
+        lines = frag_source.split('\n')
+        flags = []
+        version = None
+        for l in lines:
+            v = expr_ver.match(l)
+            if v is not None:
+                version = v.groups()[0]
+                continue
+            m = expr_define.match(l)
+            if m is not None:
+                flags.append(m.groups()[0])
+                lines.remove(l)
+
+        root_src = '\n'.join(lines)
+        if version is None:
+            raise Exception('Could not determine version of shader.')
+        return FlaggedShader(flags, root_src, version, shader_type)
+
+    def __init__ (self, flags:List[str], root_source:str, version:str, shader_type):
+        self.flag_list = flags
+        self.shader_type = shader_type
+        self.version = version
+        self.root_src = root_source
+        self.compiled_shaders = []
+        self.flags = FlaggedStates(self.flag_list)
+        self.compile_shaders()
+
+    def flag (self, flag) -> int:
+        if not self.flags.has_flag(flag):
+            raise Exception(f"{flag} is not a valid flag for this shader.")
+        else:
+            return self.flags[flag]
+
+    def get_shader_from_state (self, state:int):
+        return self.compiled_shaders[state]
+
+    def get_shader_from_flags (self, *flags:List[str]):
+        return self.compiled_shaders[self.flags.combine_flags(*flags)]
+
+    def compose_shader_src (self, state:int) -> str:
+        flags = self.flags.decompose_state(state)
+        return f"#version {self.version}\n#define " + "\n#define ".join(flags) + f"\n{self.root_src}"
+
+    def compile_shaders (self):
+        self.compiled_shaders = []
+        for i in range(self.flags.num_states()):
+            src = self.compose_shader_src(i)
+            self.compiled_shaders.append(create_shader(self.shader_type, src))
+
+class FlaggedStates:
+    """
+    convention: a 'state' is a combination of flags, ex. 1001
+                a 'flag' represents a positive state at a bit position (int), for example RANDOM_FLAG = 0100 = 4
+    """
+    def __init__ (self, states:List[str]):
+        self._flags = states
+        self._num_states = 2 ** len(self._flags)
+        self._keyed_flags:Dict[str, int] = {}
+        index = -1
+        for s in self._flags:
+            index += 1
+            setattr(self, s, 2 ** index)
+            self._keyed_flags[s] = 2 ** index
+
+    def decompose_state (self, state:int) -> List[str]:
+        include = []
+        for i in range(len(self._flags)):
+            if state>>i&1:
+                include.append(self._flags[i])
+        return include
+
+    def combine_flags (self, *args:List[str]) -> int:
+        i = 0
+        for a in args:
+            i |= self[a]
+        return i
+
+    def has_flag (self, flag) -> bool:
+        return flag in self._flags
+
+    def num_states(self) -> int:
+        return self._num_states
+
+    def get_value (self, flag) -> int:
+        if flag in self._flags:
+            return self._keyed_flags[flag]
+        else:
+            raise Exception(f'{flag} is not a valid state in this set.')
+
+    def __getitem__ (self, item):
+        return self.get_value(item)
