@@ -230,6 +230,7 @@ def main():
     glEnable(GL_BLEND)
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
     create_all_programs()
+    create_branched_programs()
 
     # create the uniforms
     create_uniforms()

@@ -8,8 +8,18 @@ from tremor.graphics.uniforms import *
 import re as regex
 
 PROGRAMS: Dict[str, 'MeshProgram'] = {}
+BRANCHED_PROGRAMS: Dict[str, 'BranchedProgram'] = {}
 
 # object programs
+def get_branched_program (name:str) -> 'BranchedProgram':
+    if name in BRANCHED_PROGRAMS.keys():
+        return BRANCHED_PROGRAMS[name]
+    else:
+        raise Exception(f'{name} is not a valid branched program name.')
+
+def query_branched_program (name:str, mat:Material) -> 'MeshProgram':
+    return get_branched_program(name).fit_program_from_material(mat)
+
 def get_program(name: str) -> 'MeshProgram':
     try:
         return PROGRAMS[name]
@@ -67,6 +77,53 @@ def create_all_programs(filepath='data/shaders/programs.ini',
     # delete the shaders
     for shad in list(compiled_vertex_shaders.values()) + list(compiled_fragment_shaders.values()):
         glDeleteShader(shad)
+
+def create_branched_programs(filepath='data/shaders/programs.ini',
+                        vertex_location: str = 'data/shaders/vertex',
+                        fragment_location: str = 'data/shaders/fragment') -> None:
+    global BRANCHED_PROGRAMS
+    # read the config file
+    config_parser = configparser.ConfigParser()
+    config_parser.read(filepath, encoding="UTF-8")
+    out = {}
+    for program in config_parser.sections():
+        program_name = str(program)
+        out[program_name] = {}
+        for key in config_parser[program_name]:
+            value = config_parser[program_name][key]
+            out[program_name][key] = str(value)
+
+    # read files, load programs
+    unique_vertex_shaders = []
+    unique_fragment_shaders = []
+    for prog in out.values():
+        if prog['vertex'] not in unique_vertex_shaders:
+            unique_vertex_shaders.append(prog['vertex'])
+        if prog['fragment'] not in unique_fragment_shaders:
+            unique_fragment_shaders.append(prog['fragment'])
+
+    # compile the shaders uniquely, so that we don't compile one more than once
+    flagged_vertex_shaders = {}
+    flagged_fragment_shaders = {}
+    for vertex_shader in unique_vertex_shaders:
+        txt = open(f'{vertex_location}/{vertex_shader}.glsl', 'r').read()
+        flagged_vertex_shaders[vertex_shader] = FlaggedShader.from_shader_source(txt, GL_VERTEX_SHADER)
+
+    for fragment_shader in unique_fragment_shaders:
+        txt = open(f'{fragment_location}/{fragment_shader}.glsl', 'r').read()
+        flagged_fragment_shaders[fragment_shader] = FlaggedShader.from_shader_source(txt, GL_FRAGMENT_SHADER)
+
+    # then go back through programs and query the compiled shaders
+    # also query for shader inputs
+    # then create the program
+    for prog_name, prog in out.items():
+        vert = prog['vertex']
+        frag = prog['fragment']
+        BRANCHED_PROGRAMS[prog_name] = BranchedProgram(prog_name, flagged_vertex_shaders[vert], flagged_fragment_shaders[frag])
+
+    # delete the shaders
+    # for shad in list(compiled_vertex_shaders.values()) + list(compiled_fragment_shaders.values()):
+    #     glDeleteShader(shad)
 
 
 def create_shader(type, source) -> object:
@@ -314,10 +371,10 @@ class FlaggedShader:
     This class can spawn a ShaderPackage
     """
     @staticmethod
-    def from_shader_source (frag_source:str, shader_type) -> 'FlaggedShader':
+    def from_shader_source (shad_source:str, shader_type) -> 'FlaggedShader':
         expr_define = regex.compile(r'#define\s+([_\w]+)\s*$')
         expr_ver = regex.compile(r'#version\s+(\d+)\s*$')
-        lines = frag_source.split('\n')
+        lines = shad_source.split('\n')
         flags = []
         version = None
         for l in lines:
@@ -390,7 +447,6 @@ class FlaggedShader:
     def spawn_all_shader_packages (self) -> List[ShaderPackage]:
         return [self.spawn_shader_package(state) for state in range(self.flags.num_states())]
 
-
 class BranchedProgram:
     """
     This class uses a FlaggedShader for a VERTEX and FRAGMENT shader
@@ -414,10 +470,13 @@ class BranchedProgram:
         v_state = vertex_state << self.flagged_fragment.flags.num_flags()
         return self.programs[v_state|fragment_state] # should be the same as + if I did it right
 
-    def get_program_from_flags (self, vertex_flags:List[str], fragment_flags:List[str]):
-        v_state = self.flagged_vertex.flags.combine_flags(vertex_flags)
-        f_state = self.flagged_fragment.flags.combine_flags(fragment_flags)
+    def get_program_from_flags (self, vertex_flags:List[str], fragment_flags:List[str]) -> MeshProgram:
+        v_state = self.flagged_vertex.flags.combine_flags(*vertex_flags)
+        f_state = self.flagged_fragment.flags.combine_flags(*fragment_flags)
         return self.get_program(v_state, f_state)
+
+    def fit_program_from_material (self, mat:Material) -> MeshProgram:
+        return self.get_program_from_flags(mat.get_flags(), mat.get_flags())
 
 class FlaggedStates:
     """
