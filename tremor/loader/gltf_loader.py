@@ -217,6 +217,7 @@ def load_gltf(filepath) -> Mesh:
             mesh.material.set_texture(get_texture(metallic.index, get_default_sampler()), MaterialTexture.METALLIC)
 
     mesh.unbind_vao()
+    mesh.find_shader('default')
     return mesh
 
 def get_default_sampler() -> pygltflib.Sampler:

@@ -14,8 +14,8 @@ from tremor.math.transform import Transform
 class Mesh:
     def __init__(self):
         self.vaoID = GL.glGenVertexArrays(1)
-        self.program = shaders.get_default_program()
-        self.gl_program:MeshProgram = self.program.program
+        self.program:MeshProgram = shaders.get_default_program()
+        self.gl_program = self.program.program
         self.material:Material = self.program.create_material()
         self.tri_count = 0
 
@@ -29,6 +29,10 @@ class Mesh:
 
     def unbind_vao(self):
         GL.glBindVertexArray(0)
+
+    def find_shader (self, name:str):
+        self.program = shaders.query_branched_program(name, self.material)
+        self.gl_program = self.program.program
 
     def render(self, transform: Transform):
         self.bind_vao()
