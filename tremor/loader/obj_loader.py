@@ -5,14 +5,14 @@ import trimesh
 
 from tremor.graphics import shaders
 from tremor.graphics.element_renderer import ElementRenderer
-from tremor.graphics.shaders import MeshShader
+from tremor.graphics.shaders import MeshProgram
 from tremor.math.vertex_math import *
 
 
 def load_wav_obj (filename) -> trimesh.Trimesh: # except sometimes it's trimesh.Scene ?!!
     return trimesh.load(filename)
 
-def load_renderable_object_from_file(filename, program:MeshShader=None, scale=1.0, color=(0.5, 0.5, 0.5)) -> ElementRenderer:
+def load_renderable_object_from_file(filename, program:MeshProgram=None, scale=1.0, color=(0.5, 0.5, 0.5)) -> ElementRenderer:
     if program is None:
         program = shaders.get_default_program()
     # obtain relevant information from the loaded object

@@ -85,7 +85,7 @@ class ElementRenderer:
 
 class Mesh:
 
-    def __init__(self, parent_element, program: shaders.MeshShader = None):
+    def __init__(self, parent_element, program: shaders.MeshProgram = None):
         self.vaoID = GL.glGenVertexArrays(1)
         self.attributes = Attributes()
         self.vertex_count = 0
@@ -93,7 +93,7 @@ class Mesh:
 
         # display
         self.material = Material()
-        self.program: shaders.MeshShader = shaders.get_default_program() if program is None else program
+        self.program: shaders.MeshProgram = shaders.get_default_program() if program is None else program
         self.gl_program = self.program.program
 
         self.has_uvs = False

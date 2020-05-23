@@ -7,19 +7,19 @@ from tremor.graphics.surfaces import Material
 from tremor.graphics.uniforms import *
 import re as regex
 
-PROGRAMS: Dict[str, 'MeshShader'] = {}
+PROGRAMS: Dict[str, 'MeshProgram'] = {}
 
 # object programs
-def get_program(name: str) -> 'MeshShader':
+def get_program(name: str) -> 'MeshProgram':
     try:
         return PROGRAMS[name]
     except ValueError:
         raise Exception(f'{name} is not a valid program name.')
 
-def get_default_program() -> 'MeshShader':
+def get_default_program() -> 'MeshProgram':
     return get_program('default')
 
-def get_programs() -> List['MeshShader']:
+def get_programs() -> List['MeshProgram']:
     return list(PROGRAMS.values())
 
 def create_all_programs(filepath='data/shaders/programs.ini',
@@ -81,9 +81,12 @@ def create_shader(type, source) -> object:
 
 
 def create_program(name: str, compiled_vertex, compiled_fragment, inputs):
-    PROGRAMS[name] = MeshShader(name, compiled_vertex, compiled_fragment, inputs)
+    PROGRAMS[name] = MeshProgram(name, compiled_vertex, compiled_fragment, inputs)
 
 class ShaderInput:
+    """
+    MAGIC: see from_shader_source
+    """
     @staticmethod
     def from_shader_source (shader_source:str) -> List['ShaderInput']:
         """
@@ -93,9 +96,10 @@ class ShaderInput:
         what:
         given a shader source (a string, the literal program), scan through each line and find lines
         starting with 'uniform' (which is the only type of shader input),
-        and ending with a comment starting with '//mat:'
+        and ending with a comment starting with '//mat'
+        uniform <type> <name>;//mat[:dependency1,dependency2,...,dependencyn]
         For example:
-        uniform blah blah blah blah;//mat:default_value
+        uniform sampler2D texColor;//mat:t_texColor,textured
 
         how:
         this built-in comment syntax easily identifies the location of said material input by placing it DIRECTLY beside where it is.
@@ -118,17 +122,21 @@ class ShaderInput:
             if l[:len('uniform')] == 'uniform':
                 uniforms.append(l)
         inputs = []
-        find_input = regex.compile(r'uniform\s(\w+)\s(\w+);//mat') # 'uniform\s(\w+)\s(\w+);//mat\:(.*)'
+        find_input = regex.compile(r'uniform\s(\w+)\s(\w+);//mat(?::([\w\d,_]+))?')
         for u in uniforms:
             m = find_input.match(u)
             if m is not None:
                 inputs.append(m.groups())
 
-        # convert inputs into shader inputs : [type, name]
+        # convert inputs into shader inputs : [type, name, [dependencies]]
         shader_inputs = []
         for i in inputs:
             typ = i[0]
             name = i[1]
+            depend = []
+            if len(i)>2:
+                depend = i[2].split(',')
+
             is_texture = False
             if typ in u_type_default_args:
                 default_args = u_type_default_args[typ]
@@ -140,15 +148,17 @@ class ShaderInput:
                 default_value = [0]
                 if typ=='sampler2D':
                     is_texture=True
-            shader_inputs.append(ShaderInput(name, typ, default_args, default_value, is_texture))
+            shader_inputs.append(ShaderInput(name, typ, default_args, default_value, is_texture, depend))
         return shader_inputs
-    def __init__ (self, name:str, u_type='float', default_args=[], value:list=[0.0], is_texture=False):
+    def __init__ (self, name:str, u_type='float', default_args=[], value:list=[0.0], is_texture=False, dependencies:List[str]=[]):
         self.name = name
         self.u_type = u_type
-        self.default_args = default_args
-        self._value = value
+        self.default_args = default_args # arguments for a glUniform call that precede the actual value
+        self._value = value # the actual value of the uniform
         self.is_texture = is_texture # in the case where this is true, the name is the same as the MaterialTexture type flag.
             # @see: MaterialTexture.COLOR for example. If it isn't, it will throw a KeyError in MeshShader
+        self.dependencies = dependencies # dependencies are the #define directives that are required for this material property.
+            # they are to signal if they're in an #ifdef of some sort or whatnot, that way with different shader compilations they can be removed
         self.texture_type = None
         if self.is_texture:
             self.texture_type = self.name
@@ -162,10 +172,28 @@ class ShaderInput:
             return self._value[0]
         else:
             return self._value
+    value = property(get_value, set_value)
     def get_uniform_args (self) -> list:
         return self.default_args + self._value
 
-class MeshShader:
+    """
+    If one input is defined in a vertex shader, and one is defined in a fragment shader,
+    or the same name is defined in two shaders, then the ShaderInput representing that single uniform
+    is the two inputs together with the MAXIMUM of restraints of both
+    """
+    @staticmethod
+    def combine_inputs (a:'ShaderInput', b:'ShaderInput') -> 'ShaderInput':
+        # everything should be the same about them other than DEPENDENCIES
+        # in that case, take every non-duplicate dependency and put them in the same list
+        adep = a.dependencies
+        bdep = b.dependencies
+        dep = [a for a in adep]
+        for b in bdep:
+            if not b in dep:
+                dep.append(b)
+        return ShaderInput(a.name, a.u_type, a.default_args, a._value, a.is_texture, dep)
+
+class MeshProgram:
     def __init__(self, name: str, compiled_vertex, compiled_fragment, inputs:List[ShaderInput]=[]):
         self.name = name
         self.program = glCreateProgram()
@@ -227,7 +255,7 @@ class MeshShader:
         mat = Material(name)
         for prop in self.inputs:
             if prop.is_texture: continue # don't set default textures, because empty textures are created in Material.__init__
-            mat.set_property(prop.name, prop.get_value())
+            mat.set_property(prop.name, prop.value)
         return mat
 
     # set uniforms for this shader from the provided material that are relevant
@@ -243,19 +271,47 @@ class MeshShader:
                 inp.set_value(mat.get_property(inp.name))
                 self.update_uniform(inp.name, inp.get_uniform_args())
 
+class ShaderPackage:
+    """
+    This class can spawn a MeshProgram
+    """
+    def __init__ (self, compiled_shader, shader_inputs):
+        self.compiled_shader = compiled_shader
+        self.shader_inputs = shader_inputs
 
-class BranchedProgram:
-    """
-    This class uses a FlaggedShader for a VERTEX and FRAGMENT shader
-    It compiles every program for every branched combination of the two together
-    """
+    @staticmethod
+    def create_mesh_program (vertex_shader_package:'ShaderPackage', fragment_shader_package: 'ShaderPackage', name:str) -> MeshProgram:
+        inputs = []
+
+        # merge the inputs
+
+        # seed with vertex inputs
+        for inp in vertex_shader_package.shader_inputs:
+            ninp = inp
+            for i in fragment_shader_package.shader_inputs:
+                if i.name == inp.name: # deal with duplicates
+                    ninp = ShaderInput.combine_inputs(i, inp)
+                    break
+            inputs.append(ninp)
+
+        # then seed with fragment inputs
+        for inp in fragment_shader_package.shader_inputs:
+            append = True
+            for i in inputs:
+                if i.name == inp.name: # duplicates already dealt with
+                    append = False
+                    break
+            if append:
+                inputs.append(inp)
+        return MeshProgram(name, vertex_shader_package.compiled_shader, fragment_shader_package.compiled_shader, inputs)
+
 class FlaggedShader:
     """
+    MAGIC: this description
     This is a class not containing DIFFERENT shaders, just different compilations of ONE shader.
     This class relies on the use of `#define [var]` in a shader to introduce branching.
     This branching is characterized at compile time in this class.
-
-    Also I anticipate using this class in place of shader objects (mostly fragment)
+    This class can spawn a ShaderPackage
     """
     @staticmethod
     def from_shader_source (frag_source:str, shader_type) -> 'FlaggedShader':
@@ -284,7 +340,8 @@ class FlaggedShader:
         self.shader_type = shader_type
         self.version = version
         self.root_src = root_source
-        self.compiled_shaders = []
+        self.compiled_shaders = [] # this is indexed by state
+        self.shader_inputs:List[ShaderInput] = [] # this is for ALL possible shaders coming from this shader
         self.flags = FlaggedStates(self.flag_list)
         self.compile_shaders()
 
@@ -302,18 +359,70 @@ class FlaggedShader:
 
     def compose_shader_src (self, state:int) -> str:
         flags = self.flags.decompose_state(state)
-        return f"#version {self.version}\n#define " + "\n#define ".join(flags) + f"\n{self.root_src}"
+        defines = ""
+        if len(flags)>0:
+            defines = "#define " + "\n#define".join(flags)
+        return f"#version {self.version}\n" + defines + f"\n{self.root_src}"
 
     def compile_shaders (self):
+        self.shader_inputs = ShaderInput.from_shader_source(self.root_src)
         self.compiled_shaders = []
         for i in range(self.flags.num_states()):
             src = self.compose_shader_src(i)
             self.compiled_shaders.append(create_shader(self.shader_type, src))
 
+    def weeded_inputs (self, state:int) -> List[ShaderInput]: # create a list of ShaderInputs to include for a shader of this state
+        defined = self.flags.decompose_state(state)
+        valid_inputs = []
+        for inp in self.shader_inputs:
+            valid = True
+            for dep in inp.dependencies:
+                if not dep in defined:
+                    valid = False
+                    break
+            if valid:
+                valid_inputs.append(inp)
+        return valid_inputs
+
+    def spawn_shader_package (self, state:int) -> ShaderPackage:
+        return ShaderPackage(self.compiled_shaders[state], self.weeded_inputs(state))
+
+    def spawn_all_shader_packages (self) -> List[ShaderPackage]:
+        return [self.spawn_shader_package(state) for state in range(self.flags.num_states())]
+
+
+class BranchedProgram:
+    """
+    This class uses a FlaggedShader for a VERTEX and FRAGMENT shader
+    It compiles every program for every branched combination of the two together
+    """
+    def __init__ (self, name:str, flagged_vertex:FlaggedShader, flagged_fragment:FlaggedShader):
+        self.name = name
+        self.flagged_vertex = flagged_vertex
+        self.flagged_fragment = flagged_fragment
+        self.programs = [] # indexed by binary combination (not superposition) of vertex and fragment states
+            # for example, vertex has 3 flags, fragment has 8 flags
+            # 0 0 0   0 0 0 0 0 0 0 0
+
+        frag_shad = self.flagged_fragment.spawn_all_shader_packages()
+        vert_shad = self.flagged_vertex.spawn_all_shader_packages()
+        for v_flag in range(self.flagged_vertex.flags.num_states()):
+            for f_flag in range(self.flagged_fragment.flags.num_states()):
+                self.programs.append(ShaderPackage.create_mesh_program(vert_shad[v_flag], frag_shad[f_flag], name))
+
+    def get_program (self, vertex_state:int, fragment_state:int) -> MeshProgram:
+        v_state = vertex_state << self.flagged_fragment.flags.num_flags()
+        return self.programs[v_state|fragment_state] # should be the same as + if I did it right
+
+    def get_program_from_flags (self, vertex_flags:List[str], fragment_flags:List[str]):
+        v_state = self.flagged_vertex.flags.combine_flags(vertex_flags)
+        f_state = self.flagged_fragment.flags.combine_flags(fragment_flags)
+        return self.get_program(v_state, f_state)
+
 class FlaggedStates:
     """
     convention: a 'state' is a combination of flags, ex. 1001
-                a 'flag' represents a positive state at a bit position (int), for example RANDOM_FLAG = 0100 = 4
+                a 'flag' represents a single positive state at a bit position (int), for example RANDOM_FLAG = 0100 = 4
     """
     def __init__ (self, states:List[str]):
         self._flags = states
@@ -325,14 +434,14 @@ class FlaggedStates:
             setattr(self, s, 2 ** index)
             self._keyed_flags[s] = 2 ** index
 
-    def decompose_state (self, state:int) -> List[str]:
+    def decompose_state (self, state:int) -> List[str]: # flags
         include = []
         for i in range(len(self._flags)):
             if state>>i&1:
                 include.append(self._flags[i])
         return include
 
-    def combine_flags (self, *args:List[str]) -> int:
+    def combine_flags (self, *args:List[str]) -> int: # state
         i = 0
         for a in args:
             i |= self[a]
@@ -343,6 +452,9 @@ class FlaggedStates:
 
     def num_states(self) -> int:
         return self._num_states
+
+    def num_flags(self) -> int:
+        return len(self._flags)
 
     def get_value (self, flag) -> int:
         if flag in self._flags:

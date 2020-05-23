@@ -12,10 +12,10 @@ in vec3 fposition;
 in vec2 texCoord;
 
 #ifdef t_texColor
-uniform sampler2D texColor;//mat
+uniform sampler2D texColor;//mat:t_texColor
 #endif
 #ifdef t_texNormal
-uniform sampler2D texNormal;//mat
+uniform sampler2D texNormal;//mat:t_texNormal,maskAlpha
 #endif
 
 //globals
@@ -55,7 +55,8 @@ void main()
     #ifdef t_texColor
     vec4 t = texture2D(texColor, texCoord);
     #ifdef maskAlpha
-
+    if (t.a < 0.1) discard;
+    #endif
     #else
     vec4 t = vec4(fcolor, 1.);
     #endif

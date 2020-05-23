@@ -4,7 +4,7 @@ import OpenGL.GL as GL
 import pygltflib
 
 from tremor.graphics import shaders
-from tremor.graphics.shaders import MeshShader
+from tremor.graphics.shaders import MeshProgram
 from tremor.graphics.surfaces import Material
 import numpy as np
 
@@ -15,7 +15,7 @@ class Mesh:
     def __init__(self):
         self.vaoID = GL.glGenVertexArrays(1)
         self.program = shaders.get_default_program()
-        self.gl_program:MeshShader = self.program.program
+        self.gl_program:MeshProgram = self.program.program
         self.material:Material = self.program.create_material()
         self.tri_count = 0
 

@@ -236,22 +236,12 @@ def main():
     # initialize all the uniforms for all the prpograms
     init_all_uniforms()
 
-<<<<<<< HEAD
     # texture_loading.load_all_textures('data/textures', {
     #     # https://open.gl/textures
     #     'noise_512': {
     #         'clamp_mode': GL_REPEAT
     #     }
     # })
-=======
-    texture_loading.load_all_textures('data/textures', {
-        # https://open.gl/textures
-        'noise_512': {
-            'clamp_mode': GL_REPEAT
-        }
-    })
-
->>>>>>> fixed fragment??
     scene_file = open("data/scenes/debug.tsf", "r", encoding="utf-8")
     current_scene = scene_loader.load_scene(scene_file)
     cam = Entity("camera")
@@ -259,30 +249,6 @@ def main():
     cam.transform.set_rotation(matrix.quaternion_from_angles([0, np.pi/2, 0]))
     current_scene.active_camera = cam
 
-<<<<<<< HEAD
-=======
-    # parent = SceneElement("yeet")
-    # planes = []
-    # planes.append(Plane(np.array([-1, -1, -1]), np.array([0, -1, 0])))
-    # planes.append(Plane(np.array([-1, -1, -1]), np.array([-1, 0, 0])))
-    # planes.append(Plane(np.array([-1, -1, -1]), np.array([0, 0, -1])))
-    # planes.append(Plane(np.array([1, 1, 1]), np.array([0, 1, 0])))
-    # planes.append(Plane(np.array([1, 1, 1]), np.array([1, 0, 0])))
-    # planes.append(Plane(np.array([1, 1, 1]), np.array([0, 0, 1])))
-    # for i in range(20):
-    #     v = np.array(random_unit_sphere_vec())
-    #     planes.append(Plane(v, v))
-    # b = Brush(planes)
-    # tris, normals = b.make_data()
-    # test_brush = Mesh(parent)
-    # test_brush.bind_float_attribute_vbo(np.array(tris, dtype='float32'), "position", True, 3)
-    # test_brush.bind_float_attribute_vbo(np.array(normals, dtype='float32'), "normal", True, 3)
-    # renderer = ElementRenderer()
-    # renderer.meshes.append(test_brush)
-    # parent.renderer = renderer
-    # current_scene.elements.append(parent)
-
->>>>>>> fixed fragment??
     fps_clock.start()
 
     glfw.set_mouse_button_callback(window, mouseclick_callback)
