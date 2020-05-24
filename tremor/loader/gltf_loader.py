@@ -175,10 +175,14 @@ def load_gltf(filepath) -> Mesh:
 
             # thus, we can safely ignore alpha information
             # lots of annoying cases can be specified, if a model looks weird, it's because those are being discarded
-            def get_texture(index, sampler) -> TextureUnit:
+            def get_texture(index) -> TextureUnit:
                 tex = obj.textures[index]
                 img = obj.images[tex.source]
                 data = buffers[img.bufferView].data
+                if tex.sampler is not None:
+                    sampler = clean_sampler(obj.samplers[tex.sampler])
+                else:
+                    sampler = get_default_sampler()
                 return load_gltf_image(img, data, sampler)
 
             # todo: these (images?) use more properties like 'scale' and 'texCoord' but we ignore those, so far
@@ -186,11 +190,11 @@ def load_gltf(filepath) -> Mesh:
             normal = mat.normalTexture
             metallic = mat.pbrMetallicRoughness.metallicRoughnessTexture
             if color is not None:
-                mesh.material.set_texture(get_texture(color.index, get_default_sampler()), MaterialTexture.COLOR)
+                mesh.material.set_texture(get_texture(color.index), MaterialTexture.COLOR)
             if normal is not None:
-                mesh.material.set_texture(get_texture(normal.index, get_default_sampler()), MaterialTexture.NORMAL)
+                mesh.material.set_texture(get_texture(normal.index), MaterialTexture.NORMAL)
             if metallic is not None:
-                mesh.material.set_texture(get_texture(metallic.index, get_default_sampler()), MaterialTexture.METALLIC)
+                mesh.material.set_texture(get_texture(metallic.index), MaterialTexture.METALLIC)
         if mesh.material is None:
             mesh.set_shader(shaders.get_default_program())
             mesh.material = mesh.program.create_material()
@@ -240,6 +244,13 @@ def get_default_sampler() -> pygltflib.Sampler:
     sampler.wrapT = pygltflib.CLAMP_TO_EDGE  # V
     sampler.minFilter = pygltflib.LINEAR_MIPMAP_LINEAR  # pygltflib.LINEAR
     sampler.magFilter = pygltflib.LINEAR # this is correct!
+    return sampler
+
+def clean_sampler (sampler:pygltflib.Sampler) -> pygltflib.Sampler:
+    default = get_default_sampler()
+    for p in 'wrapS,wrapT,minFilter,magFilter'.split(','):
+        if getattr(sampler, p) is None:
+            setattr(sampler, p, getattr(default, p))
     return sampler
 
 

@@ -1,7 +1,7 @@
 0
 debug
 { resources
-lr cube gltf data/gltf/test_gltf/better_uvs_cube.glb
+lr cube gltf data/gltf/test_gltf/DamagedHelmet.glb
 lr cube2 gltf data/gltf/test_gltf/box_flex.glb
 }
 { elements

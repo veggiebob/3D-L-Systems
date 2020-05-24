@@ -33,6 +33,7 @@ class Mesh:
     def set_shader (self, shader:MeshProgram):
         self.program = shader
         self.gl_program = self.program.program
+
     def find_shader (self, name:str):
         self.program = shaders.query_branched_program(name, self.material)
         self.gl_program = self.program.program

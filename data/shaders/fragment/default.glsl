@@ -13,7 +13,6 @@ in vec3 fposition;
 in vec2 texCoord;
 
 #ifdef t_texColor
-//todo: improve the thing after the colon //mat: ~~~ it's not needed because it can be parsed
 uniform sampler2D texColor;//mat:t_texColor
 #endif
 #ifdef t_texNormal
@@ -57,6 +56,12 @@ float alpha_depth_func (float x) {
 }
 void main()
 {
+    //FresnelSchlick(h,v,F0)=F0+(1−F0)(1−(h⋅v))^5
+    //F0 = base reflectivity
+    //h = h=l+v/∥l+v∥
+    //l = surface-to-light vector
+    //v = surface-to-camera vector
+
     #ifdef t_texColor
     vec4 t = texture2D(texColor, texCoord);
     #ifdef maskAlpha
