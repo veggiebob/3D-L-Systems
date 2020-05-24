@@ -34,8 +34,8 @@ def get_programs() -> List['MeshProgram']:
     all_programs = []
     for b in BRANCHED_PROGRAMS.values():
         all_programs += b.programs
+    # print(f'there are {len(all_programs)} programs') # todo: minimize this. Uncomment this to see how bad your code is
     return all_programs
-    # return list(PROGRAMS.values())
 
 def create_all_programs(filepath='data/shaders/programs.ini',
                         vertex_location: str = 'data/shaders/vertex',
@@ -380,20 +380,23 @@ class FlaggedShader:
         expr_define = regex.compile(r'#define\s+([_\w]+)\s*$')
         expr_ver = regex.compile(r'#version\s+(\d+)\s*$')
         lines = shad_source.split('\n')
+        clean_lines = []
         flags = []
         version = None
         for l in lines:
+            append = True
             v = expr_ver.match(l)
             if v is not None:
                 version = v.groups()[0]
-                lines.remove(l)
-                continue
+                append = False
             m = expr_define.match(l)
             if m is not None:
                 flags.append(m.groups()[0])
-                lines.remove(l)
+                append = False
+            if append:
+                clean_lines.append(l)
 
-        root_src = '\n'.join(lines)
+        root_src = '\n'.join(clean_lines)
         if version is None:
             raise Exception('Could not determine version of shader.')
         return FlaggedShader(flags, root_src, version, shader_type)
@@ -424,7 +427,7 @@ class FlaggedShader:
         flags = self.flags.decompose_state(state)
         defines = ""
         if len(flags)>0:
-            defines = "#define " + "\n#define".join(flags)
+            defines = "#define " + "\n#define ".join(flags)
         return f"#version {self.version}\n" + defines + f"\n{self.root_src}"
 
     def compile_shaders (self):
@@ -525,6 +528,7 @@ class FlaggedStates:
         if flag in self._flags:
             return self._keyed_flags[flag]
         else:
+            print(f'{flag} is not in this set')
             return 0
             # raise Exception(f'{flag} is not a valid state in this set.')
 

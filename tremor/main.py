@@ -67,9 +67,7 @@ def create_uniforms():
     add_uniform_to_all('time', 'float')
 
     # other
-    add_uniform_to_all('useTexColor', 'bool')
-
-    add_uniform_to_all('light_pos', 'vec3')
+    add_uniform_to_all('light_pos', 'vec3') # todo: baD
 
 
 

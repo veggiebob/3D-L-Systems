@@ -162,6 +162,41 @@ def load_gltf(filepath) -> Mesh:
         index_buff:UnboundBuffer = buffers[index_acc.bufferView]
         index_buff.optional_binder()(GL.GL_ELEMENT_ARRAY_BUFFER)
         mesh.elementBufID = index_buff.buffer_id
+
+        # do materials # todo: create materials, then apply to meshes
+        mesh.material = None
+        materialIdx = obj.meshes[0].primitives[0].material
+        if materialIdx is not None:
+            mat = obj.materials[materialIdx]
+            mesh.material = Material.from_gltf_material(mat)
+            if not mat.alphaMode == 'OPAQUE':
+                raise Exception("Special case! Discard model, and find the nearest exit.")
+
+            # thus, we can safely ignore alpha information
+            # lots of annoying cases can be specified, if a model looks weird, it's because those are being discarded
+            def get_texture(index, sampler) -> TextureUnit:
+                tex = obj.textures[index]
+                img = obj.images[tex.source]
+                data = buffers[img.bufferView].data
+                return load_gltf_image(img, data, sampler)
+
+            # todo: these (images?) use more properties like 'scale' and 'texCoord' but we ignore those, so far
+            color = mat.pbrMetallicRoughness.baseColorTexture
+            normal = mat.normalTexture
+            metallic = mat.pbrMetallicRoughness.metallicRoughnessTexture
+            if color is not None:
+                mesh.material.set_texture(get_texture(color.index, get_default_sampler()), MaterialTexture.COLOR)
+            if normal is not None:
+                mesh.material.set_texture(get_texture(normal.index, get_default_sampler()), MaterialTexture.NORMAL)
+            if metallic is not None:
+                mesh.material.set_texture(get_texture(metallic.index, get_default_sampler()), MaterialTexture.METALLIC)
+        if mesh.material is None:
+            mesh.set_shader(shaders.get_default_program())
+            mesh.material = mesh.program.create_material()
+        else:
+            mesh.find_shader('default')
+
+    # do vbos
     #attrs = 'COLOR_0,JOINTS_0,NORMAL,POSITION,TANGENT,TEXCOORD_0,TEXCOORD_1,WEIGHTS_0'.split(',')
     attrs = 'COLOR_0,JOINTS_0,NORMAL,POSITION,TEXCOORD_0'.split(',') # todo: fix
     for att in attrs:
@@ -191,33 +226,7 @@ def load_gltf(filepath) -> Mesh:
             mesh.tri_count = acc.count // 3
     GL.glBindBuffer(GL.GL_ARRAY_BUFFER, 0)
 
-    # do materials # todo: create materials, then apply to meshes
-    materialIdx = obj.meshes[0].primitives[0].material
-    if materialIdx is not None:
-        mat = obj.materials[materialIdx]
-        mesh.material = Material.from_gltf_material(mat)
-        if not mat.alphaMode == 'OPAQUE':
-            raise Exception("Special case! Discard model, and find the nearest exit.")
-        # thus, we can safely ignore alpha information
-        # lots of annoying cases can be specified, if a model looks weird, it's because those are being discarded
-        def get_texture (index, sampler) -> TextureUnit:
-            tex = obj.textures[index]
-            img = obj.images[tex.source]
-            data = buffers[img.bufferView].data
-            return load_gltf_image(img, data, sampler)
-        # todo: these (images?) use more properties like 'scale' and 'texCoord' but we ignore those, so far
-        color = mat.pbrMetallicRoughness.baseColorTexture
-        normal = mat.normalTexture
-        metallic = mat.pbrMetallicRoughness.metallicRoughnessTexture
-        if color is not None:
-            mesh.material.set_texture(get_texture(color.index, get_default_sampler()), MaterialTexture.COLOR)
-        if normal is not None:
-            mesh.material.set_texture(get_texture(normal.index, get_default_sampler()), MaterialTexture.NORMAL)
-        if metallic is not None:
-            mesh.material.set_texture(get_texture(metallic.index, get_default_sampler()), MaterialTexture.METALLIC)
-
     mesh.unbind_vao()
-    mesh.find_shader('default')
     return mesh
 
 def get_default_sampler() -> pygltflib.Sampler:
