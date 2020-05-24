@@ -1,6 +1,7 @@
 #version 330
 #define t_texColor
 #define t_texNormal
+#define t_texMetallic
 #define maskAlpha
 
 out vec4 outputColor;
@@ -12,10 +13,14 @@ in vec3 fposition;
 in vec2 texCoord;
 
 #ifdef t_texColor
+//todo: improve the thing after the colon //mat: ~~~ it's not needed because it can be parsed
 uniform sampler2D texColor;//mat:t_texColor
 #endif
 #ifdef t_texNormal
 uniform sampler2D texNormal;//mat:t_texNormal
+#endif
+#ifdef t_texMetallic
+uniform sampler2D texMetallic;//mat:t_texMetallic
 #endif
 
 //globals
@@ -67,9 +72,19 @@ void main()
     #else
     vec3 normal = normalize(fnormal);
     #endif
+    float diffuse_weight, specular_weight;
+    #ifdef t_texMetallic
+    //g is roughness, b is metallic
+    vec4 metallic = texture2D(texMetallic, texCoord);
+    diffuse_weight = metallic.g;
+    specular_weight = metallic.b;
+    #else
+    diffuse_weight = 0.4;
+    specular_weight = 0.6;
+    #endif
     vec3 light_dir = normalize(light_pos - fposition);
     float diffuse = max(dot(light_dir, normal), 0.);
     float specular = pow(max(dot(look, -reflect(normal, light_dir)), 0.), 16.);
-    col += (diffuse * 0.4 + specular * 0.6) * light_col * light_strength;
+    col += (diffuse * diffuse_weight + specular * specular_weight) * light_col * light_strength;
     outputColor = vec4(col, 1.0);//alpha_depth_func(cameraPosition.z));
 }

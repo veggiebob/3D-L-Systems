@@ -1,0 +1,12 @@
+Avocado + lightbulb test
+---
+0
+debug
+{ resources
+lr avocado gltf data/gltf/test_gltf/Avocado.glb
+lr light gltf data/gltf/lightbulb.glb
+}
+{ elements
+ce yum avocado 0 0 0 0 0 0 50 50 50
+ce LIGHT light 0 0 0 0 0 0 0.4 0.4 0.4
+}

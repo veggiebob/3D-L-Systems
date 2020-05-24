@@ -154,7 +154,8 @@ def load_gltf(filepath) -> Mesh:
         buffers.add_buffer(UnboundBuffer(buffer_view, data_slice, index=i))
 
     # for each primitive in each mesh . . .
-    primitive = obj.meshes[0].primitives[0]
+    gltf_mesh = obj.meshes[0]
+    primitive = gltf_mesh.primitives[0]
     index_acc = obj.accessors[primitive.indices] if primitive.indices is not None else None
     if index_acc is not None:
         mesh.element = True
@@ -197,11 +198,14 @@ def load_gltf(filepath) -> Mesh:
             mesh.find_shader('default')
 
     # do vbos
-    #attrs = 'COLOR_0,JOINTS_0,NORMAL,POSITION,TANGENT,TEXCOORD_0,TEXCOORD_1,WEIGHTS_0'.split(',')
-    attrs = 'COLOR_0,JOINTS_0,NORMAL,POSITION,TEXCOORD_0'.split(',') # todo: fix
+    attrs = 'COLOR_0,JOINTS_0,NORMAL,POSITION,TANGENT,TEXCOORD_0,TEXCOORD_1,WEIGHTS_0'.split(',')
+    # attrs = 'COLOR_0,NORMAL,POSITION,TEXCOORD_0'.split(',')
+    unsupported = 'JOINTS_0,TANGENT,TEXCOORD_1,WEIGHTS_0'.split(',') # todo: fix this
     for att in attrs:
         val = getattr(primitive.attributes, att)
         if val is None: continue
+        if att in unsupported:
+            print(f'WARNING: {att} in model {gltf_mesh.name} is currently unsupported and may cause problems in rendering.')
         name = att.lower()
         acc = obj.accessors[val]
         location = GL.glGetAttribLocation(mesh.gl_program, name)
