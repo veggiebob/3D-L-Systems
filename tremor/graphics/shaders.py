@@ -178,26 +178,52 @@ class ShaderInput:
          - a little hacky
          - all in all seems a bit distasteful
         """
+        depend_stack = [] # track #ifdef and #ifndef statements to figure out dependencies
+            # filled with [ name:str, not_negated:bool ]
+        ifdef_expr = regex.compile(r'#ifdef ([\w\d_]+)')
+        ifndef_expr = regex.compile(r'#ifndef ([\w\d_]+)')
+        else_expr = regex.compile(r'#else')
+        endif_expr = regex.compile(r'#endif')
         lines = shader_source.split('\n')
         uniforms = []
+        u_dependencies = []
         for l in lines:
+            _ifdef = ifdef_expr.match(l)
+            _ifndef = ifndef_expr.match(l)
+            _else = else_expr.match(l)
+            _endif = endif_expr.match(l)
+            if _ifdef is not None:
+                depend_stack.append([_ifdef.groups()[0], True])
+            elif _ifndef is not None:
+                depend_stack.append([_ifndef.groups()[0], False])
+            elif _else is not None:
+                depend_stack[-1][1] = not depend_stack[-1][1]
+            elif _endif is not None:
+                depend_stack.pop()
             if l[:len('uniform')] == 'uniform':
                 uniforms.append(l)
+                u_dependencies.append(','.join([d[0] for d in depend_stack if d[1]]))
         inputs = []
-        find_input = regex.compile(r'uniform\s(\w+)\s(\w+);//mat(?::([\w\d,_]+))?')
+        i_dependencies = []
+        find_input = regex.compile(r'uniform\s(\w+)\s(\w+);//mat') # (?::([\w\d,_]+))? for dependencies
+
+        index = -1
         for u in uniforms:
+            index += 1
             m = find_input.match(u)
             if m is not None:
                 inputs.append(m.groups())
+                i_dependencies.append(u_dependencies[index]) # ship the dependencies over
+
 
         # convert inputs into shader inputs : [type, name, [dependencies]]
         shader_inputs = []
+        index = -1
         for i in inputs:
+            index += 1
             typ = i[0]
             name = i[1]
-            depend = []
-            if len(i)>2:
-                depend = i[2].split(',')
+            depend = i_dependencies[index].split(',')
 
             is_texture = False
             if typ in u_type_default_args:

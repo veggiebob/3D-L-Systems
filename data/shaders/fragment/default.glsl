@@ -13,13 +13,13 @@ in vec3 fposition;
 in vec2 texCoord;
 
 #ifdef t_texColor
-uniform sampler2D texColor;//mat:t_texColor
+uniform sampler2D texColor;//mat
 #endif
 #ifdef t_texNormal
-uniform sampler2D texNormal;//mat:t_texNormal
+uniform sampler2D texNormal;//mat
 #endif
 #ifdef t_texMetallic
-uniform sampler2D texMetallic;//mat:t_texMetallic
+uniform sampler2D texMetallic;//mat
 #endif
 
 //globals
