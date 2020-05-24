@@ -27,10 +27,15 @@ def get_program(name: str) -> 'MeshProgram':
         raise Exception(f'{name} is not a valid program name.')
 
 def get_default_program() -> 'MeshProgram':
-    return get_program('default')
+    return get_branched_program('default').get_program(0, 0)
+    # return get_program('default')
 
 def get_programs() -> List['MeshProgram']:
-    return list(PROGRAMS.values())
+    all_programs = []
+    for b in BRANCHED_PROGRAMS.values():
+        all_programs += b.programs
+    return all_programs
+    # return list(PROGRAMS.values())
 
 def create_all_programs(filepath='data/shaders/programs.ini',
                         vertex_location: str = 'data/shaders/vertex',
@@ -381,6 +386,7 @@ class FlaggedShader:
             v = expr_ver.match(l)
             if v is not None:
                 version = v.groups()[0]
+                lines.remove(l)
                 continue
             m = expr_define.match(l)
             if m is not None:
@@ -515,11 +521,12 @@ class FlaggedStates:
     def num_flags(self) -> int:
         return len(self._flags)
 
-    def get_value (self, flag) -> int:
+    def get_flag_value (self, flag) -> int:
         if flag in self._flags:
             return self._keyed_flags[flag]
         else:
-            raise Exception(f'{flag} is not a valid state in this set.')
+            return 0
+            # raise Exception(f'{flag} is not a valid state in this set.')
 
     def __getitem__ (self, item):
-        return self.get_value(item)
+        return self.get_flag_value(item)

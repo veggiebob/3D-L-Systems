@@ -229,7 +229,7 @@ def main():
     glEnable(GL_MULTISAMPLE)
     glEnable(GL_BLEND)
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
-    create_all_programs()
+    # create_all_programs() # todo: move away from this as testing progresses
     create_branched_programs()
 
     # create the uniforms

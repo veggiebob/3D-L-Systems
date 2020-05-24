@@ -15,7 +15,7 @@ in vec2 texCoord;
 uniform sampler2D texColor;//mat:t_texColor
 #endif
 #ifdef t_texNormal
-uniform sampler2D texNormal;//mat:t_texNormal,maskAlpha
+uniform sampler2D texNormal;//mat:t_texNormal
 #endif
 
 //globals
