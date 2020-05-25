@@ -59,6 +59,9 @@ class TextureUnit:
 
 
 class Material:
+    """
+    MAGIC: see _do_texture_flags
+    """
     @staticmethod
     def from_gltf_material(gltf_mat: pygltflib.Material, color_texture: TextureUnit = None,
                            metallic_texture: TextureUnit = None, normal_texture: TextureUnit = None) -> 'Material':
@@ -77,7 +80,7 @@ class Material:
         mat.set_property('emissiveFactor', gltf_mat.emissiveFactor)
         return mat
 
-    def __init__(self, name: str = 'unnamed', **kwargs):
+    def __init__(self, name: str = 'unnamed', flags:List[str]=[], **kwargs):
         self.name = name
 
         # the textures
@@ -86,10 +89,24 @@ class Material:
             MaterialTexture.METALLIC: MaterialTexture(MaterialTexture.METALLIC),
             MaterialTexture.NORMAL: MaterialTexture(MaterialTexture.NORMAL)
         }
+        self._texture_flags = []
+        self._do_texture_flags()
         self._properties:Dict[str, any] = {}
+        self._flags:List[str] = flags
 
         for k, v in kwargs.items():
             self.set_property(k, v)
+
+    def add_flag (self, flag_name):
+        if not flag_name in self._flags:
+            self._flags.append(flag_name)
+
+    def remove_flag (self, flag_name):
+        if flag_name in self._flags:
+            self._flags.remove(flag_name)
+
+    def get_flags (self) -> List[str]:
+        return self._flags + self._texture_flags
 
     def set_property (self, name, value):
         self._properties[name] = value
@@ -101,10 +118,12 @@ class Material:
 
     def set_mat_texture(self, mat_texture: 'MaterialTexture') -> None:
         self.textures[mat_texture.tex_type] = mat_texture
+        self._do_texture_flags()
 
     # helper for set_mat_texture. they do the same thing
     def set_texture(self, texture: TextureUnit, tex_type: str) -> None:
         self.set_mat_texture(MaterialTexture(tex_type, texture))
+        self._do_texture_flags()
 
     def get_mat_texture(self, mat_texture_type: str = None) -> 'MaterialTexture':
         if mat_texture_type is None:
@@ -130,8 +149,17 @@ class Material:
     def get_all_textures(self) -> List[TextureUnit]:
         return [tex.texture for tex in self.get_all_mat_textures()]
 
+    def _do_texture_flags(self):
+        self._texture_flags = []
+        for tex in self.get_all_mat_textures():
+            if tex.exists:
+                self._texture_flags.append(f't_{tex.tex_type}') # magic
+
 
 class MaterialTexture:
+    """
+    MAGIC: MaterialTexture static enum things
+    """
     # enum for uniform names
     COLOR = 'texColor'
     METALLIC = 'texMetallic'
