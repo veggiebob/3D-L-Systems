@@ -32,6 +32,11 @@ class Plane:
         n = norm_vec3(np.cross((v1 - v0), (v2 - v0)))
         return Plane(v0, n)
 
+    @staticmethod
+    def plane_from_points_quake_style(points) -> "Plane":
+        n = norm_vec3(np.cross((points[2] - points[0]), (points[1] - points[0])))
+        return Plane(points[0], n)
+
     def point_dist(self, point: np.ndarray):
         return self.normal.dot(point - self.point)
 
