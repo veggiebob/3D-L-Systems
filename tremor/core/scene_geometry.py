@@ -32,6 +32,11 @@ class Plane:
         n = norm_vec3(np.cross((v1 - v0), (v2 - v0)))
         return Plane(v0, n)
 
+    @staticmethod
+    def plane_from_points_quake_style(points) -> "Plane":
+        n = norm_vec3(np.cross((points[2] - points[0]), (points[1] - points[0])))
+        return Plane(points[0], n)
+
     def point_dist(self, point: np.ndarray):
         return self.normal.dot(point - self.point)
 
@@ -118,6 +123,23 @@ class Brush:
         return all_points
 
     def make_data(self):
+        vertices = self.get_vertices()
+        tris = np.empty(0, dtype='float32')
+        normals = np.empty(0, dtype='float32')
+
+        for j in range(len(vertices)):
+            face = vertices[j]
+            fan_point = face[0]
+            for i in range(2, len(face)):
+                v0 = face[i - 1]
+                v1 = face[i]
+                check_ccw(fan_point, v0, v1, self.planes[j])
+                tris = np.append(tris, [fan_point, v0, v1])
+                norm = self.planes[j].normal
+                normals = np.append(normals, [norm, norm, norm])
+        return tris, normals
+
+    def make_instanced_data(self):
         vertices = self.get_vertices()
         tris = np.empty(0, dtype='float32')
         normals = np.empty(0, dtype='float32')

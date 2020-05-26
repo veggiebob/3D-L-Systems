@@ -4,12 +4,12 @@ import glm
 import numpy as np
 from OpenGL.GL import *
 
-
 from tremor.graphics import screen_utils
 from tremor.graphics.uniforms import update_all_uniform
 from tremor.math import matrix
 
 framecount = 0
+
 
 # needs some work for UI
 def render(scene: Scene):
@@ -17,7 +17,7 @@ def render(scene: Scene):
     glClearColor(0.0, 0.0, 0.0, 0.0)
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
     glUseProgram(0)
-    perspective_mat = glm.perspective(glm.radians(100.0), screen_utils.aspect_ratio(), 0.1, 100.0)
+    perspective_mat = glm.perspective(glm.radians(100.0), screen_utils.aspect_ratio(), 0.1, 100000.0)
     tmat = scene.active_camera.transform._get_translation_matrix()
     rmat = scene.active_camera.transform._get_rotation_matrix()
     a = tmat.dot(rmat.dot(matrix.create_translation_matrix([1, 0, 0])))
@@ -34,11 +34,12 @@ def render(scene: Scene):
     light_pos = [np.sin(framecount * 0.01) * 5, np.cos(framecount * 0.01) * 5, np.cos(framecount * 0.001)]
     update_all_uniform('light_pos', light_pos)
 
-
-    for element in scene.elements:
+    scene.bind_scene_vao()
+    for element in scene.entities:
+        if element.is_renderable() and element.mesh.is_scene_mesh:
+            element.mesh.render_scene_mesh(scene, element.transform)
+    for element in scene.entities:
         if element.is_renderable():
-            if element.name == 'LIGHT':
-                element.transform.set_translation(light_pos)
-            element.mesh.render(element.transform)
+            if not element.mesh.is_scene_mesh:
+                element.mesh.render(element.transform)
     framecount += 1
-

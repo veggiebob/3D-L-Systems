@@ -6,6 +6,7 @@ import OpenGL
 from tremor.core.scene import Scene
 from tremor.core.scene_geometry import Plane, Brush
 from tremor.graphics.element_renderer import Mesh, ElementRenderer
+from tremor.loader.scene import binloader
 from tremor.math.vertex_math import norm_vec3
 from tremor.core.entity import Entity
 
@@ -13,7 +14,7 @@ OpenGL.USE_ACCELERATE = False
 
 import glfw
 
-from tremor.loader import gltf_loader, texture_loading, scene_loader
+from tremor.loader import gltf_loader, texture_loading
 from tremor.util import glutil, configuration
 from tremor.core import game_clock, console, key_input
 
@@ -109,7 +110,7 @@ def keyboard_callback(window, key, scancode, action, mods):
             return
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL if wireframe else GL_LINE)
         wireframe = not wireframe
-    magnitude = 0.1
+    magnitude = 10
     if mods == 1:
         tform = current_scene.active_camera.transform
     else:
@@ -241,11 +242,10 @@ def main():
     #         'clamp_mode': GL_REPEAT
     #     }
     # })
-    scene_file = open("data/scenes/debug.tsf", "r", encoding="utf-8")
-    current_scene = scene_loader.load_scene(scene_file)
-    cam = Entity("camera")
-    cam.transform.set_translation([3, 3, 3])
-    cam.transform.set_rotation(matrix.quaternion_from_angles([0, np.pi/2, 0]))
+
+    current_scene = binloader.load_scene_file("data/scenes/out.tmb")
+    cam = Entity()
+    cam.transform.set_translation(np.array([64, 64, 64]))
     current_scene.active_camera = cam
 
     fps_clock.start()

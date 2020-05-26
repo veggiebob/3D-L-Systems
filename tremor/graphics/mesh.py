@@ -16,15 +16,18 @@ class Mesh:
         self.vaoID = GL.glGenVertexArrays(1)
         self.program:MeshProgram = shaders.get_default_program()
         self.gl_program = self.program.program
+        self.is_scene_mesh = False
+        self.scene_model = None
         self.material:Material = self.program.create_material()
         self.tri_count = 0
-
         # elemented
         self.element = False # is elemented
         self.elementBufID = 0
         self.elementInfo = None
 
     def bind_vao(self):
+        if self.vaoID is None:
+            self.vaoID = GL.glGenVertexArrays(1)
         GL.glBindVertexArray(self.vaoID)
 
     def unbind_vao(self):
@@ -56,3 +59,15 @@ class Mesh:
             GL.glDrawArrays(GL.GL_TRIANGLES,
                             0,
                             self.tri_count)
+
+    def render_scene_mesh(self, scene, transform: Transform):
+        GL.glUseProgram(self.gl_program)
+        self.program.update_uniform('modelViewMatrix',
+                                    [1, GL.GL_FALSE, transform.to_model_view_matrix_global().transpose()])
+        #self.program.use_material(self.material)
+        for i in range(self.scene_model.face_start, self.scene_model.face_start + self.scene_model.face_count):
+            face = scene.faces[i]
+            GL.glDrawElements(GL.GL_TRIANGLES,
+                              face.meshvertcount,
+                              GL.GL_UNSIGNED_INT,
+                              GL.ctypes.c_void_p(face.meshvertstart * 4))
