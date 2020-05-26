@@ -8,6 +8,7 @@ from tremor.graphics.shaders import MeshProgram
 from tremor.graphics.surfaces import Material
 import numpy as np
 
+from tremor.loader.texture_loading import TEXTURE_TABLE
 from tremor.math.transform import Transform
 
 
@@ -67,6 +68,7 @@ class Mesh:
         #self.program.use_material(self.material)
         for i in range(self.scene_model.face_start, self.scene_model.face_start + self.scene_model.face_count):
             face = scene.faces[i]
+            TEXTURE_TABLE[face.textureidx].bind()
             GL.glDrawElements(GL.GL_TRIANGLES,
                               face.meshvertcount,
                               GL.GL_UNSIGNED_INT,

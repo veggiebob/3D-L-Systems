@@ -1,5 +1,6 @@
 import sys
 import io
+from random import random
 from typing import List
 
 import numpy as np
@@ -108,6 +109,7 @@ def main(filename):
     raw_faces = []
     raw_mesh_verts = []
     raw_models = []
+    raw_textures = []
     for ent in ents:
         if "brushes" in ent:
             face_start = len(raw_faces)
@@ -115,20 +117,30 @@ def main(filename):
             for brush in ent["brushes"]:
                 vertices = brush.get_vertices()
                 for j in range(len(vertices)):
+                    if brush.planes[j].texture_name == "__TB_empty":
+                        continue
                     face = vertices[j]
                     raw_vert_start = len(raw_verts)
                     raw_mesh_start = len(raw_mesh_verts)
                     raw_mesh_count = 0
                     for i in range(0, len(face)):
                         raw_verts.append(
-                            RawVertex(face[i], brush.planes[j].normal, np.array([0.0, 0.0], dtype='float32')))
+                            RawVertex(face[i], brush.planes[j].normal, np.array([random(), random()], dtype='float32')))
                     for i in range(2, len(face)):
                         raw_mesh_verts.append(RawModelVertex(raw_vert_start))
                         raw_mesh_verts.append(RawModelVertex(raw_vert_start + i - 1))
                         raw_mesh_verts.append(RawModelVertex(raw_vert_start + i))
                         raw_mesh_count += 3
+                    tex_idx = -1
+                    for p in range(0, len(raw_textures)):
+                        if str(raw_textures[p].name, 'utf-8') == brush.planes[j].texture_name:
+                            tex_idx = p
+                            break
+                    if tex_idx == -1:
+                        tex_idx = len(raw_textures)
+                        raw_textures.append(RawTexture(bytes(brush.planes[j].texture_name, 'utf-8')))
                     raw_faces.append(
-                        RawFace(-1, raw_vert_start, len(face), raw_mesh_start, raw_mesh_count, brush.planes[j].normal))
+                        RawFace(tex_idx, raw_vert_start, len(face), raw_mesh_start, raw_mesh_count, brush.planes[j].normal))
                     face_count += 1
             ent.pop("brushes")
             ent["model"] = "*" + str(len(raw_models))
@@ -140,7 +152,8 @@ def main(filename):
         (ModelVertexChunk(raw_mesh_verts), MESH_VERTEX_CHUNK_TYPE),
         (FaceChunk(raw_faces), FACE_CHUNK_TYPE),
         (ModelChunk(raw_models), MODEL_CHUNK_TYPE),
-        (EntityChunk(bytes(format_ents(ents), 'utf-8')), ENTITY_CHUNK_TYPE)
+        (EntityChunk(bytes(format_ents(ents), 'utf-8')), ENTITY_CHUNK_TYPE),
+        (TextureChunk(raw_textures), TEXTURE_CHUNK_TYPE)
     ]
     idx = 0
     for c, t in chunks:

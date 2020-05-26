@@ -91,6 +91,10 @@ class RawTexture:
         stuf = struct.unpack("<64s", contents)
         return RawTexture(*stuf)
 
+    @staticmethod
+    def size():
+        return struct.calcsize("<64s")
+
 
 class RawBrush:
     def __init__(self, content_flags: int, first_brush_side: int, brush_side_count: int):
@@ -265,6 +269,36 @@ class ModelChunk:
     def from_directory(buf, dir: RawChunkDirectoryEntry):
         return ModelChunk.deserialize(buf[dir.start:dir.start+dir.length])
 
+class TextureChunk:
+    def __init__(self, textures: List[RawTexture]):
+        self.textures = textures
+
+    def length_bytes(self):
+        return len(self.textures) * RawTexture.size()
+
+    def serialize(self):
+        single_length = RawTexture.size()
+        length = len(self.textures) * single_length
+        buffer = bytearray(length)
+        c = 0
+        for texture in self.textures:
+            buffer[c:c + single_length] = texture.serialize()
+            c += single_length
+        return buffer
+
+    @staticmethod
+    def deserialize(chunk):
+        single_length = RawTexture.size()
+        chunk_len_elem = len(chunk) // single_length
+        models = []
+        for c in range(0, chunk_len_elem):
+            models.append(RawTexture.deserialize(chunk[c * single_length:c * single_length + single_length]))
+        return TextureChunk(models)
+
+    @staticmethod
+    def from_directory(buf, dir: RawChunkDirectoryEntry):
+        return TextureChunk.deserialize(buf[dir.start:dir.start+dir.length])
+
 
 class EntityChunk:
     def __init__(self, contents: bytes):
@@ -293,12 +327,13 @@ TEXTURE_CHUNK_TYPE = b"TEXT"
 PLANE_CHUNK_TYPE = b"PLAN"
 MODEL_CHUNK_TYPE = b"MODL"
 
-NUMBER_OF_CHUNKS = 5
+NUMBER_OF_CHUNKS = 6
 VERTEX_CHUNK_INDEX = 0
 MODEL_VERTEX_CHUNK_INDEX = 1
 FACE_CHUNK_INDEX = 2
 MODEL_CHUNK_INDEX = 3
 ENTITY_CHUNK_INDEX = 4
+TEXTURE_CHUNK_INDEX = 5
 
 HEADER = b'TMF\b\1\0\0\0'
 HEADER_SIZE = len(HEADER)

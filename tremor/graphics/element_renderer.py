@@ -7,6 +7,7 @@ import OpenGL.GL as GL
 from PIL import Image
 
 from tremor.graphics import shaders
+from tremor.graphics.uniforms import gl_compressed_format
 from tremor.math import vertex_math, matrix
 from tremor.math.transform import Transform
 
@@ -177,7 +178,7 @@ class Texture:
 
     def __init__(self, data: np.ndarray, name: str, width: int = 1, height: int = 1, min_filter=GL.GL_LINEAR,
                  mag_filter=GL.GL_LINEAR,
-                 clamp_mode=GL.GL_CLAMP_TO_EDGE, img_format=GL.GL_RGB):
+                 clamp_mode=GL.GL_CLAMP_TO_EDGE, img_format=GL.GL_RGBA):
         self.data = data
         self.width = width if width > 0 else len(self.data[0])
         self.height = height if height > 0 else len(self.data)
@@ -196,7 +197,7 @@ class Texture:
         GL.glTexImage2D(
             GL.GL_TEXTURE_2D,  # target
             0,  # level
-            GL.gl_compressed_format[self.format],  # internalformat
+            gl_compressed_format[self.format],  # internalformat
             self.width,  # width
             self.height,  # height
             0,  # border
@@ -207,13 +208,13 @@ class Texture:
 
         GL.glGenerateMipmap(GL.GL_TEXTURE_2D)
 
-        GL.glTexParameterf(GL.GL_TEXTURE_2D, GL.GL.GL_TEXTURE_MAG_FILTER, self.mag_filter)
-        GL.glTexParameterf(GL.GL_TEXTURE_2D, GL.GL.GL_TEXTURE_MIN_FILTER, self.min_filter)
-        GL.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL.GL_TEXTURE_WRAP_S, self.clamp_mode)  # u
-        GL.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL.GL_TEXTURE_WRAP_T, self.clamp_mode)  # v
+        GL.glTexParameterf(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MAG_FILTER, self.mag_filter)
+        GL.glTexParameterf(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MIN_FILTER, self.min_filter)
+        GL.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_WRAP_S, self.clamp_mode)  # u
+        GL.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_WRAP_T, self.clamp_mode)  # v
 
     def bind(self):
-        GL.glActiveTexture(GL.GL_TEXTURE0 + self.index)
+        GL.glActiveTexture(GL.GL_TEXTURE0)
         GL.glBindTexture(GL.GL_TEXTURE_2D, self.texture)
 
     def init(self):

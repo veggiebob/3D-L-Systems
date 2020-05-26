@@ -4,6 +4,7 @@ from tremor.graphics.mesh import Mesh
 from tremor.loader.scene.scene_types import *
 import numpy as np
 import io
+from tremor.loader.texture_loading import load_texture_by_name, TEXTURE_TABLE
 
 
 def parse_keyvalue(string):
@@ -32,6 +33,8 @@ def parse_ents(ent_str):
 
 
 def load_scene_file(filename) -> Scene:
+    global TEXTURE_TABLE
+    TEXTURE_TABLE = {}
     file = open(filename, "rb")
     contents = np.frombuffer(file.read(-1), dtype='byte')
     file_length = file.seek(0, io.SEEK_END)
@@ -54,6 +57,11 @@ def load_scene_file(filename) -> Scene:
     face_chunk = FaceChunk.from_directory(contents, directory[FACE_CHUNK_INDEX])
     model_chunk = ModelChunk.from_directory(contents, directory[MODEL_CHUNK_INDEX])
     entity_chunk = EntityChunk.from_directory(contents, directory[ENTITY_CHUNK_INDEX])
+    texture_chunk = TextureChunk.from_directory(contents, directory[TEXTURE_CHUNK_INDEX])
+    i = 0
+    for texture in texture_chunk.textures:
+        load_texture_by_name(str(texture.name, 'utf-8').strip('\0'), i)
+        i += 1
     scene = Scene(filename)
     scene.setup_scene_geometry(contents[vertex_entry.start:vertex_entry.start + vertex_entry.length],
                                contents[model_vertex_entry.start:model_vertex_entry.start + model_vertex_entry.length],

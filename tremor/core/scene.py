@@ -35,9 +35,9 @@ class Scene:
 
     def bind_scene_vao(self):
         glBindVertexArray(self.vao)
+
     def unbind_scene_vao(self):
         glBindVertexArray(0)
 
     def tick(self):
         pass
-
