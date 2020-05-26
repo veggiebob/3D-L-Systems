@@ -1,6 +1,5 @@
 from typing import List
 
-from tremor.graphics.element_renderer import ElementRenderer
 from tremor.graphics.mesh import Mesh
 from tremor.math.transform import Transform
 

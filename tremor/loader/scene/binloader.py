@@ -1,5 +1,6 @@
 from tremor.core.entity import Entity
 from tremor.core.scene import Scene
+from tremor.graphics import shaders
 from tremor.graphics.mesh import Mesh
 from tremor.loader import gltf_loader
 from tremor.loader.scene.scene_types import *
@@ -105,6 +106,7 @@ def load_scene_file(filename) -> Scene:
                 entity.mesh.is_scene_mesh = True
                 model_name = int(model_name.replace("*", ""))
                 entity.mesh.scene_model = model_chunk.items[model_name]
+                entity.mesh.set_shader(shaders.get_branched_program('default').get_program_from_flags([], ["t_texColor"]))
             else:
                 entity.mesh = gltf_loader.load_gltf("data/"+model_name+".glb")
                 entity.mesh.is_scene_mesh = False

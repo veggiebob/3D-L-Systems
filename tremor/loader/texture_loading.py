@@ -2,9 +2,61 @@ from typing import Dict
 
 import PIL, os
 import numpy as np
+from OpenGL import GL
 from PIL import Image
 
-from tremor.graphics.element_renderer import Texture
+
+from tremor.graphics.uniforms import gl_compressed_format
+
+class Texture:
+    index = 0
+
+    def __init__(self, data: np.ndarray, name: str, width: int = 1, height: int = 1, min_filter=GL.GL_LINEAR,
+                 mag_filter=GL.GL_LINEAR,
+                 clamp_mode=GL.GL_REPEAT, img_format=GL.GL_RGBA):
+        self.data = data
+        self.width = width if width > 0 else len(self.data[0])
+        self.height = height if height > 0 else len(self.data)
+        self.name = name
+        self.index = Texture.index
+        self.min_filter = min_filter
+        self.mag_filter = mag_filter
+        self.clamp_mode = clamp_mode
+        self.format = img_format
+        self.texture = None
+        self.init()
+        Texture.index += 1  # increment for other textures
+
+    def set_texture(self):
+        # https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glTexImage2D.xhtml
+        GL.glTexImage2D(
+            GL.GL_TEXTURE_2D,  # target
+            0,  # level
+            gl_compressed_format[self.format],  # internalformat
+            self.width,  # width
+            self.height,  # height
+            0,  # border
+            self.format,  # format
+            GL.GL_UNSIGNED_BYTE,  # type
+            self.data,  # pixels
+        )
+
+        GL.glGenerateMipmap(GL.GL_TEXTURE_2D)
+
+        GL.glTexParameterf(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MAG_FILTER, self.mag_filter)
+        GL.glTexParameterf(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_MIN_FILTER, self.min_filter)
+        GL.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_WRAP_S, self.clamp_mode)  # u
+        GL.glTexParameteri(GL.GL_TEXTURE_2D, GL.GL_TEXTURE_WRAP_T, self.clamp_mode)  # v
+
+    def bind(self):
+        GL.glActiveTexture(GL.GL_TEXTURE0)
+        GL.glBindTexture(GL.GL_TEXTURE_2D, self.texture)
+
+    def init(self):
+        self.texture = GL.glGenTextures(1)
+        self.bind()
+        # GL.glPixelStorei( GL.GL_UNPACK_ALIGNMENT, 1)
+        self.set_texture()
 
 TEXTURES:Dict[str, Texture] = {}
 TEXTURE_TABLE:Dict[int, Texture] = {}

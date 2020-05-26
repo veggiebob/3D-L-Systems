@@ -12,7 +12,7 @@ in vec3 fcolor;
 in vec3 fposition;
 in vec2 texCoord;
 
-#ifndef t_texColor
+#ifdef t_texColor
 uniform sampler2D texColor;//mat
 #endif
 #ifdef t_texNormal
@@ -62,7 +62,7 @@ void main()
     //l = surface-to-light vector
     //v = surface-to-camera vector
 
-    #ifndef t_texColor
+    #ifdef t_texColor
     vec4 t = texture2D(texColor, texCoord);
     #ifdef maskAlpha
     if (t.a < 0.1) discard;

@@ -12,8 +12,6 @@ from tremor.core.entity import Entity
 from tremor.graphics import shaders
 from tremor.graphics.mesh import Mesh
 from tremor.graphics.surfaces import MaterialTexture, TextureUnit, Material
-from tremor.loader import obj_loader
-from tremor.graphics.element_renderer import ElementRenderer, BufferSettings
 import numpy as np
 
 from tremor.util import configuration
@@ -221,6 +219,8 @@ def load_gltf(filepath) -> Mesh:
             byte_stride = vec * byte_size
 
         buff.optional_binder()(GL.GL_ARRAY_BUFFER) # if not bound already, bind with that target (that target is correct for all these attributes)
+        if location == -1:
+            continue
         GL.glEnableVertexAttribArray(location)
         GL.glBindBuffer(GL.GL_ARRAY_BUFFER, buff.buffer_id)
         GL.glVertexAttribPointer(location,

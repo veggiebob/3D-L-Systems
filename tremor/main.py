@@ -4,8 +4,6 @@ import time
 import OpenGL
 
 from tremor.core.scene import Scene
-from tremor.core.scene_geometry import Plane, Brush
-from tremor.graphics.element_renderer import Mesh, ElementRenderer
 from tremor.loader.scene import binloader
 from tremor.math.vertex_math import norm_vec3
 from tremor.core.entity import Entity
@@ -13,8 +11,6 @@ from tremor.core.entity import Entity
 OpenGL.USE_ACCELERATE = False
 
 import glfw
-
-from tremor.loader import gltf_loader, texture_loading
 from tremor.util import glutil, configuration
 from tremor.core import game_clock, console, key_input
 
