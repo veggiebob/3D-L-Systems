@@ -128,17 +128,17 @@ def keyboard_callback(window, key, scancode, action, mods):
     if key == glfw.KEY_LEFT_CONTROL or key == glfw.KEY_RIGHT_CONTROL:
         tform.translate_local([0, -magnitude, 0])
     if key == glfw.KEY_Q:
-        tform.rotate_local(matrix.quaternion_from_angles(np.array([magnitude, 0, 0])))
+        tform.rotate_local(matrix.quaternion_from_angles(np.array([0.1, 0, 0])))
     if key == glfw.KEY_E:
-        tform.rotate_local(matrix.quaternion_from_angles(np.array([-magnitude, 0, 0])))
+        tform.rotate_local(matrix.quaternion_from_angles(np.array([-0.1, 0, 0])))
     if key == glfw.KEY_A:
-        tform.rotate_local(matrix.quaternion_from_angles(np.array([0, magnitude, 0])))
+        tform.rotate_local(matrix.quaternion_from_angles(np.array([0, 0.1, 0])))
     if key == glfw.KEY_D:
-        tform.rotate_local(matrix.quaternion_from_angles(np.array([0, -magnitude, 0])))
+        tform.rotate_local(matrix.quaternion_from_angles(np.array([0, -0.1, 0])))
     if key == glfw.KEY_W:
-        tform.rotate_local(matrix.quaternion_from_angles(np.array([0, 0, -magnitude])))
+        tform.rotate_local(matrix.quaternion_from_angles(np.array([0, 0, -0.1])))
     if key == glfw.KEY_S:
-        tform.rotate_local(matrix.quaternion_from_angles(np.array([0, 0, magnitude])))
+        tform.rotate_local(matrix.quaternion_from_angles(np.array([0, 0, 0.1])))
     if key == glfw.KEY_R:
         tform.set_translation([0, 0, 0])
         tform.set_rotation([0, 0, 0, 1])

@@ -2,6 +2,7 @@ import sys
 import io
 from random import random
 from typing import List
+import argparse
 
 import numpy as np
 from tremor.core.scene_geometry import Brush, Plane
@@ -30,6 +31,8 @@ def parse_side(string):
         plane_points.append(np.array([point[1], point[2], point[0]], dtype='float32'))
     plane = Plane.plane_from_points_quake_style(plane_points)
     plane.texture_name = temp[15]
+    #0 0 0 0.1 0.1
+    plane.texture_attributes = (float(temp[19]), float(temp[20]), float(temp[16]), float(temp[17]), float(temp[18]))
     # todo load scale and offset and rotation, lol
     # todo and flags!
     return plane
@@ -53,20 +56,16 @@ def parse_map_file(filename):
         line = line.strip()
         if line.startswith("//"):
             continue
-        print(line)
         if line == "{":
             if not in_ent:
-                print("enter ent")
                 in_ent = True
             elif in_ent and not in_brush:
-                print("enter brush")
                 in_brush = True
             elif in_ent and in_brush:
                 raise Exception("bad")
             continue
         if line == "}":
             if in_brush:
-                print("exit brush")
                 in_brush = False
                 if "brushes" not in current_ent:
                     current_ent["brushes"] = []
@@ -74,9 +73,7 @@ def parse_map_file(filename):
                 brush_temp = []
             elif in_ent:
                 in_ent = False
-                print("exit ent")
                 entities.append(current_ent)
-                print(current_ent)
                 current_ent = {}
             elif not in_ent and not in_brush:
                 raise Exception("bad")
@@ -100,11 +97,108 @@ def format_ents(ents: List[dict]) -> str:
     return buf.getvalue()
 
 
-def main(filename):
-    print("compiling map " + filename)
-    output_file = open("out.tmb", "w+b")
+def load_texture_cache(datadir):
+    if str.endswith(datadir, "/") or str.endswith(datadir, "\\"):
+        cacheloc = datadir + "textures/texturecache.txt"
+    else:
+        cacheloc = datadir + "/textures/texturecache.txt"
+    cache_file = open(cacheloc, "rt", encoding='utf-8')
+    text_cache = {}
+    for line in cache_file:
+        line = line.strip()
+        if line == "":
+            continue
+        line = line.split(" ")
+        text_cache[line[0]] = (int(line[1]), int(line[2]))
+    return text_cache
+
+
+#xq yq zq -> yt zt xt
+#vec3_t	baseaxis[18] =
+#{
+#{0,0,1}, {1,0,0}, {0,-1,0},			// floor
+#{0,0,-1}, {1,0,0}, {0,-1,0},		// ceiling
+#{1,0,0}, {0,1,0}, {0,0,-1},			// west wall
+#{-1,0,0}, {0,1,0}, {0,0,-1},		// east wall
+#{0,1,0}, {1,0,0}, {0,0,-1},			// south wall
+#{0,-1,0}, {1,0,0}, {0,0,-1}			// north wall
+#};
+uv_proj_planes = np.array([
+    [0, 1, 0], #floor
+    [0, -1, 0], #ceiling
+    [0, 0, 1], #west wall
+    [0, 0, -1], #east wall
+    [1, 0, 0], #south wall
+    [-1, 0, 0], #north wall
+    [0, 0, 1], #floor_u
+    [-1, 0, 0], #floor_v
+    [0, 0, 1], #ceiling_u
+    [-1, 0, 0], #ceiling_v
+    [1, 0, 0], #west_u
+    [0, -1, 0], #west_v
+    [1, 0, 0], #east_u
+    [0, -1, 0], #east_v
+    [0, 0, 1], #south_u
+    [0, -1, 0], #south_v
+    [0, 0, 1], #north_u
+    [0, -1, 0], #north_v
+], dtype='float32')
+warned_angle = False
+#texture_attributes = (scale_x, scale_y, offset_x, offset_y, angle)
+def calculate_uv(texture_size, normal, point, texture_attributes):
+    global warned_angle
+    if(texture_attributes[4] != 0.0) and not warned_angle:
+        print("Warning: texture angles are currently unstable and may not produce good results!")
+        warned_angle = True
+    best_dot = 0
+    best = 0
+    for i in range(0, 6):
+        dot = uv_proj_planes[i].dot(normal)
+        if dot > best_dot:
+            best_dot = dot
+            best = i
+    u_axis = uv_proj_planes[6 + 2 * best]
+    v_axis = uv_proj_planes[7 + 2 * best]
+    angle = np.pi * texture_attributes[4] / 180.0
+    sin = np.sin(angle)
+    cos = np.cos(angle)
+    if not u_axis[0] == 0:
+        sv = 0
+    elif not u_axis[1] == 0:
+        sv = 1
+    else:
+        sv = 2
+    if not v_axis[0] == 0:
+        tv = 0
+    elif not v_axis[1] == 0:
+        tv = 1
+    else:
+        tv = 2
+    a = cos * u_axis[sv] - sin * u_axis[tv]
+    b = sin * u_axis[sv] + cos * u_axis[tv]
+    u_axis[sv] = a
+    u_axis[tv] = b
+    a = cos * v_axis[sv] - sin * v_axis[tv]
+    b = sin * v_axis[sv] + cos * v_axis[tv]
+    v_axis[sv] = a
+    v_axis[tv] = b
+    u_axis = u_axis * (1/texture_attributes[0])
+    v_axis = v_axis * (1/texture_attributes[1])
+    u = texture_attributes[2] + u_axis.dot(point)
+    v = texture_attributes[3] + v_axis.dot(point)
+    u /= texture_size[0]
+    v /= texture_size[1]
+    return u, v
+
+def main(args):
+    print("loading texture cache")
+    text_cache = load_texture_cache(args.datadir)
+    if args.verbose:
+        print(text_cache)
+    print("compiling map " + args.map)
+    output_file = open(args.output, "w+b")
     output_file.write(HEADER)
-    ents = parse_map_file(filename)
+    ents = parse_map_file(args.map)
     raw_verts = []
     raw_faces = []
     raw_mesh_verts = []
@@ -124,8 +218,10 @@ def main(filename):
                     raw_mesh_start = len(raw_mesh_verts)
                     raw_mesh_count = 0
                     for i in range(0, len(face)):
+                        u, v = calculate_uv(text_cache[brush.planes[j].texture_name], brush.planes[j].normal, face[i],
+                                            brush.planes[j].texture_attributes)
                         raw_verts.append(
-                            RawVertex(face[i], brush.planes[j].normal, np.array([random(), random()], dtype='float32')))
+                            RawVertex(face[i], brush.planes[j].normal, np.array([u, v], dtype='float32')))
                     for i in range(2, len(face)):
                         raw_mesh_verts.append(RawModelVertex(raw_vert_start))
                         raw_mesh_verts.append(RawModelVertex(raw_vert_start + i - 1))
@@ -140,7 +236,8 @@ def main(filename):
                         tex_idx = len(raw_textures)
                         raw_textures.append(RawTexture(bytes(brush.planes[j].texture_name, 'utf-8')))
                     raw_faces.append(
-                        RawFace(tex_idx, raw_vert_start, len(face), raw_mesh_start, raw_mesh_count, brush.planes[j].normal))
+                        RawFace(tex_idx, raw_vert_start, len(face), raw_mesh_start, raw_mesh_count,
+                                brush.planes[j].normal))
                     face_count += 1
             ent.pop("brushes")
             ent["model"] = "*" + str(len(raw_models))
@@ -171,4 +268,10 @@ def main(filename):
 
 
 if __name__ == "__main__":
-    main(sys.argv[1])
+    parser = argparse.ArgumentParser(description='Tremor map compiler')
+    parser.add_argument('--data-dir', dest='datadir', type=str, required=True)
+    parser.add_argument('--map', dest='map', type=str, required=True)
+    parser.add_argument('--output', dest='output', type=str, required=True)
+    parser.add_argument('-v', dest='verbose', type=bool, default=False)
+    args = parser.parse_args(sys.argv[1:])
+    main(args)

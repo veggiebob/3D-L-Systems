@@ -1,0 +1,7 @@
+defaults/default 998 998
+defaults/missing 40 40
+ignore/blender_uvs 1024 1024
+ignore/cat 512 512
+ignore/noise_512 512 512
+ignore/test_texture 1024 1024
+ignore/wood_gang 998 998

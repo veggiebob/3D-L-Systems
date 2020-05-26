@@ -178,7 +178,7 @@ class Texture:
 
     def __init__(self, data: np.ndarray, name: str, width: int = 1, height: int = 1, min_filter=GL.GL_LINEAR,
                  mag_filter=GL.GL_LINEAR,
-                 clamp_mode=GL.GL_CLAMP_TO_EDGE, img_format=GL.GL_RGBA):
+                 clamp_mode=GL.GL_REPEAT, img_format=GL.GL_RGBA):
         self.data = data
         self.width = width if width > 0 else len(self.data[0])
         self.height = height if height > 0 else len(self.data)
