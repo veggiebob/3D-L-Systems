@@ -1,8 +1,12 @@
 import sys
+import io
+from typing import List
+
 import numpy as np
-
-
 from tremor.core.scene_geometry import Brush, Plane
+import struct
+
+from tremor.loader.scene.scene_types import *
 
 
 def parse_side(string):
@@ -26,17 +30,18 @@ def parse_side(string):
     plane = Plane.plane_from_points_quake_style(plane_points)
     plane.texture_name = temp[15]
     # todo load scale and offset and rotation, lol
+    # todo and flags!
     return plane
-
 
 
 def parse_keyvalue(string):
     pair = string.split("\" \"", 1)
-    pair[0] = pair[0].replace("\"","",1)
-    pair[1] = "".join(pair[1].rsplit("\"",1))
+    pair[0] = pair[0].replace("\"", "", 1)
+    pair[1] = "".join(pair[1].rsplit("\"", 1))
     return pair
 
-def parse_file(filename):
+
+def parse_map_file(filename):
     file = open(filename, 'rt', encoding="utf-8")
     in_ent = False
     in_brush = False
@@ -83,12 +88,74 @@ def parse_file(filename):
             brush_temp.append(parse_side(line))
     return entities
 
-def main(filename):
-    ents = parse_file(filename)
+
+def format_ents(ents: List[dict]) -> str:
+    buf = io.StringIO()
     for ent in ents:
-        if ent["classname"] == "worldspawn": #special case, static geometry
+        buf.write("{\n")
+        for k, v in ent.items():
+            buf.write("\"" + str(k) + "\"" + " " + "\"" + str(v) + "\"\n")
+        buf.write("}\n")
+    return buf.getvalue()
+
+
+def main(filename):
+    print("compiling map " + filename)
+    output_file = open("out.tmb", "w+b")
+    output_file.write(HEADER)
+    ents = parse_map_file(filename)
+    raw_verts = []
+    raw_faces = []
+    raw_mesh_verts = []
+    raw_models = []
+    for ent in ents:
+        if "brushes" in ent:
+            face_start = len(raw_faces)
+            face_count = 0
             for brush in ent["brushes"]:
-                print(brush.get_vertices())
+                vertices = brush.get_vertices()
+                for j in range(len(vertices)):
+                    face = vertices[j]
+                    raw_vert_start = len(raw_verts)
+                    raw_mesh_start = len(raw_mesh_verts)
+                    raw_mesh_count = 0
+                    for i in range(0, len(face)):
+                        raw_verts.append(
+                            RawVertex(face[i], brush.planes[j].normal, np.array([0.0, 0.0], dtype='float32')))
+                    for i in range(2, len(face)):
+                        raw_mesh_verts.append(RawModelVertex(raw_vert_start))
+                        raw_mesh_verts.append(RawModelVertex(raw_vert_start + i - 1))
+                        raw_mesh_verts.append(RawModelVertex(raw_vert_start + i))
+                        raw_mesh_count += 3
+                    raw_faces.append(
+                        RawFace(-1, raw_vert_start, len(face), raw_mesh_start, raw_mesh_count, brush.planes[j].normal))
+                    face_count += 1
+            ent.pop("brushes")
+            ent["model"] = "*" + str(len(raw_models))
+            raw_models.append(RawModel(face_start, face_count))
+
+    file_loc = HEADER_SIZE + RawChunkDirectoryEntry.size() * NUMBER_OF_CHUNKS + 1
+    chunks = [
+        (VertexChunk(raw_verts), VERTEX_CHUNK_TYPE),
+        (ModelVertexChunk(raw_mesh_verts), MESH_VERTEX_CHUNK_TYPE),
+        (FaceChunk(raw_faces), FACE_CHUNK_TYPE),
+        (ModelChunk(raw_models), MODEL_CHUNK_TYPE),
+        (EntityChunk(bytes(format_ents(ents), 'utf-8')), ENTITY_CHUNK_TYPE)
+    ]
+    idx = 0
+    for c, t in chunks:
+        entry = RawChunkDirectoryEntry(int.from_bytes(t, byteorder='little'),
+                                       0,
+                                       0,
+                                       file_loc,
+                                       c.length_bytes())
+        output_file.seek(HEADER_SIZE + RawChunkDirectoryEntry.size() * idx)
+        output_file.write(entry.serialize())
+        output_file.seek(entry.start)
+        output_file.write(c.serialize())
+        file_loc = output_file.seek(0, io.SEEK_CUR) + 1  # 1 pad byte just because ;)
+        idx += 1
+
 
 if __name__ == "__main__":
     main(sys.argv[1])

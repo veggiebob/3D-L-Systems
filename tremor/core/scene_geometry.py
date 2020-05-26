@@ -138,3 +138,20 @@ class Brush:
                 norm = self.planes[j].normal
                 normals = np.append(normals, [norm, norm, norm])
         return tris, normals
+
+    def make_instanced_data(self):
+        vertices = self.get_vertices()
+        tris = np.empty(0, dtype='float32')
+        normals = np.empty(0, dtype='float32')
+
+        for j in range(len(vertices)):
+            face = vertices[j]
+            fan_point = face[0]
+            for i in range(2, len(face)):
+                v0 = face[i - 1]
+                v1 = face[i]
+                check_ccw(fan_point, v0, v1, self.planes[j])
+                tris = np.append(tris, [fan_point, v0, v1])
+                norm = self.planes[j].normal
+                normals = np.append(normals, [norm, norm, norm])
+        return tris, normals

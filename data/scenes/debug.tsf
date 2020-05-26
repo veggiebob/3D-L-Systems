@@ -1,8 +1,0 @@
-0
-debug
-{ resources
-lr test_object gltf data/gltf/test_gltf/Duck.glb
-}
-{ elements
-ce yum test_object 0 0 0 0 0 0 0.01 0.01 0.01
-}
