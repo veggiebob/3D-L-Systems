@@ -201,7 +201,9 @@ def main(args):
     print("compiling map " + args.map)
     output_file = open(args.output, "w+b")
     output_file.write(HEADER)
+    parse_time = time.time()
     ents = parse_map_file(args.map)
+    parse_time = time.time() - parse_time
     raw_verts = []
     raw_faces = []
     raw_mesh_verts = []
@@ -210,6 +212,8 @@ def main(args):
     raw_planes = []
     raw_brushes = []
     raw_brush_sides = []
+    generate_time = time.time()
+    int_time = 0
     for ent in ents:
         if "brushes" in ent:
             face_start = len(raw_faces)
@@ -226,7 +230,9 @@ def main(args):
                     raw_brush_sides.append(RawBrushSide(plane_start + plane_count, plane.surface))
                     plane_count += 1
                 raw_brushes.append(RawBrush(content_flag, brush_side_start, brush_side_count))
+                temp = time.time()
                 vertices = brush.get_vertices()
+                int_time += time.time() - temp
                 for j in range(len(vertices)):
                     if brush.planes[j].texture_name == "__TB_empty":
                         continue
@@ -259,7 +265,8 @@ def main(args):
             ent.pop("brushes")
             ent["model"] = "*" + str(len(raw_models))
             raw_models.append(RawModel(face_start, face_count))
-
+    generate_time = time.time() - generate_time
+    write_time = time.time()
     file_loc = HEADER_SIZE + RawChunkDirectoryEntry.size() * NUMBER_OF_CHUNKS + 1
     chunks = [
         (VertexChunk(raw_verts), VERTEX_CHUNK_TYPE),
@@ -286,6 +293,25 @@ def main(args):
         output_file.write(bla)
         file_loc = output_file.seek(0, io.SEEK_CUR) + 1  # 1 pad byte just because ;)
         idx += 1
+    write_time = time.time() - write_time
+    stats = [
+        "Vertices: %d" % (len(raw_verts)),
+        "ModelVertices: %d" % (len(raw_mesh_verts)),
+        "Faces: %d" % (len(raw_faces)),
+        "Models: %d" % (len(raw_models)),
+        "Textures: %d" % (len(raw_textures)),
+        "Planes: %d" % (len(raw_planes)),
+        "BrushSides: %d" % (len(raw_brush_sides)),
+        "Brushes: %d" % (len(raw_brushes)),
+        "Map parse time: %f s" % (parse_time),
+        "Map generate time: %f s" % (generate_time),
+        "Gen: Find intersections: %f s" % (int_time),
+        "Serialize+write time: %f s" % (write_time)
+
+    ]
+    print("==== STATS ====")
+    for stat in stats:
+        print(stat)
 
 
 if __name__ == "__main__":
