@@ -58,14 +58,17 @@ def load_scene_file(filename) -> Scene:
     model_chunk = ModelChunk.from_directory(contents, directory[MODEL_CHUNK_INDEX])
     entity_chunk = EntityChunk.from_directory(contents, directory[ENTITY_CHUNK_INDEX])
     texture_chunk = TextureChunk.from_directory(contents, directory[TEXTURE_CHUNK_INDEX])
+    plane_chunk = PlaneChunk.from_directory(contents, directory[PLANE_CHUNK_INDEX])
+    brush_side_chunk = BrushSideChunk.from_directory(contents, directory[BRUSH_SIDE_CHUNK_INDEX])
+    brush_chunk = BrushChunk.from_directory(contents, directory[BRUSH_CHUNK_INDEX])
     i = 0
-    for texture in texture_chunk.textures:
+    for texture in texture_chunk.items:
         load_texture_by_name(str(texture.name, 'utf-8').strip('\0'), i)
         i += 1
     scene = Scene(filename)
     scene.setup_scene_geometry(contents[vertex_entry.start:vertex_entry.start + vertex_entry.length],
                                contents[model_vertex_entry.start:model_vertex_entry.start + model_vertex_entry.length],
-                               face_chunk.faces)
+                               face_chunk.items)
     fake_ents = parse_ents(str(entity_chunk.contents, 'utf-8'))
     real_ents = []
     for ent in fake_ents:
@@ -85,7 +88,7 @@ def load_scene_file(filename) -> Scene:
                 entity.mesh = Mesh()
                 entity.mesh.is_scene_mesh = True
                 model_name = int(model_name.replace("*", ""))
-                entity.mesh.scene_model = model_chunk.models[model_name]
+                entity.mesh.scene_model = model_chunk.items[model_name]
         for k,v in ent.items():
             setattr(entity, k, v)
         real_ents.append(entity)

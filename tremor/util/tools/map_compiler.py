@@ -33,6 +33,8 @@ def parse_side(string):
     plane.texture_name = temp[15]
     #0 0 0 0.1 0.1
     plane.texture_attributes = (float(temp[19]), float(temp[20]), float(temp[16]), float(temp[17]), float(temp[18]))
+    plane.content = int(temp[21])
+    plane.surface = int(temp[22])
     # todo load scale and offset and rotation, lol
     # todo and flags!
     return plane
@@ -204,11 +206,25 @@ def main(args):
     raw_mesh_verts = []
     raw_models = []
     raw_textures = []
+    raw_planes = []
+    raw_brushes = []
+    raw_brush_sides = []
     for ent in ents:
         if "brushes" in ent:
             face_start = len(raw_faces)
             face_count = 0
             for brush in ent["brushes"]:
+                plane_start = len(raw_planes)
+                plane_count = 0
+                brush_side_start = len(raw_brush_sides)
+                brush_side_count = len(brush.planes)
+                content_flag = 0
+                for plane in brush.planes:
+                    raw_planes.append(RawPlane(plane.point, plane.normal))
+                    content_flag |= plane.content
+                    raw_brush_sides.append(RawBrushSide(plane_start + plane_count, plane.surface))
+                    plane_count += 1
+                raw_brushes.append(RawBrush(content_flag, brush_side_start, brush_side_count))
                 vertices = brush.get_vertices()
                 for j in range(len(vertices)):
                     if brush.planes[j].texture_name == "__TB_empty":
@@ -250,7 +266,10 @@ def main(args):
         (FaceChunk(raw_faces), FACE_CHUNK_TYPE),
         (ModelChunk(raw_models), MODEL_CHUNK_TYPE),
         (EntityChunk(bytes(format_ents(ents), 'utf-8')), ENTITY_CHUNK_TYPE),
-        (TextureChunk(raw_textures), TEXTURE_CHUNK_TYPE)
+        (TextureChunk(raw_textures), TEXTURE_CHUNK_TYPE),
+        (PlaneChunk(raw_planes), PLANE_CHUNK_TYPE),
+        (BrushSideChunk(raw_brush_sides), BRUSH_SIDE_CHUNK_TYPE),
+        (BrushChunk(raw_brushes), BRUSH_CHUNK_TYPE)
     ]
     idx = 0
     for c, t in chunks:
@@ -262,7 +281,8 @@ def main(args):
         output_file.seek(HEADER_SIZE + RawChunkDirectoryEntry.size() * idx)
         output_file.write(entry.serialize())
         output_file.seek(entry.start)
-        output_file.write(c.serialize())
+        bla = c.serialize()
+        output_file.write(bla)
         file_loc = output_file.seek(0, io.SEEK_CUR) + 1  # 1 pad byte just because ;)
         idx += 1
 
