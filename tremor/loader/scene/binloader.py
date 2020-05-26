@@ -1,6 +1,7 @@
 from tremor.core.entity import Entity
 from tremor.core.scene import Scene
 from tremor.graphics.mesh import Mesh
+from tremor.loader import gltf_loader
 from tremor.loader.scene.scene_types import *
 import numpy as np
 import io
@@ -82,6 +83,21 @@ def load_scene_file(filename) -> Scene:
             split[2] = float(split[2])
             entity.transform.set_translation(np.array(split, dtype='float32'))
             ent.pop("origin")
+        if "scale" in ent:
+            split = str.split(ent["scale"], " ")
+            split[0] = float(split[0])
+            split[1] = float(split[1])
+            split[2] = float(split[2])
+            entity.transform.set_scale(np.array(split, dtype='float32'))
+            ent.pop("scale")
+        if "rotation" in ent:
+            split = str.split(ent["rotation"], " ")
+            split[0] = float(split[0])
+            split[1] = float(split[1])
+            split[2] = float(split[2])
+            split[3] = float(split[3])
+            entity.transform.set_rotation(np.array(split, dtype='float32'))
+            ent.pop("rotation")
         if "model" in ent:
             model_name = ent["model"]
             if str.startswith(model_name, "*"): # internal model
@@ -89,6 +105,9 @@ def load_scene_file(filename) -> Scene:
                 entity.mesh.is_scene_mesh = True
                 model_name = int(model_name.replace("*", ""))
                 entity.mesh.scene_model = model_chunk.items[model_name]
+            else:
+                entity.mesh = gltf_loader.load_gltf("data/"+model_name+".glb")
+                entity.mesh.is_scene_mesh = False
         for k,v in ent.items():
             setattr(entity, k, v)
         real_ents.append(entity)

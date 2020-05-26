@@ -46,3 +46,9 @@
 "classname" "info_player_start"
 "origin" "-32 0 40"
 }
+// entity 2
+{
+"classname" "testing_testing"
+"origin" "64 128 64"
+"model" "gltf/trisout"
+}
