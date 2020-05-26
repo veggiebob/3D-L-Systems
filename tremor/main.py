@@ -208,7 +208,7 @@ def main():
         glfw.CONTEXT_VERSION_MINOR: 5,
         glfw.OPENGL_DEBUG_CONTEXT: glfw.TRUE,
         glfw.OPENGL_PROFILE: glfw.OPENGL_CORE_PROFILE,
-        glfw.SAMPLES: 4
+        glfw.SAMPLES: 4,
     }
 
     console.load_startup("startup.rc")

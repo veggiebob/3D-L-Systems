@@ -1,5 +1,6 @@
 import sys
 import io
+import time
 from random import random
 from typing import List
 import argparse
@@ -294,4 +295,6 @@ if __name__ == "__main__":
     parser.add_argument('--output', dest='output', type=str, required=True)
     parser.add_argument('-v', dest='verbose', type=bool, default=False)
     args = parser.parse_args(sys.argv[1:])
+    now = time.time()
     main(args)
+    print("Compilation took %f s" % (time.time() - now))

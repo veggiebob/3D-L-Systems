@@ -38,6 +38,7 @@ def render(scene: Scene):
     for element in scene.entities:
         if element.is_renderable() and element.mesh.is_scene_mesh:
             element.mesh.render_scene_mesh(scene, element.transform)
+
     for element in scene.entities:
         if element.is_renderable():
             if not element.mesh.is_scene_mesh:
