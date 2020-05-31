@@ -34,13 +34,7 @@ def render(scene: Scene):
     light_pos = [np.sin(framecount * 0.01) * 5, np.cos(framecount * 0.01) * 5, np.cos(framecount * 0.001)]
     update_all_uniform('light_pos', light_pos)
 
-    scene.bind_scene_vao()
-    for element in scene.entities:
-        if element.is_renderable() and element.mesh.is_scene_mesh:
-            element.mesh.render_scene_mesh(scene, element.transform)
-
-    for element in scene.entities:
+    for element in scene.elements:
         if element.is_renderable():
-            if not element.mesh.is_scene_mesh:
-                element.mesh.render(element.transform)
+            element.mesh.render(element.transform)
     framecount += 1

@@ -17,7 +17,6 @@ class Mesh:
         self.vaoID = GL.glGenVertexArrays(1)
         self.program:MeshProgram = shaders.get_default_program()
         self.gl_program = self.program.program
-        self.is_scene_mesh = False
         self.scene_model = None
         self.material:Material = self.program.create_material()
         self.tri_count = 0

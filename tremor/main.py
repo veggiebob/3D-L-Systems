@@ -239,7 +239,7 @@ def main():
     #     }
     # })
 
-    current_scene = binloader.load_scene_file("data/scenes/out.tmb")
+    current_scene = Scene('main')
     cam = Entity()
     cam.transform.set_translation(np.array([64, 64, 64]))
     current_scene.active_camera = cam
