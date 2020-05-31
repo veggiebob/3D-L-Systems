@@ -210,6 +210,7 @@ def load_gltf(filepath) -> Mesh:
         if val is None: continue
         if att in unsupported:
             print(f'WARNING: {att} in model {gltf_mesh.name} is currently unsupported and may cause problems in rendering.')
+            continue
         name = att.lower()
         acc = obj.accessors[val]
         location = GL.glGetAttribLocation(mesh.gl_program, name)
