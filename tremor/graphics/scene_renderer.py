@@ -36,5 +36,7 @@ def render(scene: Scene):
 
     for element in scene.elements:
         if element.is_renderable():
-            element.mesh.render(element.transform)
+            if element.name == 'LIGHT':
+                element.transform.set_translation(light_pos)
+        element.render()
     framecount += 1

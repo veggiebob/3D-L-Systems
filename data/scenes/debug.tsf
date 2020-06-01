@@ -1,6 +1,14 @@
 0
 debug
 { resources
+<<<<<<< HEAD
+lr cube gltf data/gltf/test_gltf/better_uvs_cube.glb
+lr avocado gltf data/gltf/test_gltf/Avocado.glb
+}
+{ elements
+ce yum cube -1.5 0 0 0 0 0 1 1 1
+ce yumyum avocado 0 5 0 0 0 0 50 50 50
+=======
 lr test_object gltf data/gltf/test_gltf/Duck.glb
 lr avocado gltf data/gltf/test_gltf/Avocado.glb
 lr cube gltf data/gltf/test_gltf/better_uvs_cube.glb
@@ -9,4 +17,5 @@ lr light gltf data/gltf/lightbulb.glb
 { elements
 ce yum avocado 0 0 0 0 0 0 50 50 50
 ce LIGHT light 0 0 0 0 0 0 0.4 0.4 0.4
+>>>>>>> master
 }

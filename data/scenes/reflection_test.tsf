@@ -1,0 +1,9 @@
+0
+debug
+{ resources
+lr cube gltf data/gltf/test_gltf/better_uvs_cube.glb
+lr map gltf data/gltf/test_gltf/reflection_test.glb
+}
+{ elements
+ce yum map 0 0 0 0 0 0 1 1 1
+}

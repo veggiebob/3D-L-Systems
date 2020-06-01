@@ -1,14 +1,8 @@
-from typing import Dict, List
-
 import OpenGL.GL as GL
-import pygltflib
 
 from tremor.graphics import shaders
 from tremor.graphics.shaders import MeshProgram
 from tremor.graphics.surfaces import Material
-import numpy as np
-
-from tremor.loader.texture_loading import TEXTURE_TABLE
 from tremor.math.transform import Transform
 
 
@@ -40,7 +34,8 @@ class Mesh:
     def find_shader (self, name:str):
         self.program = shaders.query_branched_program(name, self.material)
         self.gl_program = self.program.program
-
+    def use_program (self):
+        GL.glUseProgram(self.gl_program)
     def render(self, transform: Transform):
         self.bind_vao()
         GL.glUseProgram(self.gl_program)
@@ -59,27 +54,3 @@ class Mesh:
             GL.glDrawArrays(GL.GL_TRIANGLES,
                             0,
                             self.tri_count)
-    def render_scene_mesh(self, scene, transform: Transform):
-        GL.glUseProgram(self.gl_program)
-        self.program.update_uniform('modelViewMatrix',
-                                    [1, GL.GL_FALSE, transform.to_model_view_matrix_global().transpose()])
-        #self.program.use_material(self.material)
-        bound_tex = -1
-        #list of (texture_to_bind, start[], count[])
-        drawcalls = {}
-        for i in range(self.scene_model.face_start, self.scene_model.face_start + self.scene_model.face_count):
-            face = scene.faces[i]
-            tex = TEXTURE_TABLE[face.textureidx]
-            if tex in drawcalls:
-                drawcalls[tex][0].append((face.meshvertstart * 4))
-                drawcalls[tex][1].append(face.meshvertcount)
-                drawcalls[tex][2][0] = drawcalls[tex][2][0] + 1
-            else:
-                drawcalls[tex] = ([(face.meshvertstart * 4)], [face.meshvertcount], [1])
-        for tex, call in drawcalls.items():
-            tex.bind()
-            GL.glMultiDrawElements(GL.GL_TRIANGLES,
-                                   call[1],
-                                   GL.GL_UNSIGNED_INT,
-                                   np.array(call[0], dtype=np.intp),
-                                   call[2][0])

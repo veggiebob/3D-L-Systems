@@ -1,23 +1,21 @@
 from random import random
-import time
 
 import OpenGL
 
-from tremor.core.scene import Scene
-from tremor.loader.scene import binloader
-from tremor.math.vertex_math import norm_vec3
 from tremor.core.entity import Entity
+from tremor.core.scene import Scene
+from tremor.math.vertex_math import norm_vec3
 
 OpenGL.USE_ACCELERATE = False
 
 import glfw
+from tremor.loader import scene_loader
 from tremor.util import glutil, configuration
 from tremor.core import game_clock, console, key_input
 
 from tremor.graphics.shaders import *
 from tremor.graphics.uniforms import *
 import sys
-import glm
 from tremor.graphics import screen_utils, scene_renderer
 from tremor.math import matrix
 
@@ -238,10 +236,11 @@ def main():
     #         'clamp_mode': GL_REPEAT
     #     }
     # })
-
-    current_scene = Scene('main')
-    cam = Entity()
-    cam.transform.set_translation(np.array([64, 64, 64]))
+    scene_file = open("data/scenes/reflection_test.tsf", "r", encoding="utf-8")
+    current_scene = scene_loader.load_scene(scene_file)
+    cam = Entity("camera")
+    cam.transform.set_translation([3, 3, 3])
+    cam.transform.set_rotation(matrix.quaternion_from_angles([0, np.pi/2, 0]))
     current_scene.active_camera = cam
 
     fps_clock.start()

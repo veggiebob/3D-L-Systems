@@ -1,8 +1,4 @@
 #version 330
-#define t_texColor
-#define t_texNormal
-#define t_texMetallic
-#define maskAlpha
 //#define clippingPlane
 
 out vec4 outputColor;
@@ -11,20 +7,11 @@ in vec4 cameraPosition;
 in vec3 fnormal;
 in vec3 fcolor;
 in vec3 fposition;
-in vec2 texCoord;
 //#ifdef clippingPlane
 //in float planeDistance;
 //#endif
 
-#ifdef t_texColor
-uniform sampler2D texColor;//mat
-#endif
-#ifdef t_texNormal
-uniform sampler2D texNormal;//mat
-#endif
-#ifdef t_texMetallic
-uniform sampler2D texMetallic;//mat
-#endif
+uniform vec3 baseColor;//mat
 
 //globals
 uniform vec3 light_pos;
@@ -68,31 +55,12 @@ void main()
 //    #ifdef clippingPlane
 //    if (planeDistance < 0) discard; // discard pixel if it's on the wrong side
 //    #endif
-    #ifdef t_texColor
-    vec4 t = texture2D(texColor, texCoord);
-    #ifdef maskAlpha
-    if (t.a < 0.1) discard;
-    #endif
-    #else
     vec4 t = vec4(fcolor, 1.);
-    #endif
-    vec3 col = t.rgb * ambient;
-    #ifdef t_texNormal
-    vec3 nn = (texture2D(texNormal, texCoord).xyz - 0.5)*2;
-    vec3 normal = map_direction(vec3(0.,0.,1.), nn, fnormal);
-    #else
+    vec3 col = t.rgb * ambient * baseColor;
     vec3 normal = normalize(fnormal);
-    #endif
     float diffuse_weight, specular_weight;
-    #ifdef t_texMetallic
-    //g is roughness, b is metallic
-    vec4 metallic = texture2D(texMetallic, texCoord);
-    diffuse_weight = metallic.g;
-    specular_weight = metallic.b;
-    #else
     diffuse_weight = 0.4;
     specular_weight = 0.6;
-    #endif
     vec3 light_dir = normalize(light_pos - fposition);
     float diffuse = max(dot(light_dir, normal), 0.);
     float specular = pow(max(dot(look, -reflect(normal, light_dir)), 0.), 16.);

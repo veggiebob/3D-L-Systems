@@ -1,11 +1,11 @@
 import configparser
+import re as regex
 from typing import List
 
 from OpenGL.GL.shaders import ShaderCompilationError
 
 from tremor.graphics.surfaces import Material
 from tremor.graphics.uniforms import *
-import re as regex
 
 PROGRAMS: Dict[str, 'MeshProgram'] = {}
 BRANCHED_PROGRAMS: Dict[str, 'BranchedProgram'] = {}
@@ -33,7 +33,7 @@ def get_default_program() -> 'MeshProgram':
 def get_programs() -> List['MeshProgram']:
     all_programs = []
     for b in BRANCHED_PROGRAMS.values():
-        all_programs += b.programs
+        all_programs += b.get_unordered_programs()
     # print(f'there are {len(all_programs)} programs') # todo: minimize this. Uncomment this to see how bad your code is
     return all_programs
 
@@ -405,11 +405,14 @@ class FlaggedShader:
     def from_shader_source (shad_source:str, shader_type) -> 'FlaggedShader':
         expr_define = regex.compile(r'#define\s+([_\w]+)\s*$')
         expr_ver = regex.compile(r'#version\s+(\d+)\s*$')
+        expr_comment = regex.compile(r'^\s*//')
         lines = shad_source.split('\n')
         clean_lines = []
         flags = []
         version = None
         for l in lines:
+            if expr_comment.match(l) is not None:
+                continue
             append = True
             v = expr_ver.match(l)
             if v is not None:
@@ -486,6 +489,9 @@ class BranchedProgram:
     """
     This class uses a FlaggedShader for a VERTEX and FRAGMENT shader
     It compiles every program for every branched combination of the two together
+
+    HOWEVER, if both shaders use a same #define but the state being compiled is different on each shader, exclude
+    for example, vertex might define clippingDistance, and then fragment will not `in float clippingDistance;`
     """
     def __init__ (self, name:str, flagged_vertex:FlaggedShader, flagged_fragment:FlaggedShader):
         self.name = name
@@ -497,13 +503,34 @@ class BranchedProgram:
 
         frag_shad = self.flagged_fragment.spawn_all_shader_packages()
         vert_shad = self.flagged_vertex.spawn_all_shader_packages()
-        for v_flag in range(self.flagged_vertex.flags.num_states()):
-            for f_flag in range(self.flagged_fragment.flags.num_states()):
-                self.programs.append(ShaderPackage.create_mesh_program(vert_shad[v_flag], frag_shad[f_flag], name))
-
+        for v_state in range(self.flagged_vertex.flags.num_states()):
+            for f_state in range(self.flagged_fragment.flags.num_states()):
+                aa_frag_flags = self.flagged_fragment.flags.decompose_state_as_dict(f_state)
+                aa_vert_flags = self.flagged_vertex.flags.decompose_state_as_dict(v_state)
+                if self.compatible(v_state, f_state):
+                    self.programs.append(ShaderPackage.create_mesh_program(vert_shad[v_state], frag_shad[f_state], f'{name}{v_state}-{f_state}'))
+                else:
+                    self.programs.append(None)
+    def compatible (self, v_state, f_state):
+        v_d = self.flagged_vertex.flags.decompose_state_as_dict(v_state)
+        f_d = self.flagged_fragment.flags.decompose_state_as_dict(f_state)
+        for vattr,v in v_d.items():
+            if vattr in f_d.keys() and f_d[vattr] != v:
+                return False
+        for fattr,v in f_d.items():
+            if fattr in v_d.keys() and v_d[fattr] != v:
+                return False
+        return True
+    def get_unordered_programs (self) -> List[MeshProgram]:
+        return [p for p in self.programs if p is not None]
     def get_program (self, vertex_state:int, fragment_state:int) -> MeshProgram:
         v_state = vertex_state << self.flagged_fragment.flags.num_flags()
-        return self.programs[v_state|fragment_state] # should be the same as + if I did it right
+        index = v_state|fragment_state  # should be the same as + if I did it right
+        if self.programs[index] is None:
+            raise Exception(f"{index} or {self.flagged_vertex.flags.decompose_state_as_dict(vertex_state)} \
+            & {self.flagged_fragment.flags.decompose_state_as_dict(fragment_state)} \
+            is an invalid shader combination. How did you do it?")
+        return self.programs[index]
 
     def get_program_from_flags (self, vertex_flags:List[str], fragment_flags:List[str]) -> MeshProgram:
         v_state = self.flagged_vertex.flags.combine_flags(*vertex_flags)
@@ -527,6 +554,12 @@ class FlaggedStates:
             index += 1
             setattr(self, s, 2 ** index)
             self._keyed_flags[s] = 2 ** index
+
+    def decompose_state_as_dict (self, state:int) -> Dict[str, bool]:
+        d = {k:False for k in self._keyed_flags.keys()} # copy the dict, assuming false for each
+        for entry in self.decompose_state(state):
+            d[entry] = True
+        return d
 
     def decompose_state (self, state:int) -> List[str]: # flags
         include = []
