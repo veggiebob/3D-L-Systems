@@ -236,7 +236,7 @@ def main():
     #         'clamp_mode': GL_REPEAT
     #     }
     # })
-    scene_file = open("data/scenes/debug.tsf", "r", encoding="utf-8")
+    scene_file = open("data/scenes/reflection_test.tsf", "r", encoding="utf-8")
     current_scene = scene_loader.load_scene(scene_file)
     cam = Entity("camera")
     cam.transform.set_translation([3, 3, 3])

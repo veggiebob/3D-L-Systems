@@ -1,5 +1,6 @@
 #version 330
 //#define clippingPlane
+#define useVertexColor
 
 out vec4 outputColor;
 
@@ -11,7 +12,7 @@ in vec3 fposition;
 //in float planeDistance;
 //#endif
 
-uniform vec3 baseColor;//mat
+uniform vec4 baseColor;//mat
 
 //globals
 uniform vec3 light_pos;
@@ -55,8 +56,12 @@ void main()
 //    #ifdef clippingPlane
 //    if (planeDistance < 0) discard; // discard pixel if it's on the wrong side
 //    #endif
+    #ifdef useVertexColor
     vec4 t = vec4(fcolor, 1.);
-    vec3 col = t.rgb * ambient * baseColor;
+    #else
+    vec4 t = vec4(baseColor);
+    #endif
+    vec3 col = t.rgb * ambient;
     vec3 normal = normalize(fnormal);
     float diffuse_weight, specular_weight;
     diffuse_weight = 0.4;

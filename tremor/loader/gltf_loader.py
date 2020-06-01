@@ -1,3 +1,4 @@
+import copy
 import ctypes
 from io import BytesIO
 from typing import Dict, List, Callable
@@ -203,13 +204,15 @@ def load_gltf(filepath) -> List[Entity]:
             mesh.material = None
             materialIdx = obj.meshes[0].primitives[0].material
             if materialIdx is not None:
-                mesh.material = materials[materialIdx]
+                mesh.material = copy.deepcopy(materials[materialIdx])
             if mesh.material is None:
                 mesh.set_shader(shaders.get_default_program())
                 mesh.material = mesh.program.create_material()
                 print('WARNING: you used a default program!')
             else:
                 if len(mesh.material.get_all_mat_textures()) == 0 or primitive.attributes.TEXCOORD_0 is None and primitive.attributes.TEXCOORD_1 is None:
+                    if primitive.attributes.COLOR_0 is not None:
+                        mesh.material.add_flag('useVertexColor')
                     mesh.find_shader('flat_shaded')
                     print('using a flat shader')
                 else:

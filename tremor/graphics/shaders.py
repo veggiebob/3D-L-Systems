@@ -224,7 +224,9 @@ class ShaderInput:
             typ = i[0]
             name = i[1]
             depend = i_dependencies[index].split(',')
-
+            for d in depend:
+                if len(d)==0 or d == '':
+                    depend.remove(d) # stupid cleaning stuff
             is_texture = False
             if typ in u_type_default_args:
                 default_args = u_type_default_args[typ]
@@ -236,6 +238,7 @@ class ShaderInput:
                 default_value = [0]
                 if typ=='sampler2D':
                     is_texture=True
+
             shader_inputs.append(ShaderInput(name, typ, default_args, default_value, is_texture, depend))
         return shader_inputs
     def __init__ (self, name:str, u_type='float', default_args=[], value:list=[0.0], is_texture=False, dependencies:List[str]=[]):
@@ -356,7 +359,7 @@ class MeshProgram:
                     mat_tex.texture.index
                 )
             else:
-                inp.set_value(mat.get_property(inp.name))
+                inp.set_value(mat.get_property(inp.name)) # unfortunately this assumes the correct type matchup. todo install type matching errors with detailed error messages
                 self.update_uniform(inp.name, inp.get_uniform_args())
 
 class ShaderPackage:

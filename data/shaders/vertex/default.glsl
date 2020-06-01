@@ -39,7 +39,7 @@ void main()
     fposition = vec3(modelViewMatrix * vec4(position, 1.));
     gl_Position = projectionMatrix * viewMatrix * modelViewMatrix * vec4(position, 1.);
     cameraPosition = gl_Position;
-    fcolor = vec3(1.0, 1.0, 1.0);
+    fcolor = color_0;
     texCoord = texcoord_0;
     texCoord2 = texcoord_1;
 //    #ifdef clippingPlane
