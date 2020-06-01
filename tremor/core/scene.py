@@ -1,6 +1,8 @@
 from typing import List
 
 from tremor.core.entity import Entity
+from tremor.graphics.vbo import VertexBufferObject
+from OpenGL.GL import *
 
 
 class Scene:

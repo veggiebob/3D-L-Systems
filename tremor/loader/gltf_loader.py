@@ -11,6 +11,7 @@ from tremor.core.entity import Entity
 from tremor.graphics import shaders
 from tremor.graphics.mesh import Mesh
 from tremor.graphics.surfaces import MaterialTexture, TextureUnit, Material
+import numpy as np
 from tremor.util import configuration
 
 GLTF = pygltflib.GLTF2()
@@ -183,6 +184,7 @@ def load_gltf(filepath) -> List[Entity]:
     entities:List[Entity] = []
     for n in obj.nodes:
         if n.mesh is None: continue
+        print(n.name)
         ent = Entity(n.name)
         # do the mesh, using only the first primitive
         mesh = Mesh()

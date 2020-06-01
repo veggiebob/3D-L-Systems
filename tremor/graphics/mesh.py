@@ -11,15 +11,17 @@ class Mesh:
         self.vaoID = GL.glGenVertexArrays(1)
         self.program:MeshProgram = shaders.get_default_program()
         self.gl_program = self.program.program
+        self.scene_model = None
         self.material:Material = self.program.create_material()
         self.tri_count = 0
-
         # elemented
         self.element = False # is elemented
         self.elementBufID = 0
         self.elementInfo = None
 
     def bind_vao(self):
+        if self.vaoID is None:
+            self.vaoID = GL.glGenVertexArrays(1)
         GL.glBindVertexArray(self.vaoID)
 
     def unbind_vao(self):

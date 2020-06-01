@@ -9,7 +9,6 @@ from tremor.math.vertex_math import norm_vec3
 OpenGL.USE_ACCELERATE = False
 
 import glfw
-
 from tremor.loader import scene_loader
 from tremor.util import glutil, configuration
 from tremor.core import game_clock, console, key_input
@@ -105,7 +104,7 @@ def keyboard_callback(window, key, scancode, action, mods):
             return
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL if wireframe else GL_LINE)
         wireframe = not wireframe
-    magnitude = 0.1
+    magnitude = 10
     if mods == 1:
         tform = current_scene.active_camera.transform
     else:
@@ -123,17 +122,17 @@ def keyboard_callback(window, key, scancode, action, mods):
     if key == glfw.KEY_LEFT_CONTROL or key == glfw.KEY_RIGHT_CONTROL:
         tform.translate_local([0, -magnitude, 0])
     if key == glfw.KEY_Q:
-        tform.rotate_local(matrix.quaternion_from_angles(np.array([magnitude, 0, 0])))
+        tform.rotate_local(matrix.quaternion_from_angles(np.array([0.1, 0, 0])))
     if key == glfw.KEY_E:
-        tform.rotate_local(matrix.quaternion_from_angles(np.array([-magnitude, 0, 0])))
+        tform.rotate_local(matrix.quaternion_from_angles(np.array([-0.1, 0, 0])))
     if key == glfw.KEY_A:
-        tform.rotate_local(matrix.quaternion_from_angles(np.array([0, magnitude, 0])))
+        tform.rotate_local(matrix.quaternion_from_angles(np.array([0, 0.1, 0])))
     if key == glfw.KEY_D:
-        tform.rotate_local(matrix.quaternion_from_angles(np.array([0, -magnitude, 0])))
+        tform.rotate_local(matrix.quaternion_from_angles(np.array([0, -0.1, 0])))
     if key == glfw.KEY_W:
-        tform.rotate_local(matrix.quaternion_from_angles(np.array([0, 0, -magnitude])))
+        tform.rotate_local(matrix.quaternion_from_angles(np.array([0, 0, -0.1])))
     if key == glfw.KEY_S:
-        tform.rotate_local(matrix.quaternion_from_angles(np.array([0, 0, magnitude])))
+        tform.rotate_local(matrix.quaternion_from_angles(np.array([0, 0, 0.1])))
     if key == glfw.KEY_R:
         tform.set_translation([0, 0, 0])
         tform.set_rotation([0, 0, 0, 1])
@@ -203,7 +202,7 @@ def main():
         glfw.CONTEXT_VERSION_MINOR: 5,
         glfw.OPENGL_DEBUG_CONTEXT: glfw.TRUE,
         glfw.OPENGL_PROFILE: glfw.OPENGL_CORE_PROFILE,
-        glfw.SAMPLES: 4
+        glfw.SAMPLES: 4,
     }
 
     console.load_startup("startup.rc")
