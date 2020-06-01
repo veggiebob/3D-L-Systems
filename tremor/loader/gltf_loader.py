@@ -200,7 +200,6 @@ def load_gltf(filepath) -> Mesh:
             else:
                 mesh.find_shader('default')
 
-    mesh.use_program()
     # do vbos
     attrs = 'COLOR_0,JOINTS_0,NORMAL,POSITION,TANGENT,TEXCOORD_0,TEXCOORD_1,WEIGHTS_0'.split(',')
     # attrs = 'COLOR_0,NORMAL,POSITION,TEXCOORD_0'.split(',')
