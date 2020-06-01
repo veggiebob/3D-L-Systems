@@ -202,7 +202,7 @@ def load_gltf(filepath) -> List[Entity]:
 
             # do materials # todo: create materials, then apply to meshes
             mesh.material = None
-            materialIdx = obj.meshes[0].primitives[0].material
+            materialIdx = gltf_mesh.primitives[0].material
             if materialIdx is not None:
                 mesh.material = copy.deepcopy(materials[materialIdx])
             if mesh.material is None:
@@ -270,8 +270,8 @@ def load_gltf(filepath) -> List[Entity]:
 def get_default_sampler() -> pygltflib.Sampler:
     # print('created default sampler')
     sampler = pygltflib.Sampler()
-    sampler.wrapS = pygltflib.CLAMP_TO_EDGE  # U # REPEAT
-    sampler.wrapT = pygltflib.CLAMP_TO_EDGE  # V
+    sampler.wrapS = pygltflib.REPEAT  # U # CLAMP_TO_EDGE
+    sampler.wrapT = pygltflib.REPEAT  # V
     sampler.minFilter = pygltflib.LINEAR_MIPMAP_LINEAR  # pygltflib.LINEAR
     sampler.magFilter = pygltflib.LINEAR # this is correct!
     return sampler
