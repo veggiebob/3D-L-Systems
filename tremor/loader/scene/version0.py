@@ -79,14 +79,17 @@ def load_scene0(name, data_stream) -> Scene:
             loader = load_gltf
         else:
             loader = None
-        # i'm not entirely happy with the loader producing SceneElements, todo come up with a different approach
-        loaded_mesh = loader(raw_res["location"])
+        loaded_entities = loader(raw_res["location"])
         parent_elem = Entity(raw_elem["name"])
         parent_elem.transform.set_translation(raw_elem["translation"])
         parent_elem.transform.set_rotation(matrix.quaternion_from_angles(raw_elem["rotation_angles"], degrees=True))
         parent_elem.transform.set_scale(raw_elem["scale"])
-        parent_elem.mesh = loaded_mesh
+        parent_elem.mesh = None
+        for e in loaded_entities:
+            e.parent = parent_elem
+            parent_elem.children.append(e)
         scene.elements.append(parent_elem)
+        #scene.elements += loaded_entities
     return scene
 
 @unique

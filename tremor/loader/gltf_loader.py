@@ -7,6 +7,7 @@ import pygltflib
 from OpenGL import GL
 from PIL import Image as PIL_Image
 
+from tremor.core.entity import Entity
 from tremor.graphics import shaders
 from tremor.graphics.mesh import Mesh
 from tremor.graphics.surfaces import MaterialTexture, TextureUnit, Material
@@ -131,14 +132,14 @@ class UnboundBufferCollection:
     def _sort (self):
         self._buffers.sort(key=lambda buff:buff.buffer_view_index)
 
-def load_gltf(filepath) -> Mesh:
+def load_gltf(filepath) -> List[Entity]:
     obj = glb_object(filepath)
     # if not len(obj.meshes) == 1:
     #     raise Exception("only 1 mesh")
     # if not len(obj.meshes[0].primitives) == 1:
     #     raise Exception("only 1 primitive")
-    mesh = Mesh() # todo: multiple meshes w/ primitives
-    mesh.bind_vao()
+
+    # initialize gltf stuff
     blob = np.frombuffer(obj.binary_blob(), dtype='uint8')
     obj.destroy_binary_blob()
     buffers = UnboundBufferCollection()
@@ -147,101 +148,119 @@ def load_gltf(filepath) -> Mesh:
         data_slice = blob[buffer_view.byteOffset:buffer_view.byteOffset + buffer_view.byteLength]
         buffers.add_buffer(UnboundBuffer(buffer_view, data_slice, index=i))
 
-    # for each primitive in each mesh . . .
-    gltf_mesh = obj.meshes[0]
-    primitive = gltf_mesh.primitives[0]
-    index_acc = obj.accessors[primitive.indices] if primitive.indices is not None else None
-    if index_acc is not None:
-        mesh.element = True
-        mesh.elementInfo = index_acc
-        index_buff:UnboundBuffer = buffers[index_acc.bufferView]
-        index_buff.optional_binder()(GL.GL_ELEMENT_ARRAY_BUFFER)
-        mesh.elementBufID = index_buff.buffer_id
-
-        # do materials # todo: create materials, then apply to meshes
-        mesh.material = None
-        materialIdx = obj.meshes[0].primitives[0].material
-        if materialIdx is not None:
-            mat = obj.materials[materialIdx]
-            mesh.material = Material.from_gltf_material(mat)
-            if not mat.alphaMode == 'OPAQUE':
-                raise Exception("Special case! Discard model, and find the nearest exit.")
-
-            # thus, we can safely ignore alpha information
-            # lots of annoying cases can be specified, if a model looks weird, it's because those are being discarded
-            def get_texture(index) -> TextureUnit:
-                tex = obj.textures[index]
-                img = obj.images[tex.source]
-                data = buffers[img.bufferView].data
-                if tex.sampler is not None:
-                    sampler = clean_sampler(obj.samplers[tex.sampler])
-                else:
-                    sampler = get_default_sampler()
-                return load_gltf_image(img, data, sampler)
-
-            # todo: these (images?) use more properties like 'scale' and 'texCoord' but we ignore those, so far
-            color = mat.pbrMetallicRoughness.baseColorTexture
-            normal = mat.normalTexture
-            metallic = mat.pbrMetallicRoughness.metallicRoughnessTexture
-            if color is not None:
-                mesh.material.set_texture(get_texture(color.index), MaterialTexture.COLOR)
-            if normal is not None:
-                mesh.material.set_texture(get_texture(normal.index), MaterialTexture.NORMAL)
-            if metallic is not None:
-                mesh.material.set_texture(get_texture(metallic.index), MaterialTexture.METALLIC)
-        if mesh.material is None:
-            mesh.set_shader(shaders.get_default_program())
-            mesh.material = mesh.program.create_material()
-            print('WARNING: you used a default program!')
+    def get_texture(index) -> TextureUnit:
+        tex = obj.textures[index]
+        img = obj.images[tex.source]
+        data = buffers[img.bufferView].data
+        if tex.sampler is not None:
+            sampler = clean_sampler(obj.samplers[tex.sampler])
         else:
-            if len(mesh.material.get_all_mat_textures()) == 0 or primitive.attributes.TEXCOORD_0 is None and primitive.attributes.TEXCOORD_1 is None:
-                mesh.find_shader('flat_shaded')
-                print('using a flat shader')
+            sampler = get_default_sampler()
+        return load_gltf_image(img, data, sampler)
+
+    materials = []
+    for material in obj.materials:
+        mat = Material.from_gltf_material(material)
+        if not material.alphaMode == 'OPAQUE':
+            raise Exception("Special case! Discard model, and find the nearest exit.")
+        color = material.pbrMetallicRoughness.baseColorTexture
+        normal = material.normalTexture
+        metallic = material.pbrMetallicRoughness.metallicRoughnessTexture
+        if color is not None:
+            mat.set_texture(get_texture(color.index), MaterialTexture.COLOR)
+        if normal is not None:
+            mat.set_texture(get_texture(normal.index), MaterialTexture.NORMAL)
+        if metallic is not None:
+            mat.set_texture(get_texture(metallic.index), MaterialTexture.METALLIC)
+
+        # add extras just in case
+        for prop,value in material.extras.items():
+            mat.set_property(prop, value)
+
+        materials.append(mat)
+
+    # for each primitive in each mesh . . .
+    entities:List[Entity] = []
+    for n in obj.nodes:
+        if n.mesh is None: continue
+        ent = Entity(n.name)
+        # do the mesh, using only the first primitive
+        mesh = Mesh()
+        mesh.bind_vao()
+        gltf_mesh = obj.meshes[n.mesh]
+        primitive = gltf_mesh.primitives[0]
+        index_acc = obj.accessors[primitive.indices] if primitive.indices is not None else None
+        if index_acc is not None:
+            mesh.element = True
+            mesh.elementInfo = index_acc
+            index_buff:UnboundBuffer = buffers[index_acc.bufferView]
+            index_buff.optional_binder()(GL.GL_ELEMENT_ARRAY_BUFFER)
+            mesh.elementBufID = index_buff.buffer_id
+
+            # do materials # todo: create materials, then apply to meshes
+            mesh.material = None
+            materialIdx = obj.meshes[0].primitives[0].material
+            if materialIdx is not None:
+                mesh.material = materials[materialIdx]
+            if mesh.material is None:
+                mesh.set_shader(shaders.get_default_program())
+                mesh.material = mesh.program.create_material()
+                print('WARNING: you used a default program!')
             else:
-                mesh.find_shader('default')
+                if len(mesh.material.get_all_mat_textures()) == 0 or primitive.attributes.TEXCOORD_0 is None and primitive.attributes.TEXCOORD_1 is None:
+                    mesh.find_shader('flat_shaded')
+                    print('using a flat shader')
+                else:
+                    mesh.find_shader('default')
 
-    # do vbos
-    attrs = 'COLOR_0,JOINTS_0,NORMAL,POSITION,TANGENT,TEXCOORD_0,TEXCOORD_1,WEIGHTS_0'.split(',')
-    # attrs = 'COLOR_0,NORMAL,POSITION,TEXCOORD_0'.split(',')
-    unsupported = 'JOINTS_0,TANGENT,TEXCOORD_1,WEIGHTS_0'.split(',') # todo: fix this
-    for att in attrs:
-        val = getattr(primitive.attributes, att)
-        if val is None: continue
-        if att in unsupported:
-            print(f'WARNING: {att} in model {gltf_mesh.name} is currently unsupported and may cause problems in rendering.')
-            continue
-        name = att.lower()
-        acc = obj.accessors[val]
-        location = GL.glGetAttribLocation(mesh.gl_program, name)
-        # compiler can automatically assume that a location might not exist.
-        # for example, if a mesh has a texcoord_0 defined but no textures, the shader it requested will have the
-        # #defines set up so that it never actually calls on the attribute texcoord_0, so the compiler pretends it does
-        # not exist. Hence, this value can be -1 even if you do define everything correctly :/
-        if location == -1:
-            continue
-        buff = buffers[acc.bufferView]
-        byte_stride = buff.buffer_view.byteStride
-        if byte_stride is None:
-            vec = accessor_type_dim(acc.type)
-            byte_size = np.array([1], dtype=accessor_dtype(acc.componentType)).itemsize
-            byte_stride = vec * byte_size
+        # do vbos
+        attrs = 'COLOR_0,JOINTS_0,NORMAL,POSITION,TANGENT,TEXCOORD_0,TEXCOORD_1,WEIGHTS_0'.split(',')
+        # attrs = 'COLOR_0,NORMAL,POSITION,TEXCOORD_0'.split(',')
+        unsupported = 'JOINTS_0,TANGENT,TEXCOORD_1,WEIGHTS_0'.split(',') # todo: fix this
+        for att in attrs:
+            val = getattr(primitive.attributes, att)
+            if val is None: continue
+            if att in unsupported:
+                print(f'WARNING: {att} in model {gltf_mesh.name} is currently unsupported and may cause problems in rendering.')
+                continue
+            name = att.lower()
+            acc = obj.accessors[val]
+            location = GL.glGetAttribLocation(mesh.gl_program, name)
+            # compiler can automatically assume that a location might not exist.
+            # for example, if a mesh has a texcoord_0 defined but no textures, the shader it requested will have the
+            # #defines set up so that it never actually calls on the attribute texcoord_0, so the compiler pretends it does
+            # not exist. Hence, this value can be -1 even if you do define everything correctly :/
+            if location == -1:
+                print(f'WARNING: location of {name} returned -1')
+                continue
+            buff = buffers[acc.bufferView]
+            byte_stride = buff.buffer_view.byteStride
+            if byte_stride is None:
+                vec = accessor_type_dim(acc.type)
+                byte_size = np.array([1], dtype=accessor_dtype(acc.componentType)).itemsize
+                byte_stride = vec * byte_size
 
-        buff.optional_binder()(GL.GL_ARRAY_BUFFER) # if not bound already, bind with that target (that target is correct for all these attributes)
-        GL.glEnableVertexAttribArray(location)
-        GL.glBindBuffer(GL.GL_ARRAY_BUFFER, buff.buffer_id)
-        GL.glVertexAttribPointer(location,
-                                 type_to_dim[acc.type],
-                                 acc.componentType,
-                                 acc.normalized,
-                                 byte_stride,
-                                 ctypes.c_void_p(acc.byteOffset),
-                                 )
-        if name == 'position': # this is ok because gltf specifies position, see attrs
-            mesh.tri_count = acc.count // 3
-    GL.glBindBuffer(GL.GL_ARRAY_BUFFER, 0)
+            buff.optional_binder()(GL.GL_ARRAY_BUFFER) # if not bound already, bind with that target (that target is correct for all these attributes)
+            GL.glEnableVertexAttribArray(location)
+            GL.glBindBuffer(GL.GL_ARRAY_BUFFER, buff.buffer_id)
+            GL.glVertexAttribPointer(location,
+                                     type_to_dim[acc.type],
+                                     acc.componentType,
+                                     acc.normalized,
+                                     byte_stride,
+                                     ctypes.c_void_p(acc.byteOffset),
+                                     )
+            if name == 'position': # this is ok because gltf specifies position, see attrs
+                mesh.tri_count = acc.count // 3
+        GL.glBindBuffer(GL.GL_ARRAY_BUFFER, 0)
+        mesh.unbind_vao()
 
-    mesh.unbind_vao()
-    return mesh
+        ent.mesh = mesh
+        ent.transform.set_translation(n.translation)
+        ent.transform.set_rotation(n.rotation)
+        ent.transform.set_scale(n.scale)
+        entities.append(ent)
+    return entities
 
 def get_default_sampler() -> pygltflib.Sampler:
     # print('created default sampler')

@@ -16,5 +16,11 @@ class Entity:
     def __str__(self):
         return self.name + " (Entity-" + str(self.__hash__()) + ")"
 
+    def render (self):
+        if self.is_renderable():
+            self.mesh.render(self.transform)
+        for c in self.children:
+            c.render()
+
     def is_renderable(self):
         return self.mesh is not None
