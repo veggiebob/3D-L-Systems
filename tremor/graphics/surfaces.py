@@ -1,8 +1,7 @@
 from typing import Dict, List
-import numpy as np
 
-import pygltflib
 import OpenGL.GL as gl
+import pygltflib
 
 
 class TextureUnit:
@@ -167,6 +166,11 @@ class MaterialTexture:
     OCCLUSION = 'texOcclusion'
     EMISSIVE = 'texEmissive'
 
+    # these are just to easily get pointers to these output textures from the fbo
+    from tremor.graphics.fbos import FBO
+    @staticmethod
+    def from_fbo (fbo: FBO, attachment: gl.GLenum, texture_uniform_name:str) -> 'MaterialTexture':
+        return MaterialTexture(texture_uniform_name, fbo.get_attachment_texture(attachment))
     def __init__(self, tex_type: str, texture: TextureUnit = None):
         self.exists: bool = texture is not None
         self.tex_type: str = tex_type

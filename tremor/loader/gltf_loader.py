@@ -1,21 +1,15 @@
 import ctypes
+from io import BytesIO
 from typing import Dict, List, Callable
 
-from OpenGL import GL
-from OpenGL.arrays import ArrayDatatype
-from PIL import Image as PIL_Image
-from io import BytesIO
-
+import numpy as np
 import pygltflib
+from OpenGL import GL
+from PIL import Image as PIL_Image
 
-from tremor.core.entity import Entity
 from tremor.graphics import shaders
 from tremor.graphics.mesh import Mesh
 from tremor.graphics.surfaces import MaterialTexture, TextureUnit, Material
-from tremor.loader import obj_loader
-from tremor.graphics.element_renderer import ElementRenderer, BufferSettings
-import numpy as np
-
 from tremor.util import configuration
 
 GLTF = pygltflib.GLTF2()
@@ -198,9 +192,15 @@ def load_gltf(filepath) -> Mesh:
         if mesh.material is None:
             mesh.set_shader(shaders.get_default_program())
             mesh.material = mesh.program.create_material()
+            print('WARNING: you used a default program!')
         else:
-            mesh.find_shader('default')
+            if len(mesh.material.get_all_mat_textures()) == 0 or primitive.attributes.TEXCOORD_0 is None and primitive.attributes.TEXCOORD_1 is None:
+                mesh.find_shader('flat_shaded')
+                print('using a flat shader')
+            else:
+                mesh.find_shader('default')
 
+    mesh.use_program()
     # do vbos
     attrs = 'COLOR_0,JOINTS_0,NORMAL,POSITION,TANGENT,TEXCOORD_0,TEXCOORD_1,WEIGHTS_0'.split(',')
     # attrs = 'COLOR_0,NORMAL,POSITION,TEXCOORD_0'.split(',')
@@ -214,6 +214,12 @@ def load_gltf(filepath) -> Mesh:
         name = att.lower()
         acc = obj.accessors[val]
         location = GL.glGetAttribLocation(mesh.gl_program, name)
+        # compiler can automatically assume that a location might not exist.
+        # for example, if a mesh has a texcoord_0 defined but no textures, the shader it requested will have the
+        # #defines set up so that it never actually calls on the attribute texcoord_0, so the compiler pretends it does
+        # not exist. Hence, this value can be -1 even if you do define everything correctly :/
+        if location == -1:
+            continue
         buff = buffers[acc.bufferView]
         byte_stride = buff.buffer_view.byteStride
         if byte_stride is None:

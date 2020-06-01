@@ -1,13 +1,8 @@
-from typing import Dict, List
-
 import OpenGL.GL as GL
-import pygltflib
 
 from tremor.graphics import shaders
 from tremor.graphics.shaders import MeshProgram
 from tremor.graphics.surfaces import Material
-import numpy as np
-
 from tremor.math.transform import Transform
 
 
@@ -37,7 +32,8 @@ class Mesh:
     def find_shader (self, name:str):
         self.program = shaders.query_branched_program(name, self.material)
         self.gl_program = self.program.program
-
+    def use_program (self):
+        GL.glUseProgram(self.gl_program)
     def render(self, transform: Transform):
         self.bind_vao()
         GL.glUseProgram(self.gl_program)
