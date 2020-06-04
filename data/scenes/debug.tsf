@@ -3,8 +3,10 @@ debug
 { resources
 lr cube gltf data/gltf/test_gltf/better_uvs_cube.glb
 lr avocado gltf data/gltf/test_gltf/Avocado.glb
+lr room gltf data/gltf/test_gltf/env_room.glb
 }
 { elements
 ce yum cube -1.5 0 0 0 0 0 1 1 1
 ce yumyum avocado 0 5 0 0 0 0 50 50 50
+ce room room 0 0 0 0 0 0 1 1 1
 }

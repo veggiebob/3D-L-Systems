@@ -6,7 +6,7 @@ from tremor.math.transform import Transform
 
 class Entity:
     def __init__(self, name:str):
-        self.transform = Transform(self)
+        self.transform:Transform = Transform(self)
         self.mesh: Mesh = None
         self._node_idx = -1
         self.children: List[Entity] = []

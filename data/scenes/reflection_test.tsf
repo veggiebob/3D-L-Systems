@@ -1,9 +1,10 @@
 0
 debug
 { resources
-lr cube gltf data/gltf/test_gltf/better_uvs_cube.glb
 lr map gltf data/gltf/test_gltf/simple_scene_test.glb
+lr room gltf data/gltf/test_gltf/env_room.glb
 }
 { elements
-ce yum map 0 0 0 0 0 0 10 10 10
+ce yum map 0 0 0 0 0 0 1 1 1
+ce room room 0 0 0 0 0 0 1 1 1
 }

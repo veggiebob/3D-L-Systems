@@ -3,7 +3,7 @@
 #define t_texNormal
 #define t_texMetallic
 #define maskAlpha
-//#define clippingPlane
+#define reflective
 
 out vec4 outputColor;
 
@@ -12,9 +12,7 @@ in vec3 fnormal;
 in vec3 fcolor;
 in vec3 fposition;
 in vec2 texCoord;
-//#ifdef clippingPlane
-//in float planeDistance;
-//#endif
+in float planeDistance;
 
 #ifdef t_texColor
 uniform sampler2D texColor;//mat
@@ -24,6 +22,9 @@ uniform sampler2D texNormal;//mat
 #endif
 #ifdef t_texMetallic
 uniform sampler2D texMetallic;//mat
+#endif
+#ifdef reflective
+uniform sampler2D FBOreflection;//mat
 #endif
 
 //globals
@@ -65,9 +66,7 @@ void main()
     //h = h=l+v/∥l+v∥
     //l = surface-to-light vector
     //v = surface-to-camera vector
-//    #ifdef clippingPlane
-//    if (planeDistance < 0) discard; // discard pixel if it's on the wrong side
-//    #endif
+    if (planeDistance < 0) discard; // discard pixel if it's on the wrong side
     #ifdef t_texColor
     vec4 t = texture2D(texColor, texCoord);
     #ifdef maskAlpha
@@ -77,6 +76,12 @@ void main()
     vec4 t = vec4(fcolor, 1.);
     #endif
     vec3 col = t.rgb * ambient;
+
+    //test
+    #ifdef reflective
+    col = texture2D(FBOreflection, texCoord).rgb;
+    #endif
+
     #ifdef t_texNormal
     vec3 nn = (texture2D(texNormal, texCoord).xyz - 0.5)*2;
     vec3 normal = map_direction(vec3(0.,0.,1.), nn, fnormal);

@@ -3,13 +3,13 @@ import ctypes
 from io import BytesIO
 from typing import Dict, List, Callable
 
-import numpy as np
 import pygltflib
 from OpenGL import GL
 from PIL import Image as PIL_Image
 
 from tremor.core.entity import Entity
-from tremor.graphics import shaders
+from tremor.graphics import shaders, fbos
+from tremor.graphics.fbos import FBO
 from tremor.graphics.mesh import Mesh
 from tremor.graphics.surfaces import MaterialTexture, TextureUnit, Material
 import numpy as np
@@ -177,15 +177,18 @@ def load_gltf(filepath) -> List[Entity]:
 
         # add extras just in case
         for prop,value in material.extras.items():
-            mat.set_property(prop, value)
-
+            if value == 'flag':
+                mat.add_flag(prop)
+            else:
+                mat.set_property(prop, value)
+        if mat.has_flag('reflective'):
+            mat.add_fbo_texture(fbos.find_fbo_by_type(FBO.REFLECTION), GL.GL_COLOR_ATTACHMENT0)
         materials.append(mat)
 
     # for each primitive in each mesh . . .
     entities:List[Entity] = []
     for n in obj.nodes:
         if n.mesh is None: continue
-        print(n.name)
         ent = Entity(n.name)
         # do the mesh, using only the first primitive
         mesh = Mesh()
@@ -210,11 +213,11 @@ def load_gltf(filepath) -> List[Entity]:
                 mesh.material = mesh.program.create_material()
                 print('WARNING: you used a default program!')
             else:
-                if len(mesh.material.get_all_mat_textures()) == 0 or primitive.attributes.TEXCOORD_0 is None and primitive.attributes.TEXCOORD_1 is None:
+                if len(mesh.material.get_all_mat_textures()) == 0 or (primitive.attributes.TEXCOORD_0 is None and primitive.attributes.TEXCOORD_1 is None):
                     if primitive.attributes.COLOR_0 is not None:
                         mesh.material.add_flag('useVertexColor')
                     mesh.find_shader('flat_shaded')
-                    print('using a flat shader')
+                    print('using a flat shader for material %s'%mesh.material.name)
                 else:
                     mesh.find_shader('default')
 

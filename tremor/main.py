@@ -16,7 +16,7 @@ from tremor.core import game_clock, console, key_input
 from tremor.graphics.shaders import *
 from tremor.graphics.uniforms import *
 import sys
-from tremor.graphics import screen_utils, scene_renderer
+from tremor.graphics import screen_utils, scene_renderer, fbos
 from tremor.math import matrix
 
 import imgui
@@ -33,9 +33,9 @@ fps_clock = game_clock.FPSController()
 inputs = {'mouse': [0, 0]}  # this is probably bad
 
 current_scene: Scene = None
+viewangles = np.array([0, 0], dtype='float32')
 
 imgui_renderer: GlfwRenderer = None
-
 
 def create_window(size, pos, title, hints, screen_size, monitor=None, share=None, ):
     if pos == "centered":
@@ -78,6 +78,9 @@ def reshape(w, h):
 
 wireframe = False
 
+def pressed(key):
+    return glfw.get_key(window, key) == glfw.PRESS
+
 def keyboard_callback(window, key, scancode, action, mods):
     global wireframe
     imgui_renderer.keyboard_callback(window, key, scancode, action, mods)
@@ -104,44 +107,20 @@ def keyboard_callback(window, key, scancode, action, mods):
             return
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL if wireframe else GL_LINE)
         wireframe = not wireframe
-    magnitude = 10
-    if mods == 1:
-        tform = current_scene.active_camera.transform
-    else:
-        tform = current_scene.active_camera.transform
-    if key == glfw.KEY_UP:
-        tform.translate_local([magnitude, 0, 0])
-    if key == glfw.KEY_DOWN:
-        tform.translate_local([-magnitude, 0, 0])
-    if key == glfw.KEY_LEFT:
-        tform.translate_local([0, 0, -magnitude])
-    if key == glfw.KEY_RIGHT:
-        tform.translate_local([0, 0, magnitude])
-    if key == glfw.KEY_SPACE:
-        tform.translate_local([0, magnitude, 0])
-    if key == glfw.KEY_LEFT_CONTROL or key == glfw.KEY_RIGHT_CONTROL:
-        tform.translate_local([0, -magnitude, 0])
-    if key == glfw.KEY_Q:
-        tform.rotate_local(matrix.quaternion_from_angles(np.array([0.1, 0, 0])))
-    if key == glfw.KEY_E:
-        tform.rotate_local(matrix.quaternion_from_angles(np.array([-0.1, 0, 0])))
-    if key == glfw.KEY_A:
-        tform.rotate_local(matrix.quaternion_from_angles(np.array([0, 0.1, 0])))
-    if key == glfw.KEY_D:
-        tform.rotate_local(matrix.quaternion_from_angles(np.array([0, -0.1, 0])))
-    if key == glfw.KEY_W:
-        tform.rotate_local(matrix.quaternion_from_angles(np.array([0, 0, -0.1])))
-    if key == glfw.KEY_S:
-        tform.rotate_local(matrix.quaternion_from_angles(np.array([0, 0, 0.1])))
-    if key == glfw.KEY_R:
-        tform.set_translation([0, 0, 0])
-        tform.set_rotation([0, 0, 0, 1])
     inputs['key'] = key
 
 
 def mouse_callback(window, x, y):
     imgui_renderer.mouse_callback(window, x, y)
     inputs['mouse'] = [x, y]
+    y = -y * 0.05
+    x = -x * 0.05
+    if y > 90:
+        y = 90
+    if y < -90:
+        y = -90
+    viewangles[0] = x % 360
+    viewangles[1] = y
     current_scene.active_camera.transform.set_rotation(matrix.quaternion_from_angles([0, np.pi * np.mod(x/20.0 + 90, 360)/180, 0]))
 
 
@@ -210,7 +189,7 @@ def main():
     window = create_window(size=(screen_utils.WIDTH, screen_utils.HEIGHT), pos="centered", title="Quake-like",
                            monitor=screen, hints=hints,
                            screen_size=glfw.get_monitor_physical_size(glfw.get_primary_monitor()))
-    # glfw.set_input_mode(window, glfw.CURSOR, glfw.CURSOR_DISABLED)
+    glfw.set_input_mode(window, glfw.CURSOR, glfw.CURSOR_DISABLED)
     imgui_renderer = GlfwRenderer(window, attach_callbacks=False)
     glutil.log_capabilities()
     glEnable(GL_CULL_FACE)
@@ -229,6 +208,7 @@ def main():
     create_uniforms()
     # initialize all the uniforms for all the prpograms
     init_all_uniforms()
+    fbos.initialize_global_fbos()
 
     # texture_loading.load_all_textures('data/textures', {
     #     # https://open.gl/textures
@@ -239,7 +219,7 @@ def main():
     scene_file = open("data/scenes/reflection_test.tsf", "r", encoding="utf-8")
     current_scene = scene_loader.load_scene(scene_file)
     cam = Entity("camera")
-    cam.transform.set_translation([3, 3, 3])
+    cam.transform.set_translation(np.array([3, 3, 3]))
     cam.transform.set_rotation(matrix.quaternion_from_angles([0, np.pi/2, 0]))
     current_scene.active_camera = cam
 
@@ -256,6 +236,22 @@ def main():
         # todo call an update method as well
         glfw.poll_events()
         imgui_renderer.process_inputs()
+
+        # fly control
+        cam.transform.set_rotation(matrix.quat_from_viewangles(viewangles))
+        speed = 0.1
+        if pressed(glfw.KEY_W) or pressed(glfw.KEY_UP):
+            cam.transform.translate_local(np.array([speed, 0, 0]))
+        if pressed(glfw.KEY_S) or pressed(glfw.KEY_DOWN):
+            cam.transform.translate_local(np.array([-speed, 0, 0]))
+        if pressed(glfw.KEY_A) or pressed(glfw.KEY_LEFT):
+            cam.transform.translate_local(np.array([0, 0, -speed]))
+        if pressed(glfw.KEY_D) or pressed(glfw.KEY_RIGHT):
+            cam.transform.translate_local(np.array([0, 0, speed]))
+        if pressed(glfw.KEY_LEFT_SHIFT):
+            cam.transform.translate_local(np.array([0, -speed, 0]))
+        if pressed(glfw.KEY_SPACE):
+            cam.transform.translate_local(np.array([0, speed, 0]))
         render()
         imgui.new_frame()
         if console.SHOW_CONSOLE:

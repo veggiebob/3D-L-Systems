@@ -50,7 +50,9 @@ def quaternion_from_matrix(mat: np.ndarray):
 
 def quaternion_from_angles(angles, degrees=False):
     # angles is angles (rad) around x y z
-    return R.from_euler('xyz', angles, degrees=degrees).as_quat()
+    r1 = R.from_euler('y', angles[1], degrees=degrees)
+    r2 = R.from_euler('z', angles[2], degrees=degrees)
+    return (r1 * r2).as_quat()
 
 def create_scale_matrix (x, y=None, z=None):
     if y is None or z is None:
@@ -79,6 +81,9 @@ def flatten(mat4):
             k = i+4*j
             arr[k] = mat4[j][i]
     return arr
+
+def quat_from_viewangles(viewangles):
+    return quaternion_from_angles(np.array([0, viewangles[0], viewangles[1]]), True)
 
 
 

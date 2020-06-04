@@ -13,3 +13,7 @@ class Scene:
 
     def tick(self):
         pass
+
+    def render(self):
+        for element in self.elements:
+            element.render()

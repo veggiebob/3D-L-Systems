@@ -88,6 +88,7 @@ class Material:
             MaterialTexture.METALLIC: MaterialTexture(MaterialTexture.METALLIC),
             MaterialTexture.NORMAL: MaterialTexture(MaterialTexture.NORMAL)
         }
+        self.fbo_dependencies:List[FBODependency] = []
         self._texture_flags = []
         self._do_texture_flags()
         self._properties:Dict[str, any] = {}
@@ -103,7 +104,8 @@ class Material:
     def remove_flag (self, flag_name):
         if flag_name in self._flags:
             self._flags.remove(flag_name)
-
+    def has_flag (self, flag_name):
+        return flag_name in self._flags
     def get_flags (self) -> List[str]:
         return self._flags + self._texture_flags
 
@@ -154,6 +156,13 @@ class Material:
             if tex.exists:
                 self._texture_flags.append(f't_{tex.tex_type}') # magic
 
+    def add_fbo_texture (self, fbo, attachment:gl.GLenum):
+        self.set_mat_texture(MaterialTexture.from_fbo(fbo, attachment))
+        self.fbo_dependencies.append(FBODependency(fbo.fbo_type))
+
+class FBODependency:
+    def __init__ (self, fbo_type:str):
+        self.fbo_type = fbo_type
 
 class MaterialTexture:
     """
@@ -167,10 +176,11 @@ class MaterialTexture:
     EMISSIVE = 'texEmissive'
 
     # these are just to easily get pointers to these output textures from the fbo
-    from tremor.graphics.fbos import FBO
     @staticmethod
-    def from_fbo (fbo: FBO, attachment: gl.GLenum, texture_uniform_name:str) -> 'MaterialTexture':
-        return MaterialTexture(texture_uniform_name, fbo.get_attachment_texture(attachment))
+    def from_fbo (fbo, attachment: gl.GLenum) -> 'MaterialTexture':
+        # the uniform name will be the fbo_type
+        mat_tex = MaterialTexture(fbo.fbo_type, fbo.get_attachment_texture(attachment))
+        return mat_tex
     def __init__(self, tex_type: str, texture: TextureUnit = None):
         self.exists: bool = texture is not None
         self.tex_type: str = tex_type

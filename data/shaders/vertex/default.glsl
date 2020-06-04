@@ -1,5 +1,4 @@
 #version 330
-//#define clippingPlane
 // GLTF: COLOR_0,JOINTS_0,NORMAL,POSITION,TANGENT,TEXCOORD_0,TEXCOORD_1,WEIGHTS_0
 layout(location = 0) in vec3 position;
 layout(location = 1) in vec3 normal;
@@ -17,9 +16,7 @@ out vec3 fcolor;
 out vec2 texCoord;
 out vec2 texCoord2;
 out vec4 cameraPosition;
-//#ifdef clippingPlane
-//out float planeDistance;
-//#endif
+out float planeDistance;
 
 uniform mat4 modelViewMatrix;
 uniform mat4 projectionMatrix;
@@ -27,12 +24,10 @@ uniform mat4 viewMatrix;
 
 uniform float time;
 
-//#ifdef clippingPlane
 ////<x,y,z,w> = <a,b,c,d> where the plane is defined by ax + by + cz + d = 0
 ////this means that <a,b,c> is the normal of the plane
-//uniform vec4 plane;//mat
-//#endif
-
+uniform vec4 plane;
+uniform bool isPlane;
 void main()
 {
     fnormal = (modelViewMatrix * vec4(normal, 0.)).xyz;
@@ -42,7 +37,7 @@ void main()
     fcolor = color_0;
     texCoord = texcoord_0;
     texCoord2 = texcoord_1;
-//    #ifdef clippingPlane
-//    planeDistance = dot(plane.xyz, position) + plane.w;
-//    #endif
+    if (isPlane)
+    planeDistance = dot(plane.xyz, position) + plane.w;
+    else planeDistance = 1.0; // everything visible
 }

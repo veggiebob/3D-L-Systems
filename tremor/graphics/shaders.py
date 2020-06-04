@@ -590,7 +590,7 @@ class FlaggedStates:
         if flag in self._flags:
             return self._keyed_flags[flag]
         else:
-            print(f'{flag} is not in this set')
+            # print(f'{flag} is not in this set')
             return 0
             # raise Exception(f'{flag} is not a valid state in this set.')
 

@@ -95,3 +95,11 @@ class Transform:
             )
         )
         self.set_rotation(matrix.quaternion_from_matrix(position_mat))
+
+    def clone(self):
+        new = Transform(self._elem)
+        new._translation = self._translation.copy()
+        new._scale = self._scale.copy()
+        new._rotation = self._rotation.copy()
+        new._mv_needs_rebuild = True
+        return new
