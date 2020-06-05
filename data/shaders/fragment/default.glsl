@@ -8,7 +8,6 @@
 
 out vec4 outputColor;
 
-in vec4 cameraPosition;
 in vec3 fnormal;
 in vec3 fcolor;
 in vec3 fposition;
@@ -32,7 +31,7 @@ uniform sampler2D FBOreflection;//mat
 uniform vec3 light_pos;
 uniform float time;
 
-const vec3 ambient = vec3(0.2);
+const vec3 ambient = vec3(0.7);
 
 const vec3 look = vec3(0., 0., 1.);
 const vec3 light_col = vec3(1.);
@@ -112,5 +111,5 @@ void main()
     float intensity = light_intensity_func(length(light_pos-fposition));
     col += (diffuse * diffuse_weight + specular * specular_weight) * light_col * light_strength * intensity;
 #endif
-    outputColor = vec4(col, 1.0);//alpha_depth_func(cameraPosition.z));
+    outputColor = vec4(col, 1.0);//alpha_depth_func(gl_Position.z));
 }

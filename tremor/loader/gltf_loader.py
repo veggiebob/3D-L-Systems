@@ -210,11 +210,6 @@ def load_gltf(filepath, opt_input_flags:List[str]=[]) -> List[Entity]:
             materialIdx = gltf_mesh.primitives[0].material
             if materialIdx is not None:
                 mesh.material = copy.deepcopy(materials[materialIdx])
-            if mesh.material is None:
-                mesh.set_shader(shaders.get_default_program())
-                mesh.material = mesh.program.create_material()
-                print('WARNING: you used a default program!')
-            else:
                 if len(mesh.material.get_all_mat_textures()) == 0 or (primitive.attributes.TEXCOORD_0 is None and primitive.attributes.TEXCOORD_1 is None):
                     if primitive.attributes.COLOR_0 is not None:
                         mesh.material.add_flag('useVertexColor')
@@ -222,6 +217,10 @@ def load_gltf(filepath, opt_input_flags:List[str]=[]) -> List[Entity]:
                     print('using a flat shader for material %s'%mesh.material.name)
                 else:
                     mesh.find_shader('default')
+            else:
+                mesh.set_shader(shaders.get_default_program())
+                mesh.material = mesh.program.create_material()
+                print('WARNING: you used a default program!')
 
         # do vbos
         attrs = 'COLOR_0,JOINTS_0,NORMAL,POSITION,TANGENT,TEXCOORD_0,TEXCOORD_1,WEIGHTS_0'.split(',')

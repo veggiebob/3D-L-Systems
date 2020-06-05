@@ -87,7 +87,7 @@ def load_scene0(name, data_stream) -> Scene:
             loader = load_gltf
         else:
             loader = None
-        loaded_entities = loader(raw_res["location"], raw_res['flags'].split(';'))
+        loaded_entities = loader(raw_res["location"], raw_res['flags'].split(';') if raw_res['flags'] != '' else [])
         parent_elem = Entity(raw_elem["name"])
         parent_elem.transform.set_translation(raw_elem["translation"])
         parent_elem.transform.set_rotation(matrix.quaternion_from_angles(raw_elem["rotation_angles"], degrees=True))

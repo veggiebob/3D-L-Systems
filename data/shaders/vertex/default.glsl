@@ -16,7 +16,6 @@ out vec3 fnormal;
 out vec3 fcolor;
 out vec2 texCoord;
 out vec2 texCoord2;
-out vec4 cameraPosition;
 out float planeDistance;
 
 uniform mat4 modelViewMatrix;
@@ -30,8 +29,9 @@ uniform float time;
 uniform vec4 plane;
 uniform bool hasPlane;
 mat4 no_translate (mat4 mat) {
-    mat[3].xyz = vec3(0.);
-    return mat;
+    mat4 nmat = mat;
+    nmat[3].xyz = vec3(0.);
+    return nmat;
 }
 const float stupid_scale = 10000.;
 void main()
@@ -45,7 +45,6 @@ void main()
     fposition = position*stupid_scale;
     gl_Position = (projectionMatrix) * no_translate(viewMatrix) * vec4(position*stupid_scale, 1.);
     #endif
-    cameraPosition = gl_Position;
     fcolor = color_0;
     texCoord = texcoord_0;
     texCoord2 = texcoord_1;

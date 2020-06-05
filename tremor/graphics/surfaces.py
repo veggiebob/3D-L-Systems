@@ -79,7 +79,7 @@ class Material:
         mat.set_property('emissiveFactor', gltf_mat.emissiveFactor)
         return mat
 
-    def __init__(self, name: str = 'unnamed', flags:List[str]=[], **kwargs):
+    def __init__(self, name: str = 'unnamed', flags:List[str]=(), **kwargs):
         self.name = name
 
         # the textures
@@ -92,7 +92,7 @@ class Material:
         self._texture_flags = []
         self._do_texture_flags()
         self._properties:Dict[str, any] = {}
-        self._flags:List[str] = flags
+        self._flags:List[str] = list(flags)
 
         for k, v in kwargs.items():
             self.set_property(k, v)
