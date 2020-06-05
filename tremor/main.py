@@ -62,6 +62,8 @@ def create_uniforms():
     add_uniform_to_all('time', 'float')
 
     # other
+    add_uniform_to_all('hasPlane', 'bool')
+    add_uniform_to_all('plane', 'vec4')
     add_uniform_to_all('light_pos', 'vec3') # todo: baD
 
 
@@ -125,8 +127,8 @@ def mouse_callback(window, x, y):
 
 
 def mouseclick_callback(window, button, action, modifiers):
-    # print(fps_clock.average_fps)
-    pass
+    print(fps_clock.average_fps)
+    # pass
 
 
 def error_callback(error, description):

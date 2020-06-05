@@ -1,10 +1,13 @@
 0
 debug
 { resources
+//flags after resource, separate by ;
 lr map gltf data/gltf/test_gltf/simple_scene_test.glb
-lr room gltf data/gltf/test_gltf/env_room.glb
+lr light gltf data/gltf/test_gltf/Avocado.glb
+lr room gltf data/gltf/test_gltf/env_room.glb unlit;skybox
 }
 { elements
 ce yum map 0 0 0 0 0 0 1 1 1
+ce LIGHT light 0 0 0 0 0 0 50 50 50
 ce room room 0 0 0 0 0 0 1 1 1
 }

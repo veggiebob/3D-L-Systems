@@ -1,3 +1,4 @@
+import re
 from collections import Callable
 from enum import Enum, unique
 from typing import Dict, List
@@ -15,12 +16,14 @@ def load_scene0(name, data_stream) -> Scene:
     state = State.NO_BLOCK
     resource_entries = {}
     element_entries = []
+    comment_expr = re.compile('\s*//.*')
     while True:
         line = data_stream.readline()
         if line == "":
             break
+        if comment_expr.match(line) is not None:
+            continue
         line = str.rstrip(line)
-        print(line)
         if line == "":
             continue  # this is a different case than the check above, trust me
         split = str.split(line, " ")
@@ -49,11 +52,15 @@ def load_scene0(name, data_stream) -> Scene:
                 raise Exception("Block end outside of a block")
             state = State.NO_BLOCK
         elif cmd == "lr":
-            if not len(split) == 4:
+            if len(split) != 4 and len(split) != 5:
                 raise Exception("Malformed load resource command")
             if not state == State.RESOURCE_BLOCK:
                 raise Exception("Load resource command outside of resource block")
             resource_entries[split[1]] = {"format": split[2], "location": split[3]}
+            flags = ''
+            if len(split) == 5:
+                flags = split[4]
+            resource_entries[split[1]]['flags'] = flags
         elif cmd == "ce":
             if not len(split) == 12:
                 raise Exception("Malformed create element command")
@@ -73,13 +80,14 @@ def load_scene0(name, data_stream) -> Scene:
     if not has_resources or not has_elements:
         raise Exception("Missing one or more required sections")
     scene = Scene(name)
+    print('loading scene . . . ', end='')
     for raw_elem in element_entries:
         raw_res = resource_entries[raw_elem["resource"]]
         if raw_res["format"] == "gltf":
             loader = load_gltf
         else:
             loader = None
-        loaded_entities = loader(raw_res["location"])
+        loaded_entities = loader(raw_res["location"], raw_res['flags'].split(';'))
         parent_elem = Entity(raw_elem["name"])
         parent_elem.transform.set_translation(raw_elem["translation"])
         parent_elem.transform.set_rotation(matrix.quaternion_from_angles(raw_elem["rotation_angles"], degrees=True))
@@ -90,6 +98,7 @@ def load_scene0(name, data_stream) -> Scene:
             parent_elem.children.append(e)
         scene.elements.append(parent_elem)
         #scene.elements += loaded_entities
+    print('done')
     return scene
 
 @unique

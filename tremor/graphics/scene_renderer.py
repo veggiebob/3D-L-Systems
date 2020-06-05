@@ -55,9 +55,12 @@ def render(scene: Scene):
     update_all_uniform('viewMatrix', [1, GL_FALSE, np.array(view_mat)])
     update_all_uniform('projectionMatrix', [1, GL_FALSE, np.array(perspective_mat)])
 
-    update_all_uniform('time', [framecount / screen_utils.MAX_FPS])  # seconds
+    time = framecount / screen_utils.MAX_FPS
+    update_all_uniform('time', [time])  # seconds
+    # update_all_uniform('hasPlane', [True])
+    # update_all_uniform('plane', [1, 0, 0, np.sin(time)*5])
 
-    light_pos = [np.sin(framecount * 0.01) * 5, np.cos(framecount * 0.01) * 5, np.cos(framecount * 0.001)]
+    light_pos = [np.sin(framecount * 0.01) * 3, 5, np.cos(framecount * 0.01) * 3]
     update_all_uniform('light_pos', light_pos)
     scene.render()
     framecount += 1

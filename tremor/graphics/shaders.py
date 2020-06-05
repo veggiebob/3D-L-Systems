@@ -87,6 +87,7 @@ def create_branched_programs(filepath='data/shaders/programs.ini',
                         vertex_location: str = 'data/shaders/vertex',
                         fragment_location: str = 'data/shaders/fragment') -> None:
     global BRANCHED_PROGRAMS
+    print('compiling shaders . . . ', end='')
     # read the config file
     config_parser = configparser.ConfigParser()
     config_parser.read(filepath, encoding="UTF-8")
@@ -129,6 +130,7 @@ def create_branched_programs(filepath='data/shaders/programs.ini',
     # delete the shaders
     # for shad in list(compiled_vertex_shaders.values()) + list(compiled_fragment_shaders.values()):
     #     glDeleteShader(shad)
+    print('done')
 
 
 def create_shader(type, source) -> object:

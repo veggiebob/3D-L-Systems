@@ -134,7 +134,7 @@ class UnboundBufferCollection:
     def _sort (self):
         self._buffers.sort(key=lambda buff:buff.buffer_view_index)
 
-def load_gltf(filepath) -> List[Entity]:
+def load_gltf(filepath, opt_input_flags:List[str]=[]) -> List[Entity]:
     obj = glb_object(filepath)
     # if not len(obj.meshes) == 1:
     #     raise Exception("only 1 mesh")
@@ -181,6 +181,8 @@ def load_gltf(filepath) -> List[Entity]:
                 mat.add_flag(prop)
             else:
                 mat.set_property(prop, value)
+        for f in opt_input_flags:
+            mat.add_flag(f)
         if mat.has_flag('reflective'):
             mat.add_fbo_texture(fbos.find_fbo_by_type(FBO.REFLECTION), GL.GL_COLOR_ATTACHMENT0)
         materials.append(mat)
