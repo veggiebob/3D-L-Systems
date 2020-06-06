@@ -4,12 +4,13 @@ import OpenGL
 
 from tremor.core.entity import Entity
 from tremor.core.scene import Scene
+from tremor.graphics.mesh import Mesh
 from tremor.math.vertex_math import norm_vec3
 
 OpenGL.USE_ACCELERATE = False
 
 import glfw
-from tremor.loader import scene_loader
+from tremor.loader import scene_loader, gltf_loader
 from tremor.util import glutil, configuration
 from tremor.core import game_clock, console, key_input
 
@@ -151,7 +152,7 @@ def random_unit_sphere_vec () -> np.ndarray:
 
 def main():
     global window, vbo, nvbo, cvbo
-    global current_scene
+    global current_scene, flatscreen
     global imgui_renderer
 
     glfw.set_error_callback(error_callback)
@@ -203,7 +204,6 @@ def main():
     glEnable(GL_MULTISAMPLE)
     glEnable(GL_BLEND)
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
-    # create_all_programs() # todo: move away from this as testing progresses
     create_branched_programs()
 
     # create the uniforms

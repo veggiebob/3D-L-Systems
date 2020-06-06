@@ -3,12 +3,12 @@ from io import TextIOBase
 from typing import Dict, Callable
 
 from tremor.core.scene import Scene
+from tremor.loader import gltf_loader
 from tremor.loader.scene import version0
 
 version_map: Dict[int, Callable[[str, TextIOBase], Scene]] = {
     0: version0.load_scene0
 }
-
 
 def load_scene(data_stream) -> Scene:
     # read header

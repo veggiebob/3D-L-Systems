@@ -3,8 +3,8 @@ import re as regex
 from typing import List
 
 from OpenGL.GL.shaders import ShaderCompilationError
-
-from tremor.graphics.surfaces import Material
+import OpenGL.GL as gl
+from tremor.graphics.surfaces import Material, MaterialTexture
 from tremor.graphics.uniforms import *
 
 PROGRAMS: Dict[str, 'MeshProgram'] = {}
@@ -347,7 +347,8 @@ class MeshProgram:
             name = f'{self.name}_mat'
         mat = Material(name)
         for prop in self.inputs:
-            if prop.is_texture: continue # don't set default textures, because empty textures are created in Material.__init__
+            if prop.is_texture:
+                mat.set_mat_texture(MaterialTexture(prop.texture_type))
             mat.set_property(prop.name, prop.value)
         return mat
 
@@ -363,6 +364,9 @@ class MeshProgram:
             else:
                 inp.set_value(mat.get_property(inp.name)) # unfortunately this assumes the correct type matchup. todo install type matching errors with detailed error messages
                 self.update_uniform(inp.name, inp.get_uniform_args())
+
+    def use (self):
+        gl.glUseProgram(self.program)
 
 class ShaderPackage:
     """

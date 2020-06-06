@@ -8,7 +8,6 @@ lr room gltf data/gltf/test_gltf/env_room.glb unlit;skybox
 }
 { elements
 ce yum map 0 0 0 0 0 0 1 1 1
-//todo: why does ordering matter for skyboxes??!!
 ce room room 0 0 0 0 0 0 1 1 1
 ce LIGHT light 0 0 0 0 0 0 50 50 50
 }

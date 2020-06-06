@@ -1,9 +1,12 @@
+import ctypes
+
 import OpenGL.GL as GL
 
 from tremor.graphics import shaders
 from tremor.graphics.shaders import MeshProgram
 from tremor.graphics.surfaces import Material
 from tremor.math.transform import Transform
+import numpy as np
 
 
 class Mesh:
@@ -34,6 +37,9 @@ class Mesh:
     def find_shader (self, name:str):
         self.program = shaders.query_branched_program(name, self.material)
         self.gl_program = self.program.program
+
+    def create_material (self, name:str=None):
+        self.material = self.program.create_material(name)
     def use_program (self):
         GL.glUseProgram(self.gl_program)
     def render(self, transform: Transform):
@@ -54,3 +60,46 @@ class Mesh:
             GL.glDrawArrays(GL.GL_TRIANGLES,
                             0,
                             self.tri_count)
+
+    @staticmethod
+    def create_blank_square () -> 'Mesh':
+        mesh = Mesh()
+        mesh.find_shader('post_processing')
+        mesh.tri_count = 6
+        mesh.bind_vao()
+        positions = np.array([
+            0, 0, 0,  1, 1, 0,  0, 1, 0,
+            0, 0, 0,  1, 0, 0,  1, 1, 0
+        ], dtype='float32') * 1
+        uvs = np.array([
+            0, 0,  1, 1,  0, 1,
+            0, 0,  1, 0,  1, 1
+        ], dtype='float32')
+        pos_buf = GL.glGenBuffers(1)
+        GL.glBindBuffer(GL.GL_ARRAY_BUFFER, pos_buf)
+        GL.glBufferData(GL.GL_ARRAY_BUFFER, len(positions) * 4, positions, GL.GL_STATIC_DRAW)
+        position_location = GL.glGetAttribLocation(mesh.gl_program, 'position')
+        GL.glEnableVertexAttribArray(position_location)
+        GL.glVertexAttribPointer(position_location,
+                                 3,
+                                 GL.GL_FLOAT,
+                                 GL.GL_FALSE,
+                                 0,
+                                 ctypes.c_void_p(0)
+                                )
+
+        uv_buf = GL.glGenBuffers(1)
+        GL.glBindBuffer(GL.GL_ARRAY_BUFFER, uv_buf)
+        GL.glBufferData(GL.GL_ARRAY_BUFFER, len(uvs) * 4, uvs, GL.GL_STATIC_DRAW)
+        position_location = GL.glGetAttribLocation(mesh.gl_program, 'texcoord_0')
+        GL.glEnableVertexAttribArray(position_location)
+        GL.glVertexAttribPointer(position_location,
+                                 2,
+                                 GL.GL_FLOAT,
+                                 GL.GL_FALSE,
+                                 0,
+                                 ctypes.c_void_p(0)
+                                 )
+        GL.glBindBuffer(GL.GL_ARRAY_BUFFER, 0)
+        mesh.unbind_vao()
+        return mesh

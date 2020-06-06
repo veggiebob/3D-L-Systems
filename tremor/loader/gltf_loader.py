@@ -134,7 +134,7 @@ class UnboundBufferCollection:
     def _sort (self):
         self._buffers.sort(key=lambda buff:buff.buffer_view_index)
 
-def load_gltf(filepath, opt_input_flags:List[str]=[]) -> List[Entity]:
+def load_gltf(filepath, opt_input_flags:List[str]=()) -> List[Entity]:
     obj = glb_object(filepath)
     # if not len(obj.meshes) == 1:
     #     raise Exception("only 1 mesh")
@@ -217,6 +217,7 @@ def load_gltf(filepath, opt_input_flags:List[str]=[]) -> List[Entity]:
                     print('using a flat shader for material %s'%mesh.material.name)
                 else:
                     mesh.find_shader('default')
+                    # print('using default shader for material %s'%mesh.material.name)
             else:
                 mesh.set_shader(shaders.get_default_program())
                 mesh.material = mesh.program.create_material()
@@ -344,7 +345,6 @@ gltf_samp_types: Dict[int, type] = {
     33648: GL.GL_MIRRORED_REPEAT,
     10497: GL.GL_REPEAT
 }
-
 
 def accessor_type_dim(typ: str) -> int:
     try:

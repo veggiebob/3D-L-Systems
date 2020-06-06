@@ -49,8 +49,11 @@ class TextureUnit:
             type,  # type
             data
         )
-
+        self.mipmap()
+        self.set_sampler(sampler)
+    def mipmap (self):
         gl.glGenerateMipmap(gl.GL_TEXTURE_2D)
+    def set_sampler (self, sampler:pygltflib.Sampler):
         gl.glTexParameterf(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_MAG_FILTER, sampler.magFilter)
         gl.glTexParameterf(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_MIN_FILTER, sampler.minFilter)
         gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_WRAP_S, sampler.wrapS)
@@ -61,6 +64,9 @@ class Material:
     """
     MAGIC: see _do_texture_flags
     """
+    # @staticmethod
+    # def from_shader (program:MeshProgram, name:str=None) -> 'Material':
+    #     return program.create_material(name)
     @staticmethod
     def from_gltf_material(gltf_mat: pygltflib.Material, color_texture: TextureUnit = None,
                            metallic_texture: TextureUnit = None, normal_texture: TextureUnit = None) -> 'Material':
@@ -160,7 +166,8 @@ class Material:
         self.set_mat_texture(MaterialTexture.from_fbo(fbo, attachment))
         self.fbo_dependencies.append(FBODependency(fbo.fbo_type))
 
-class FBODependency:
+class FBODependency: # this class is kindof stupid atm, but it's
+    # supposed to help prune which fbos need to be rendered
     def __init__ (self, fbo_type:str):
         self.fbo_type = fbo_type
 

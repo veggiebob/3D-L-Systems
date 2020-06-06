@@ -1,12 +1,13 @@
-from tremor.core.scene import Scene
-import glfw
 import glm
 import numpy as np
 from OpenGL.GL import *
 
+from tremor.core.scene import Scene
 from tremor.graphics import screen_utils, fbos
 from tremor.graphics.fbos import FBO
+from tremor.graphics.mesh import Mesh
 from tremor.graphics.uniforms import update_all_uniform
+from tremor.loader import gltf_loader
 from tremor.math import matrix
 from tremor.math.transform import Transform
 
@@ -33,14 +34,24 @@ class FBORenderer:
         self.scene.render()
         self.fbo.return_to_screen()
 
+flatscreen:Mesh = None
 def render(scene: Scene):
-    global framecount
+    global framecount, flatscreen
     glClearColor(0.0, 0.0, 0.0, 0.0)
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
     glUseProgram(0)
     cam_transform = scene.active_camera.transform.clone()
-    reflection_render = FBORenderer(fbos.find_fbo_by_type(FBO.REFLECTION), scene)
+
+    reflector = fbos.find_fbo_by_type(FBO.REFLECTION)
+    reflection_render = FBORenderer(reflector, scene)
+    cam_transform.set_translation(-cam_transform.get_translation())
     reflection_render.render_with_transform(cam_transform)
+    cam_transform.set_translation(-cam_transform.get_translation())
+
+    # reflector.prepare_render()
+    # scene.render()
+    # reflector.return_to_screen()
+
     perspective_mat = glm.perspective(glm.radians(90.0), screen_utils.aspect_ratio(), 0.1, 100000.0)
     tmat = cam_transform._get_translation_matrix()
     rmat = cam_transform._get_rotation_matrix()  # fine as long as we never pitch
@@ -62,5 +73,22 @@ def render(scene: Scene):
 
     light_pos = [np.sin(framecount * 0.01) * 3, 5, np.cos(framecount * 0.01) * 3]
     update_all_uniform('light_pos', light_pos)
+
+    # scene.render()
+    # """
+    # render to the behind-screen
+    screen_fbo = fbos.find_fbo_by_type(FBO.FINAL_RENDER_OUTPUT)
+    screen_fbo.prepare_render()
     scene.render()
+    screen_fbo.return_to_screen()
+
+    # now apply the post-processed shader
+    if flatscreen is None:
+        flatscreen = Mesh.create_blank_square()
+        flatscreen.find_shader('post_processing')
+        flatscreen.create_material()
+        flatscreen.material.add_fbo_texture(screen_fbo, GL_COLOR_ATTACHMENT0)
+        flatscreen.material.add_fbo_texture(reflector, GL_COLOR_ATTACHMENT0)
+    flatscreen.render(Transform.zero())
+    # """
     framecount += 1

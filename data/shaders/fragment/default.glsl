@@ -25,6 +25,7 @@ uniform sampler2D texMetallic;//mat
 #endif
 #ifdef reflective
 uniform sampler2D FBOreflection;//mat
+uniform vec4 baseColor;//mat
 #endif
 
 //globals
@@ -86,7 +87,7 @@ void main()
     col *= ambient;
 
     #ifdef reflective
-    //col = texture2D(FBOreflection, texCoord).rgb;
+    col = texture2D(FBOreflection, texCoord).rgb * baseColor.rgb;
     #endif
 
     #ifdef t_texNormal
@@ -109,7 +110,7 @@ void main()
     float diffuse = max(dot(light_dir, normal), 0.);
     float specular = pow(max(dot(look, -reflect(normal, light_dir)), 0.), 16.);
     float intensity = light_intensity_func(length(light_pos-fposition));
-    col += (diffuse * diffuse_weight + specular * specular_weight) * light_col * light_strength * intensity;
+    col += (diffuse * diffuse_weight + specular * specular_weight) * light_col * light_strength;
 #endif
     outputColor = vec4(col, 1.0);//alpha_depth_func(gl_Position.z));
 }
