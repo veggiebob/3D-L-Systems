@@ -48,10 +48,6 @@ def render(scene: Scene):
     reflection_render.render_with_transform(cam_transform)
     cam_transform.set_translation(-cam_transform.get_translation())
 
-    # reflector.prepare_render()
-    # scene.render()
-    # reflector.return_to_screen()
-
     perspective_mat = glm.perspective(glm.radians(90.0), screen_utils.aspect_ratio(), 0.1, 100000.0)
     tmat = cam_transform._get_translation_matrix()
     rmat = cam_transform._get_rotation_matrix()  # fine as long as we never pitch
