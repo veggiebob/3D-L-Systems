@@ -4,7 +4,7 @@ from OpenGL.GL import *
 import numpy as np
 
 # https://www.khronos.org/registry/OpenGL-Refpages/gl4/html/glUniform.xhtml
-from tremor.graphics import shaders
+from main.graphics import shaders
 
 u_types: Dict[str, Callable] = {
     'float': glUniform1f,

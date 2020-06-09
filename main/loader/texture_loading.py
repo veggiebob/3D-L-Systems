@@ -6,7 +6,7 @@ from OpenGL import GL
 from PIL import Image
 
 
-from tremor.graphics.uniforms import gl_compressed_format
+from main.graphics.uniforms import gl_compressed_format
 
 class Texture:
     index = 0

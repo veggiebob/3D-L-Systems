@@ -2,14 +2,14 @@ import glm
 import numpy as np
 from OpenGL.GL import *
 
-from tremor.core.scene import Scene
-from tremor.graphics import screen_utils, fbos
-from tremor.graphics.fbos import FBO
-from tremor.graphics.mesh import Mesh
-from tremor.graphics.uniforms import update_all_uniform
-from tremor.loader import gltf_loader
-from tremor.math import matrix
-from tremor.math.transform import Transform
+from main.core.scene import Scene
+from main.graphics import screen_utils, fbos
+from main.graphics.fbos import FBO
+from main.graphics.mesh import Mesh
+from main.graphics.uniforms import update_all_uniform
+from main.loader import gltf_loader
+from main.math import matrix
+from main.math.transform import Transform
 
 framecount = 0
 

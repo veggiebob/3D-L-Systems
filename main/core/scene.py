@@ -1,7 +1,7 @@
 from typing import List
 
-from tremor.core.entity import Entity
-from tremor.graphics.vbo import VertexBufferObject
+from main.core.entity import Entity
+from main.graphics.vbo import VertexBufferObject
 from OpenGL.GL import *
 
 

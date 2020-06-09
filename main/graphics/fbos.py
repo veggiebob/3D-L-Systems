@@ -4,8 +4,8 @@ from typing import List, Dict
 import OpenGL.GL as gl
 from OpenGL.GL.framebufferobjects import *
 
-from tremor.graphics import screen_utils
-from tremor.graphics.surfaces import TextureUnit
+from main.graphics import screen_utils
+from main.graphics.surfaces import TextureUnit
 
 """
 steps to make a cool fbo:
@@ -64,7 +64,7 @@ class FBO:
         else:
             raise Exception(f"{attachment} is not an attachment in the FBO!")
     def set_attachment_texture (self, attachment):
-        from tremor.loader.gltf_loader import get_default_sampler
+        from main.loader.gltf_loader import get_default_sampler
         self.textures[attachment] = TextureUnit.generate_texture()
         samp = get_default_sampler()
         samp.minFilter = gl.GL_LINEAR

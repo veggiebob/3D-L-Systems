@@ -2,23 +2,23 @@ from random import random
 
 import OpenGL
 
-from tremor.core.entity import Entity
-from tremor.core.scene import Scene
-from tremor.graphics.mesh import Mesh
-from tremor.math.vertex_math import norm_vec3
+from main.core.entity import Entity
+from main.core.scene import Scene
+from main.graphics.mesh import Mesh
+from main.math.vertex_math import norm_vec3
 
 OpenGL.USE_ACCELERATE = False
 
 import glfw
-from tremor.loader import scene_loader, gltf_loader
-from tremor.util import glutil, configuration
-from tremor.core import game_clock, console, key_input
+from main.loader import scene_loader, gltf_loader
+from main.util import glutil, configuration
+from main.core import game_clock, console, key_input
 
-from tremor.graphics.shaders import *
-from tremor.graphics.uniforms import *
+from main.graphics.shaders import *
+from main.graphics.uniforms import *
 import sys
-from tremor.graphics import screen_utils, scene_renderer, fbos
-from tremor.math import matrix
+from main.graphics import screen_utils, scene_renderer, fbos
+from main.math import matrix
 
 import imgui
 

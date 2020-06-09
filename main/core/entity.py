@@ -1,7 +1,7 @@
 from typing import List
 
-from tremor.graphics.mesh import Mesh
-from tremor.math.transform import Transform
+from main.graphics.mesh import Mesh
+from main.math.transform import Transform
 
 
 class Entity:

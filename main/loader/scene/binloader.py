@@ -1,12 +1,12 @@
-from tremor.core.entity import Entity
-from tremor.core.scene import Scene
-from tremor.graphics import shaders
-from tremor.graphics.mesh import Mesh
-from tremor.loader import gltf_loader
-from tremor.loader.scene.scene_types import *
+from main.core.entity import Entity
+from main.core.scene import Scene
+from main.graphics import shaders
+from main.graphics.mesh import Mesh
+from main.loader import gltf_loader
+from main.loader.scene.scene_types import *
 import numpy as np
 import io
-from tremor.loader.texture_loading import load_texture_by_name, TEXTURE_TABLE
+from main.loader.texture_loading import load_texture_by_name, TEXTURE_TABLE
 
 
 def parse_keyvalue(string):

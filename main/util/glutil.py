@@ -2,7 +2,7 @@ from collections import Callable
 
 from OpenGL.GL import *
 
-from tremor.core import console
+from main.core import console
 
 
 def log_capabilities():

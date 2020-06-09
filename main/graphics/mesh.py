@@ -2,10 +2,10 @@ import ctypes
 
 import OpenGL.GL as GL
 
-from tremor.graphics import shaders
-from tremor.graphics.shaders import MeshProgram
-from tremor.graphics.surfaces import Material
-from tremor.math.transform import Transform
+from main.graphics import shaders
+from main.graphics.shaders import MeshProgram
+from main.graphics.surfaces import Material
+from main.math.transform import Transform
 import numpy as np
 
 

@@ -1,5 +1,5 @@
 import numpy as np
-from tremor.math import vertex_math
+from main.math import vertex_math
 
 from scipy.spatial.transform import Rotation as R
 

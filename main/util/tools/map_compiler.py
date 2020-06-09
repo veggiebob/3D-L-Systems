@@ -6,10 +6,10 @@ from typing import List
 import argparse
 
 import numpy as np
-from tremor.core.scene_geometry import Brush, Plane
+from main.core.scene_geometry import Brush, Plane
 import struct
 
-from tremor.loader.scene.scene_types import *
+from main.loader.scene.scene_types import *
 
 
 def parse_side(string):

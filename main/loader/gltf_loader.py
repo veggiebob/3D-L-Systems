@@ -7,13 +7,13 @@ import pygltflib
 from OpenGL import GL
 from PIL import Image as PIL_Image
 
-from tremor.core.entity import Entity
-from tremor.graphics import shaders, fbos
-from tremor.graphics.fbos import FBO
-from tremor.graphics.mesh import Mesh
-from tremor.graphics.surfaces import MaterialTexture, TextureUnit, Material
+from main.core.entity import Entity
+from main.graphics import shaders, fbos
+from main.graphics.fbos import FBO
+from main.graphics.mesh import Mesh
+from main.graphics.surfaces import MaterialTexture, TextureUnit, Material
 import numpy as np
-from tremor.util import configuration
+from main.util import configuration
 
 GLTF = pygltflib.GLTF2()
 

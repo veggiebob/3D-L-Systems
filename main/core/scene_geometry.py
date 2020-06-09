@@ -1,5 +1,5 @@
 import numpy as np
-from tremor.math.vertex_math import norm_vec3
+from main.math.vertex_math import norm_vec3
 
 
 def center_of_mass(points: np.array) -> np.array:

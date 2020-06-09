@@ -1,7 +1,7 @@
 from enum import Enum
 from typing import Any, Dict, Tuple
 
-from tremor.core import key_input
+from main.core import key_input
 import glfw
 
 text_buffer = []

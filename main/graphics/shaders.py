@@ -4,8 +4,8 @@ from typing import List
 
 from OpenGL.GL.shaders import ShaderCompilationError
 import OpenGL.GL as gl
-from tremor.graphics.surfaces import Material, MaterialTexture
-from tremor.graphics.uniforms import *
+from main.graphics.surfaces import Material, MaterialTexture
+from main.graphics.uniforms import *
 
 PROGRAMS: Dict[str, 'MeshProgram'] = {}
 BRANCHED_PROGRAMS: Dict[str, 'BranchedProgram'] = {}

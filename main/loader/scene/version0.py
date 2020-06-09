@@ -3,12 +3,12 @@ from collections import Callable
 from enum import Enum, unique
 from typing import Dict, List
 
-from tremor.core.scene import Scene
+from main.core.scene import Scene
 import numpy as np
 
-from tremor.core.entity import Entity
-from tremor.loader.gltf_loader import load_gltf
-from tremor.math import matrix
+from main.core.entity import Entity
+from main.loader.gltf_loader import load_gltf
+from main.math import matrix
 
 def load_scene0(name, data_stream) -> Scene:
     has_resources = False
