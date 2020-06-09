@@ -122,9 +122,9 @@ class Spatial:
     @staticmethod
     def quat_from_vectors(a, b):  # returns a quaternion that rotates a to b
         direction = np.cross(a, b)
-        theta = np.acos(np.dot(a, b))
+        theta = np.arccos(np.dot(a, b))
         w = np.cos(theta / 2.0)
-        quat = np.empty((1, 4))
+        quat = np.empty(4)
         quat[0:3] = direction * np.sin(theta / 2.0)
         quat[3] = w
         return quat
@@ -142,15 +142,15 @@ class Spatial:
         self.translation = translation
         self.scale = scale
         if self.translation is None:
-            self.translation = np.array([0, 0, 0])
+            self.translation = np.array([0, 0, 0], dtype='float64')
         if self.i is None:
-            self.i = np.array([1, 0, 0])
+            self.i = np.array([1, 0, 0], dtype='float64')
         if self.j is None:
-            self.j = np.array([0, 1, 0])
+            self.j = np.array([0, 1, 0], dtype='float64')
         if self.k is None:
-            self.k = np.array([0, 0, 1])
+            self.k = np.array([0, 0, 1], dtype='float64')
         if self.scale is None:
-            self.scale = np.array([1, 1, 1])
+            self.scale = np.array([1, 1, 1], dtype='float64')
 
     def align_i(self, new_i):
         quat = Spatial.quat_from_vectors(self.i, new_i)
@@ -165,7 +165,7 @@ class Spatial:
         self.transform_by_quaternion(quat)
 
     def spin_about_axis (self, axis, radians):
-        quat = np.empty((1, 4))
+        quat = np.empty(4)
         quat[0:3] = axis * np.sin(radians / 2.0)
         quat[3] = np.cos(radians / 2.0)
         self.transform_by_quaternion(quat)
@@ -217,6 +217,11 @@ class Spatial:
         t.set_translation(self.translation)
         t.set_scale(self.scale)
         return t
+
+    def config_transform (self, transform:Transform) -> None:
+        transform.set_rotation(np.array(self.get_quaternion(), dtype='float32'))
+        transform.set_translation(np.array(self.translation, dtype='float32'))
+        transform.set_scale(np.array(self.scale, dtype='float32'))
 
     def copy (self) -> 'Spatial':
         s = Spatial()

@@ -4,7 +4,17 @@ from main.core.entity import Entity
 from main.graphics.mesh import Mesh
 from main.math.transform import Spatial
 
-
+class Turtle:
+    # any state that is preserved, pushed or popped during the turtle's movement should be here
+    # make sure to keep the copy method updated (it's important)
+    def __init__ (self):
+        self.spatial = Spatial()
+        self.resource:int = -1
+    def copy (self) -> 'Turtle':
+        t = Turtle()
+        t.spatial = self.spatial.copy()
+        t.resource = self.resource
+        return t
 class LSystemGenerator:
     """
     Use a parsed L-System to generate geometry
@@ -14,70 +24,75 @@ class LSystemGenerator:
         self.lsystem = lsystem
         # at render
         self.sequence = self.lsystem.axiom
-        self.transform_stack = []
-        self.turtle = Spatial() # we will consider the 'forward' axis being the Y axis
-        self.current_mesh: Mesh = None
+        self.turtle_stack:List[Turtle] = []
+        self.turtle = Turtle() # we will consider the 'forward' axis being the Y axis
 
         self.generate_sequence()
 
-    def generate_mesh (self) -> List[Entity]:
+    def generate_system (self) -> Entity:
         # run the turtle through the list of commands
         # return all the meshes todo instanced rendering
+        root = Entity('l-system-root')
+        self.turtle.spatial.config_transform(root.transform)
         meshes:List[Entity] = []
         for command in self.sequence:
             if LSystem.is_action(command):
-                mesh = LSystem.ACTIONS[command](self)
-                if mesh is not None:
-                    meshes.append(mesh)
+                ent:Entity = LSystem.ACTIONS[command](self)
+                if ent is not None:
+                    ent.parent = root
+                    meshes.append(ent)
+                    root.children.append(ent)
             elif LSystem.is_resource(command):
-                self.change_resource(int(command))
-        return meshes
+                self.turtle.resource = int(command)
+        return root
 
     def generate_sequence(self):
         print('generating sequence . . . ', end='')
         self.sequence = self.lsystem.axiom
         for i in range(self.lsystem.iterations):
             self._iterate()
-        print('done!')
+
+        print('done: %s'%self.sequence)
 
     def _iterate(self):
         new_seq = ""
         for ch in self.sequence:
             new_seq += self.lsystem.get_rule(ch)
+        self.sequence = new_seq
 
-    def change_resource(self, index: int):
-        self.current_mesh = self.lsystem.resources[index]
+    def get_current_mesh (self) -> Mesh:
+        return self.lsystem.resources[self.turtle.resource]
 
     def action_forward(self):
-        self.turtle.translation += self.turtle.j
+        self.turtle.spatial.translation += self.turtle.spatial.j * self.lsystem.unit_length
 
     def action_backward(self):
-        self.turtle.translation -= self.turtle.j
+        self.turtle.spatial.translation -= self.turtle.spatial.j * self.lsystem.unit_length
 
     def action_theta_cw(self):
-        self.turtle.spin_j(self.lsystem.spin_angle / 180 * np.pi)
+        self.turtle.spatial.spin_j(self.lsystem.spin_angle / 180 * np.pi)
 
     def action_theta_ccw(self):
-        self.turtle.spin_j(-self.lsystem.spin_angle / 180 * np.pi)
+        self.turtle.spatial.spin_j(-self.lsystem.spin_angle / 180 * np.pi)
 
     def action_pitch_up(self):
-        self.turtle.spin_i(self.lsystem.pitch_angle / 180 * np.pi)
+        self.turtle.spatial.spin_k(self.lsystem.pitch_angle / 180 * np.pi)
 
     def action_pitch_down(self):
-        self.turtle.spin_i(-self.lsystem.pitch_angle / 180 * np.pi)
+        self.turtle.spatial.spin_k(-self.lsystem.pitch_angle / 180 * np.pi)
 
     def action_push(self):
-        self.transform_stack.append(self.turtle.copy())
+        self.turtle_stack.append(self.turtle.copy())
 
     def action_pop(self):
-        self.turtle = self.transform_stack.pop()
+        self.turtle = self.turtle_stack.pop()
 
     def action_draw_resource(self) -> Entity:
-        if self.current_mesh is None:
-            return None
+        if self.turtle.resource < 0:
+            return
         e = Entity('l-system')
-        e.transform = self.turtle.get_transform()
-        e.mesh = self.current_mesh
+        self.turtle.spatial.config_transform(e.transform)
+        e.mesh = self.get_current_mesh()
         return e
 
 
@@ -90,14 +105,14 @@ class LSystem:
     Numbers 0-9 are commands to set the resource to draw
     """
     ACTIONS:Dict[str, Callable] = {
-        '*': LSystemGenerator.action_forward,
-        '!': LSystemGenerator.action_backward,
-        '-': LSystemGenerator.action_theta_cw,
-        '+': LSystemGenerator.action_theta_ccw,
-        '[': LSystemGenerator.action_push,
-        ']': LSystemGenerator.action_pop,
+        '+': LSystemGenerator.action_forward,
+        '-': LSystemGenerator.action_backward,
+        '*': LSystemGenerator.action_theta_cw,
+        '!': LSystemGenerator.action_theta_ccw,
         '^': LSystemGenerator.action_pitch_up,
         '&': LSystemGenerator.action_pitch_down,
+        '[': LSystemGenerator.action_push,
+        ']': LSystemGenerator.action_pop,
         '#': LSystemGenerator.action_draw_resource
     }
 
@@ -116,7 +131,7 @@ class LSystem:
         self.unit_length = 1
         self.pitch_angle = 30
         self.spin_angle = 60
-        self.axiom = "*"
+        self.axiom = ""
         self.rules: Dict[str, str] = {}
 
     def get_rule(self, ch: str):

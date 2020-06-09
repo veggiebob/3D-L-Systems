@@ -75,7 +75,7 @@ void main()
     #ifdef t_texColor
     vec4 t = texture2D(texColor, texCoord);
     #ifdef maskAlpha
-    if (t.a < 0.1) discard;
+    if (t.a < 0.5) discard;
     #endif
     #else
     vec4 t = vec4(fcolor, 1.);

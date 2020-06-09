@@ -5,6 +5,8 @@ import OpenGL
 from main.core.entity import Entity
 from main.core.scene import Scene
 from main.graphics.mesh import Mesh
+from main.lsystems import mesh_generator
+from main.lsystems.parser import LSystem
 from main.math.vertex_math import norm_vec3
 
 OpenGL.USE_ACCELERATE = False
@@ -195,7 +197,7 @@ def main():
     glfw.set_input_mode(window, glfw.CURSOR, glfw.CURSOR_DISABLED)
     imgui_renderer = GlfwRenderer(window, attach_callbacks=False)
     glutil.log_capabilities()
-    glEnable(GL_CULL_FACE)
+    # glEnable(GL_CULL_FACE) # don't cull because of leaves!
     glCullFace(GL_BACK)
     glEnable(GL_DEPTH_TEST)
     glDepthMask(GL_TRUE)
@@ -218,8 +220,25 @@ def main():
     #         'clamp_mode': GL_REPEAT
     #     }
     # })
-    scene_file = open("data/scenes/reflection_test.tsf", "r", encoding="utf-8")
-    current_scene = scene_loader.load_scene(scene_file)
+    # scene_file = open("data/scenes/reflection_test.tsf", "r", encoding="utf-8")
+    # current_scene = scene_loader.load_scene(scene_file)
+    ls = LSystem()
+    ls.unit_length = 0.5
+    ls.pitch_angle = 20
+    ls.spin_angle = 60
+    ls.axiom = '0*s'
+    ls.rules = {
+        's': '[b]*',
+        'b': '#---&b'
+    }
+    ls.iterations = 5
+    leaves = gltf_loader.load_gltf('data/gltf/lsystemassets/leaves.glb', ['maskAlpha'])
+    for i in range(len(leaves)):
+        ls.resources[i] = leaves[i].mesh
+
+    current_scene = mesh_generator.create_scene(ls)
+    current_scene.elements.append(gltf_loader.load_gltf('data/gltf/env_room.glb', ['skybox', 'unlit'])[0])
+    current_scene.elements += gltf_loader.load_gltf('data/gltf/axes.glb')
     cam = Entity("camera")
     cam.transform.set_translation(np.array([3, 3, 3]))
     cam.transform.set_rotation(matrix.quaternion_from_angles([0, np.pi/2, 0]))

@@ -163,8 +163,10 @@ def load_gltf(filepath, opt_input_flags:List[str]=()) -> List[Entity]:
     materials = []
     for material in obj.materials:
         mat = Material.from_gltf_material(material)
-        if not material.alphaMode == 'OPAQUE':
-            raise Exception("Special case! Discard model, and find the nearest exit.")
+        # if not material.alphaMode == 'OPAQUE':
+        #     raise Exception("Special case! Discard model, and find the nearest exit.")
+        if material.alphaMode in ['MASK', 'BLEND']:
+            mat.add_flag('maskAlpha')
         color = material.pbrMetallicRoughness.baseColorTexture
         normal = material.normalTexture
         metallic = material.pbrMetallicRoughness.metallicRoughnessTexture
