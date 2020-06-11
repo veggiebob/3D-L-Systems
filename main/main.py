@@ -1,3 +1,4 @@
+import copy
 from random import random
 
 import OpenGL
@@ -223,22 +224,39 @@ def main():
     # scene_file = open("data/scenes/reflection_test.tsf", "r", encoding="utf-8")
     # current_scene = scene_loader.load_scene(scene_file)
     ls = LSystem()
-    ls.unit_length = 0.5
-    ls.pitch_angle = 20
+    ls.unit_length = 1.0
+    ls.pitch_angle = 90
     ls.spin_angle = 60
-    ls.axiom = '0*s'
+    ls.binormal_angle = 20
+    ls.scale_multiplier = 1.1
+    ls.axiom = '3b'
     ls.rules = {
-        's': '[b]*',
-        'b': '#---&b'
+        # 'b': '3#+[^^^4#+1#]&b'
+        # 'b': '[3#+&___b]' # testing box -- todo notice weird angles on occasion
+        'b': '#+*b' # very strange behavior -- todo notice weird axis movements -- should be rotating about red (x) axis
     }
-    ls.iterations = 5
+    ls.iterations = 20
     leaves = gltf_loader.load_gltf('data/gltf/lsystemassets/leaves.glb', ['maskAlpha'])
-    for i in range(len(leaves)):
-        ls.resources[i] = leaves[i].mesh
-
-    current_scene = mesh_generator.create_scene(ls)
+    branches = gltf_loader.load_gltf('data/gltf/lsystemassets/branches.glb')
+    index = 0
+    for ent in leaves + branches:
+        ls.resources[index] = ent.mesh
+        index += 1
+    current_scene = Scene('lsystempreview')
+    tree = mesh_generator.create_lsystem(ls)
+    current_scene.elements.append(tree)
     current_scene.elements.append(gltf_loader.load_gltf('data/gltf/env_room.glb', ['skybox', 'unlit'])[0])
-    current_scene.elements += gltf_loader.load_gltf('data/gltf/axes.glb')
+    axes = gltf_loader.load_gltf('data/gltf/axes.glb')
+    for a in axes:
+        a.transform.set_scale(a.transform.get_scale() * 0.5)
+    for ent in tree.children:
+        debug_axis = copy.deepcopy(axes)
+        for a in debug_axis:
+            a.transform.set_translation(ent.transform.get_translation())
+            a.transform.set_rotation(ent.transform.get_rotation())
+            a.transform.set_scale(ent.transform.get_scale())
+        current_scene.elements += debug_axis
+    current_scene.elements += axes
     cam = Entity("camera")
     cam.transform.set_translation(np.array([3, 3, 3]))
     cam.transform.set_rotation(matrix.quaternion_from_angles([0, np.pi/2, 0]))
@@ -260,7 +278,7 @@ def main():
 
         # fly control
         cam.transform.set_rotation(matrix.quat_from_viewangles(viewangles))
-        speed = 0.1
+        speed = 0.02
         if pressed(glfw.KEY_W) or pressed(glfw.KEY_UP):
             cam.transform.translate_local(np.array([speed, 0, 0]))
         if pressed(glfw.KEY_S) or pressed(glfw.KEY_DOWN):

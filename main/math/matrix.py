@@ -64,7 +64,6 @@ def create_scale_matrix (x, y=None, z=None):
     m[2][2] *= z
     return m
 
-
 def look_at(position, target, up):
     zaxis = vertex_math.norm_vec3(target - position)
     xaxis = vertex_math.norm_vec3(vertex_math.cross_array(vertex_math.norm_vec3(up), zaxis))

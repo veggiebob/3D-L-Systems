@@ -1,4 +1,4 @@
-from typing import List, Dict, Callable
+from typing import List, Dict, Callable, Optional
 import numpy as np
 from main.core.entity import Entity
 from main.graphics.mesh import Mesh
@@ -8,13 +8,15 @@ class Turtle:
     # any state that is preserved, pushed or popped during the turtle's movement should be here
     # make sure to keep the copy method updated (it's important)
     def __init__ (self):
-        self.spatial = Spatial()
+        self.spatial:'Spatial' = Spatial()
         self.resource:int = -1
     def copy (self) -> 'Turtle':
         t = Turtle()
         t.spatial = self.spatial.copy()
         t.resource = self.resource
         return t
+    def __str__ (self) -> str:
+        return f"Turtle(resource={self.resource}, {self.spatial})"
 class LSystemGenerator:
     """
     Use a parsed L-System to generate geometry
@@ -33,7 +35,7 @@ class LSystemGenerator:
         # run the turtle through the list of commands
         # return all the meshes todo instanced rendering
         root = Entity('l-system-root')
-        self.turtle.spatial.config_transform(root.transform)
+        root.transform = self.turtle.spatial.config_transform(root.transform)
         meshes:List[Entity] = []
         for command in self.sequence:
             if LSystem.is_action(command):
@@ -42,6 +44,7 @@ class LSystemGenerator:
                     ent.parent = root
                     meshes.append(ent)
                     root.children.append(ent)
+                print('TURTLE: %s'%self.turtle)
             elif LSystem.is_resource(command):
                 self.turtle.resource = int(command)
         return root
@@ -64,10 +67,10 @@ class LSystemGenerator:
         return self.lsystem.resources[self.turtle.resource]
 
     def action_forward(self):
-        self.turtle.spatial.translation += self.turtle.spatial.j * self.lsystem.unit_length
+        self.turtle.spatial.translation += self.turtle.spatial.j * self.turtle.spatial.scale * self.lsystem.unit_length
 
     def action_backward(self):
-        self.turtle.spatial.translation -= self.turtle.spatial.j * self.lsystem.unit_length
+        self.turtle.spatial.translation -= self.turtle.spatial.j * self.turtle.spatial.scale * self.lsystem.unit_length
 
     def action_theta_cw(self):
         self.turtle.spatial.spin_j(self.lsystem.spin_angle / 180 * np.pi)
@@ -77,21 +80,27 @@ class LSystemGenerator:
 
     def action_pitch_up(self):
         self.turtle.spatial.spin_k(self.lsystem.pitch_angle / 180 * np.pi)
-
     def action_pitch_down(self):
         self.turtle.spatial.spin_k(-self.lsystem.pitch_angle / 180 * np.pi)
-
+    def action_binormal_ccw (self):
+        self.turtle.spatial.spin_i(self.lsystem.binormal_angle / 180 * np.pi)
+    def action_binormal_cw(self):
+        self.turtle.spatial.spin_i(-self.lsystem.binormal_angle / 180 * np.pi)
+    def action_increase_size (self):
+        self.turtle.spatial.scale *= self.lsystem.scale_multiplier
+    def action_decrease_size (self):
+        self.turtle.spatial.scale /= self.lsystem.scale_multiplier
     def action_push(self):
         self.turtle_stack.append(self.turtle.copy())
 
     def action_pop(self):
         self.turtle = self.turtle_stack.pop()
 
-    def action_draw_resource(self) -> Entity:
+    def action_draw_resource(self) -> Optional[Entity]:
         if self.turtle.resource < 0:
             return
         e = Entity('l-system')
-        self.turtle.spatial.config_transform(e.transform)
+        e.transform = self.turtle.spatial.config_transform(e.transform)
         e.mesh = self.get_current_mesh()
         return e
 
@@ -111,6 +120,10 @@ class LSystem:
         '!': LSystemGenerator.action_theta_ccw,
         '^': LSystemGenerator.action_pitch_up,
         '&': LSystemGenerator.action_pitch_down,
+        '@': LSystemGenerator.action_binormal_ccw,
+        '$': LSystemGenerator.action_binormal_cw,
+        '_': LSystemGenerator.action_decrease_size,
+        '=': LSystemGenerator.action_increase_size,
         '[': LSystemGenerator.action_push,
         ']': LSystemGenerator.action_pop,
         '#': LSystemGenerator.action_draw_resource
@@ -131,6 +144,8 @@ class LSystem:
         self.unit_length = 1
         self.pitch_angle = 30
         self.spin_angle = 60
+        self.binormal_angle = 5
+        self.scale_multiplier = 1.1
         self.axiom = ""
         self.rules: Dict[str, str] = {}
 

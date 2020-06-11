@@ -75,7 +75,7 @@ class Transform:
         return self._rotation
 
     def get_scale(self):
-        return self._scale
+        return np.array(self._scale, dtype='float64')
 
     def translate_local(self, trans_vec: np.ndarray):
         if not len(trans_vec) == 3:
@@ -134,7 +134,10 @@ class Spatial:
         spatial = Spatial()
         spatial.transform_by_quaternion(quat)
         return spatial
-
+    @staticmethod
+    def normalize_vec (vec) -> np.array:
+        l = np.sqrt(vec[0]**2 + vec[1]**2 + vec[2]**2)
+        return vec / l
     def __init__(self, i=None, j=None, k=None, translation=None, scale=None):
         self.i = i
         self.j = j
@@ -152,6 +155,10 @@ class Spatial:
         if self.scale is None:
             self.scale = np.array([1, 1, 1], dtype='float64')
 
+    def _normalize (self):
+        self.i = Spatial.normalize_vec(self.i)
+        self.j = Spatial.normalize_vec(self.j)
+        self.k = Spatial.normalize_vec(self.k)
     def align_i(self, new_i):
         quat = Spatial.quat_from_vectors(self.i, new_i)
         self.transform_by_quaternion(quat)
@@ -180,12 +187,13 @@ class Spatial:
         self.spin_about_axis(self.k, radians)
 
     def get_quaternion(self):
-        return Spatial.quat_from_vectors(np.array([1, 0, 0]), self.i)
+        return Spatial.quat_from_vectors(np.array([0, 1, 0]), self.j)
 
     def transform_by_quaternion(self, quaternion):
         self.i = Spatial.quat_rot(quaternion, self.i)
         self.j = Spatial.quat_rot(quaternion, self.j)
         self.k = Spatial.quat_rot(quaternion, self.k)
+        self._normalize()
 
     def to_matrix(self):
         mat = np.empty((4, 4))
@@ -218,10 +226,13 @@ class Spatial:
         t.set_scale(self.scale)
         return t
 
-    def config_transform (self, transform:Transform) -> None:
-        transform.set_rotation(np.array(self.get_quaternion(), dtype='float32'))
-        transform.set_translation(np.array(self.translation, dtype='float32'))
-        transform.set_scale(np.array(self.scale, dtype='float32'))
+    def config_transform (self, transform:Transform) -> Transform:
+        t = transform.clone()
+        # t.set_rotation(np.array(self.get_quaternion(), dtype='float32'))
+        t.rotate_local(self.get_quaternion())
+        t.set_translation(np.array(self.translation, dtype='float32'))
+        t.set_scale(np.array(self.scale, dtype='float32'))
+        return t
 
     def copy (self) -> 'Spatial':
         s = Spatial()
@@ -231,3 +242,6 @@ class Spatial:
         s.translation = self.translation.copy()
         s.scale = self.scale.copy()
         return s
+
+    def __str__ (self) -> str:
+        return f"Spatial(i={self.i}, j={self.j}, k={self.k})"
