@@ -5,7 +5,7 @@ from main.math import vertex_math, matrix
 
 # A transform is a translation, rotation, and scale
 class Transform:
-    def __init__(self, scene_elem=None):
+    def __init__(self, scene_elem:'Entity'=None):
         self._translation = np.array([0, 0, 0], dtype='float32')  # x y z
         self._rotation = np.array([0, 0, 0, 1], dtype='float32')  # w z y x
         self._scale = np.array([1, 1, 1])  # x y z
@@ -115,9 +115,21 @@ class Transform:
 
 
 class Spatial:
+    I = np.array([1.0, 0., 0.], dtype='float32')
+    J = np.array([.0, 1., 0.], dtype='float32')
+    K = np.array([.0, 0., 1.], dtype='float32')
     @staticmethod
     def quat_rot(quat, vec):  # returns vec rotated by quaternion quat
         return vec + 2.0 * np.cross(quat[0:3], np.cross(quat[0:3], vec) + quat[3] * vec)
+
+    @staticmethod
+    def quaternion_multiply(quaternion1, quaternion0):
+        w0, x0, y0, z0 = quaternion0
+        w1, x1, y1, z1 = quaternion1
+        return np.array([-x1 * x0 - y1 * y0 - z1 * z0 + w1 * w0,
+                         x1 * w0 + y1 * z0 - z1 * y0 + w1 * x0,
+                         -x1 * z0 + y1 * w0 + z1 * x0 + w1 * y0,
+                         x1 * y0 - y1 * x0 + z1 * w0 + w1 * z0], dtype=np.float32)
 
     @staticmethod
     def quat_from_vectors(a, b):  # returns a quaternion that rotates a to b
@@ -134,6 +146,7 @@ class Spatial:
         spatial = Spatial()
         spatial.transform_by_quaternion(quat)
         return spatial
+
     @staticmethod
     def normalize_vec (vec) -> np.array:
         l = np.sqrt(vec[0]**2 + vec[1]**2 + vec[2]**2)
@@ -186,8 +199,12 @@ class Spatial:
     def spin_k (self, radians):
         self.spin_about_axis(self.k, radians)
 
+    @staticmethod
+    def dottest (a, b, epsilon=0.01) -> bool: # return if they are too close
+        return np.dot(a, b) > 1 - epsilon
     def get_quaternion(self):
-        return Spatial.quat_from_vectors(np.array([0, 1, 0]), self.j)
+        mat = self.to_matrix()[0:3,0:3]
+        return Rotation.as_quat(Rotation.from_matrix(mat))
 
     def transform_by_quaternion(self, quaternion):
         self.i = Spatial.quat_rot(quaternion, self.i)
@@ -228,8 +245,8 @@ class Spatial:
 
     def config_transform (self, transform:Transform) -> Transform:
         t = transform.clone()
-        # t.set_rotation(np.array(self.get_quaternion(), dtype='float32'))
-        t.rotate_local(self.get_quaternion())
+        t.set_rotation(np.array(self.get_quaternion(), dtype='float32'))
+        # t.rotate_local(self.get_quaternion())
         t.set_translation(np.array(self.translation, dtype='float32'))
         t.set_scale(np.array(self.scale, dtype='float32'))
         return t

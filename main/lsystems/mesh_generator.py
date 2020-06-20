@@ -5,7 +5,7 @@ import numpy as np
 
 def create_lsystem (lsystem:LSystem) -> Entity:
     generator = LSystemGenerator(lsystem)
-    generator.turtle.spatial.align_j(np.array([0.0, 1.0, 0.0]))
+    # generator.turtle.spatial.align_j(np.array([0.0, 1.0, 0.0]))
     tree = generator.generate_system()
     # sc = tree.transform.get_scale()
     # tree.transform.set_scale(np.array([sc[0], sc[1], sc[2]]))

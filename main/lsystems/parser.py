@@ -42,6 +42,7 @@ class LSystemGenerator:
                 ent:Entity = LSystem.ACTIONS[command](self)
                 if ent is not None:
                     ent.parent = root
+                    ent.transform._elem = ent
                     meshes.append(ent)
                     root.children.append(ent)
                 print('TURTLE: %s'%self.turtle)
