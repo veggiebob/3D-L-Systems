@@ -1,3 +1,5 @@
+from time import perf_counter
+
 import glm
 import numpy as np
 from OpenGL.GL import *
@@ -42,11 +44,11 @@ def render(scene: Scene):
     glUseProgram(0)
     cam_transform = scene.active_camera.transform.clone()
 
-    reflector = fbos.find_fbo_by_type(FBO.REFLECTION)
-    reflection_render = FBORenderer(reflector, scene)
-    cam_transform.set_translation(-cam_transform.get_translation())
-    reflection_render.render_with_transform(cam_transform)
-    cam_transform.set_translation(-cam_transform.get_translation())
+    # reflector = fbos.find_fbo_by_type(FBO.REFLECTION)
+    # reflection_render = FBORenderer(reflector, scene)
+    # cam_transform.set_translation(-cam_transform.get_translation())
+    # reflection_render.render_with_transform(cam_transform)
+    # cam_transform.set_translation(-cam_transform.get_translation())
 
     perspective_mat = glm.perspective(glm.radians(90.0), screen_utils.aspect_ratio(), 0.1, 100000.0)
     tmat = cam_transform._get_translation_matrix()
@@ -70,8 +72,8 @@ def render(scene: Scene):
     light_pos = [np.sin(framecount * 0.01) * 3, 5, np.cos(framecount * 0.01) * 3]
     update_all_uniform('light_pos', light_pos)
 
-    # scene.render()
-    # """
+    scene.render()
+    """
     # render to the behind-screen
     screen_fbo = fbos.find_fbo_by_type(FBO.FINAL_RENDER_OUTPUT)
     screen_fbo.prepare_render()
@@ -86,5 +88,5 @@ def render(scene: Scene):
         flatscreen.material.add_fbo_texture(screen_fbo, GL_COLOR_ATTACHMENT0)
         flatscreen.material.add_fbo_texture(reflector, GL_COLOR_ATTACHMENT0)
     flatscreen.render(Transform.zero())
-    # """
+    """
     framecount += 1

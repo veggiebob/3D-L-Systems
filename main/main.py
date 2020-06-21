@@ -1,4 +1,5 @@
 import copy
+import time
 from random import random
 
 import OpenGL
@@ -33,6 +34,11 @@ window = None
 framecount = 0
 MAX_FPS: int = None
 fps_clock = game_clock.FPSController()
+MAX_RENDER_TIME = 30#ms
+RENDER_START_TIME = 0
+needs_restart = False
+pretty_render = False
+since_restart = 0
 
 inputs = {'mouse': [0, 0]}  # this is probably bad
 
@@ -73,8 +79,35 @@ def create_uniforms():
 
 
 def render():
-    scene_renderer.render(current_scene)
+    global RENDER_START_TIME, needs_restart, pretty_render, since_restart
+    if needs_restart:
+        RENDER_START_TIME = time.perf_counter()
+        scene_renderer.render(current_scene)
+        frame_time = time.perf_counter() - RENDER_START_TIME
+        if not pretty_render:
+            print(f'render time is {frame_time*1000}ms')
+        else:
+            print(f'PRETTY RENDER at {frame_time*1000}ms')
+        needs_restart = False
+        if not pretty_render:
+            since_restart = 0
+        if since_restart == -1:
+            since_restart = -1000000000000000000
+            pretty_render = False
+        if pretty_render:
+            since_restart = -1
+            needs_restart = True
+    else:
+        since_restart += 1
+
+    if since_restart > 50:
+        needs_restart = True
+        pretty_render = True
+
     fps_clock.capFPS(screen_utils.MAX_FPS)
+
+def exceeded_max_render_time () -> bool:
+    return time.perf_counter() - RENDER_START_TIME > MAX_RENDER_TIME / 1000 and not pretty_render
 
 
 def reshape(w, h):
@@ -117,7 +150,11 @@ def keyboard_callback(window, key, scancode, action, mods):
 
 
 def mouse_callback(window, x, y):
+    global needs_restart
     imgui_renderer.mouse_callback(window, x, y)
+    dif = abs(inputs['mouse'][0] - x) + abs(inputs['mouse'][1] - y)
+    if dif > 5:
+        needs_restart = True
     inputs['mouse'] = [x, y]
     y = -y * 0.05
     x = -x * 0.05
@@ -150,13 +187,11 @@ def resize_callback(window, w, h):
 def char_callback(window, char):
     imgui_renderer.char_callback(window, char)
 
-def random_unit_sphere_vec () -> np.ndarray:
-    return norm_vec3([random()*2-1, random()*2-1, random()*2-1])
-
 def main():
     global window, vbo, nvbo, cvbo
     global current_scene, flatscreen
     global imgui_renderer
+    global needs_restart
 
     glfw.set_error_callback(error_callback)
 
@@ -224,22 +259,35 @@ def main():
     # scene_file = open("data/scenes/reflection_test.tsf", "r", encoding="utf-8")
     # current_scene = scene_loader.load_scene(scene_file)
 
+
+    """
+    out of this project https://www.khanacademy.org/computer-programming/l-systems/5646640411344896
+    try making number 3 (where showProject = 3)
+    """
+    """
+    current setup:
+    2: pine needle
+    3: regular branch
+    4: ending branch
+    """
+
     SHOW_DEBUG_AXES = False
     ls = LSystem()
     ls.unit_length = 1.0
-    ls.pitch_angle = 10
-    ls.spin_angle = 60
-    ls.binormal_angle = 20
-    ls.scale_multiplier = 1.1
-    ls.axiom = 'tltl'
+    ls.pitch_angle = 30
+    ls.spin_angle = 10
+    ls.binormal_angle = 30
+    ls.scale_multiplier = 1.2
+    ls.axiom = 'r'
     ls.rules = {
-        't': 't+',
-        'l': '[b*b*b*b*b*b]',
-        'b': '[3#+[^^^4#+1#]&b4#]'
-        # 'b': '[3#+&___b]'
-        # 'b': '#+&*b'
+        'f': 'ff+',
+        'p': '2#+_@p',
+        'b': '3#+[!@@p][*$$p]b',
+        'l': '******[&&b4#+2#]',
+        't': '=====3#+_____llllll_',
+        'r': 'trr'
     }
-    ls.iterations = 5
+    ls.iterations = 8
     leaves = gltf_loader.load_gltf('data/gltf/lsystemassets/leaves.glb', ['maskAlpha'])
     branches = gltf_loader.load_gltf('data/gltf/lsystemassets/branches.glb')
     index = 0
@@ -247,9 +295,9 @@ def main():
         ls.resources[index] = ent.mesh
         index += 1
     current_scene = Scene('lsystempreview')
+    current_scene.elements.append(gltf_loader.load_gltf('data/gltf/env_room.glb', ['skybox', 'unlit'])[0])
     tree = mesh_generator.create_lsystem(ls)
     current_scene.elements.append(tree)
-    current_scene.elements.append(gltf_loader.load_gltf('data/gltf/env_room.glb', ['skybox', 'unlit'])[0])
 
     if SHOW_DEBUG_AXES:
         axes = gltf_loader.load_gltf('data/gltf/axes.glb')
@@ -284,19 +332,32 @@ def main():
 
         # fly control
         cam.transform.set_rotation(matrix.quat_from_viewangles(viewangles))
-        speed = 0.05
+        speed = 0.08
+
+        if framecount > 10:
+            speed *= screen_utils.MAX_FPS / fps_clock.average_fps
+
+        should_restart = False
         if pressed(glfw.KEY_W) or pressed(glfw.KEY_UP):
             cam.transform.translate_local(np.array([speed, 0, 0]))
+            should_restart = True
         if pressed(glfw.KEY_S) or pressed(glfw.KEY_DOWN):
             cam.transform.translate_local(np.array([-speed, 0, 0]))
+            should_restart = True
         if pressed(glfw.KEY_A) or pressed(glfw.KEY_LEFT):
             cam.transform.translate_local(np.array([0, 0, -speed]))
+            should_restart = True
         if pressed(glfw.KEY_D) or pressed(glfw.KEY_RIGHT):
             cam.transform.translate_local(np.array([0, 0, speed]))
+            should_restart = True
         if pressed(glfw.KEY_LEFT_SHIFT):
             cam.transform.translate_local(np.array([0, -speed, 0]))
+            should_restart = True
         if pressed(glfw.KEY_SPACE):
             cam.transform.translate_local(np.array([0, speed, 0]))
+            should_restart = True
+
+        needs_restart |= should_restart
         render()
         imgui.new_frame()
         if console.SHOW_CONSOLE:

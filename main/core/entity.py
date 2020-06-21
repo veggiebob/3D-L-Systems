@@ -1,5 +1,7 @@
+import time
 from typing import List
 
+from main import main
 from main.graphics.mesh import Mesh
 from main.math.transform import Transform
 
@@ -18,6 +20,9 @@ class Entity:
         return self.name + " (Entity-" + str(self.__hash__()) + ")"
 
     def render (self):
+        if main.exceeded_max_render_time():
+            # print('overtime at entity level!')
+            return
         if self.is_renderable():
             self.mesh.render(self.transform)
         for c in self.children:

@@ -45,7 +45,6 @@ class LSystemGenerator:
                     ent.transform._elem = ent
                     meshes.append(ent)
                     root.children.append(ent)
-                print('TURTLE: %s'%self.turtle)
             elif LSystem.is_resource(command):
                 self.turtle.resource = int(command)
         return root
@@ -117,11 +116,11 @@ class LSystem:
     ACTIONS:Dict[str, Callable] = {
         '+': LSystemGenerator.action_forward,
         '-': LSystemGenerator.action_backward,
-        '*': LSystemGenerator.action_theta_cw,
+        '*': LSystemGenerator.action_theta_cw, # j (green)
         '!': LSystemGenerator.action_theta_ccw,
-        '^': LSystemGenerator.action_pitch_up,
+        '^': LSystemGenerator.action_pitch_up, # k (blue)
         '&': LSystemGenerator.action_pitch_down,
-        '@': LSystemGenerator.action_binormal_ccw,
+        '@': LSystemGenerator.action_binormal_ccw, # i (red)
         '$': LSystemGenerator.action_binormal_cw,
         '_': LSystemGenerator.action_decrease_size,
         '=': LSystemGenerator.action_increase_size,
@@ -139,7 +138,7 @@ class LSystem:
         return ch in '0123456789'
 
     def __init__(self):
-        self.resources: List[Mesh] = [None for i in range(10)]
+        self.resources: List[Optional[Mesh]] = [None for i in range(10)]
         self.iterations = 1
 
         self.unit_length = 1
