@@ -104,6 +104,12 @@ class LSystemGenerator:
         e.mesh = self.get_current_mesh()
         return e
 
+    def action_increase_resource (self):
+        self.turtle.resource = (self.turtle.resource + 1)%len(self.lsystem.resources)
+
+    def action_decrease_resource (self):
+        self.turtle.resource = (self.turtle.resource - 1)%len(self.lsystem.resources)
+
 
 class LSystem:
     """
@@ -126,7 +132,9 @@ class LSystem:
         '=': LSystemGenerator.action_increase_size,
         '[': LSystemGenerator.action_push,
         ']': LSystemGenerator.action_pop,
-        '#': LSystemGenerator.action_draw_resource
+        '#': LSystemGenerator.action_draw_resource,
+        '`': LSystemGenerator.action_increase_resource,
+        '~': LSystemGenerator.action_decrease_resource
     }
 
     @staticmethod

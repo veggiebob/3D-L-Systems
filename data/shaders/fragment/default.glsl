@@ -32,7 +32,7 @@ uniform vec4 baseColor;//mat
 uniform vec3 light_pos;
 uniform float time;
 
-const vec3 ambient = vec3(0.7);
+const vec3 ambient = vec3(0.4);
 
 const vec3 look = vec3(0., 0., 1.);
 const vec3 light_col = vec3(1.);
@@ -109,7 +109,7 @@ void main()
     vec3 light_dir = normalize(light_pos - fposition);
     float diffuse = max(dot(light_dir, normal), 0.);
     float specular = pow(max(dot(look, -reflect(normal, light_dir)), 0.), 16.);
-    float intensity = light_intensity_func(length(light_pos-fposition));
+    float intensity = 1.0; //light_intensity_func(length(light_pos-fposition));
     col += (diffuse * diffuse_weight + specular * specular_weight) * light_col * light_strength;
 #endif
     outputColor = vec4(col, 1.0);//alpha_depth_func(gl_Position.z));

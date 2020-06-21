@@ -84,10 +84,10 @@ def render():
         RENDER_START_TIME = time.perf_counter()
         scene_renderer.render(current_scene)
         frame_time = time.perf_counter() - RENDER_START_TIME
-        if not pretty_render:
-            print(f'render time is {frame_time*1000}ms')
-        else:
-            print(f'PRETTY RENDER at {frame_time*1000}ms')
+        # if not pretty_render:
+        #     print(f'render time is {frame_time*1000}ms')
+        # else:
+        #     print(f'PRETTY RENDER at {frame_time*1000}ms')
         needs_restart = False
         if not pretty_render:
             since_restart = 0
@@ -95,6 +95,7 @@ def render():
             since_restart = -1000000000000000000
             pretty_render = False
         if pretty_render:
+            # for some reason if it only re-renders once then it sometimes doesn't show, so it renders again
             since_restart = -1
             needs_restart = True
     else:
@@ -265,29 +266,39 @@ def main():
     try making number 3 (where showProject = 3)
     """
     """
-    current setup:
+    current resource setup:
+    0: straight, flat leaf
+    1: oak leaf
     2: pine needle
     3: regular branch
     4: ending branch
     """
-
+    """
+    3D L Systems conventionally use this system
+    '+' turn left (!)
+    '-' turn right (*)
+    '&' pitch down (&)
+    '^' pitch up (^)
+    '\' roll left (@)
+    '/' roll right ($)
+    
+    '!' decrease size (_)
+    '`' increment resource index (`)
+    """
     SHOW_DEBUG_AXES = False
     ls = LSystem()
     ls.unit_length = 1.0
-    ls.pitch_angle = 30
-    ls.spin_angle = 10
-    ls.binormal_angle = 30
+    ls.pitch_angle = 22.5
+    ls.spin_angle = 22.5
+    ls.binormal_angle = 22.5
     ls.scale_multiplier = 1.2
-    ls.axiom = 'r'
+    ls.iterations = 5
+    ls.axiom = '[S]!!!!!S'
     ls.rules = {
-        'f': 'ff+',
-        'p': '2#+_@p',
-        'b': '3#+[!@@p][*$$p]b',
-        'l': '******[&&b4#+2#]',
-        't': '=====3#+_____llllll_',
-        'r': 'trr'
+        'S': '3#+[&AB]****[&AB]*****[&AB]',
+        'A': '_3#[B]+[&AB]****[&AB]******&AB',
+        'B': '4#+1[&&#]****[&&#]****[&&#]'
     }
-    ls.iterations = 8
     leaves = gltf_loader.load_gltf('data/gltf/lsystemassets/leaves.glb', ['maskAlpha'])
     branches = gltf_loader.load_gltf('data/gltf/lsystemassets/branches.glb')
     index = 0
@@ -332,7 +343,7 @@ def main():
 
         # fly control
         cam.transform.set_rotation(matrix.quat_from_viewangles(viewangles))
-        speed = 0.08
+        speed = 0.16
 
         if framecount > 10:
             speed *= screen_utils.MAX_FPS / fps_clock.average_fps
