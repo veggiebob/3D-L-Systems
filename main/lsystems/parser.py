@@ -4,19 +4,24 @@ from main.core.entity import Entity
 from main.graphics.mesh import Mesh
 from main.math.transform import Spatial
 
+
 class Turtle:
     # any state that is preserved, pushed or popped during the turtle's movement should be here
     # make sure to keep the copy method updated (it's important)
-    def __init__ (self):
-        self.spatial:'Spatial' = Spatial()
-        self.resource:int = -1
-    def copy (self) -> 'Turtle':
+    def __init__(self):
+        self.spatial: 'Spatial' = Spatial()
+        self.resource: int = -1
+
+    def copy(self) -> 'Turtle':
         t = Turtle()
         t.spatial = self.spatial.copy()
         t.resource = self.resource
         return t
-    def __str__ (self) -> str:
+
+    def __str__(self) -> str:
         return f"Turtle(resource={self.resource}, {self.spatial})"
+
+
 class LSystemGenerator:
     """
     Use a parsed L-System to generate geometry
@@ -26,20 +31,20 @@ class LSystemGenerator:
         self.lsystem = lsystem
         # at render
         self.sequence = self.lsystem.axiom
-        self.turtle_stack:List[Turtle] = []
-        self.turtle = Turtle() # we will consider the 'forward' axis being the Y axis
+        self.turtle_stack: List[Turtle] = []
+        self.turtle = Turtle()  # we will consider the 'forward' axis being the Y axis
 
         self.generate_sequence()
 
-    def generate_system (self) -> Entity:
+    def generate_system(self) -> Entity:
         # run the turtle through the list of commands
         # return all the meshes todo instanced rendering
         root = Entity('l-system-root')
         root.transform = self.turtle.spatial.config_transform(root.transform)
-        meshes:List[Entity] = []
+        meshes: List[Entity] = []
         for command in self.sequence:
             if LSystem.is_action(command):
-                ent:Entity = LSystem.ACTIONS[command](self)
+                ent: Entity = LSystem.ACTIONS[command](self)
                 if ent is not None:
                     ent.parent = root
                     ent.transform._elem = ent
@@ -55,7 +60,7 @@ class LSystemGenerator:
         for i in range(self.lsystem.iterations):
             self._iterate()
 
-        print('done: %s'%self.sequence)
+        print('done: %s' % self.sequence)
 
     def _iterate(self):
         new_seq = ""
@@ -63,7 +68,7 @@ class LSystemGenerator:
             new_seq += self.lsystem.get_rule(ch)
         self.sequence = new_seq
 
-    def get_current_mesh (self) -> Mesh:
+    def get_current_mesh(self) -> Mesh:
         return self.lsystem.resources[self.turtle.resource]
 
     def action_forward(self):
@@ -80,16 +85,22 @@ class LSystemGenerator:
 
     def action_pitch_up(self):
         self.turtle.spatial.spin_k(self.lsystem.pitch_angle / 180 * np.pi)
+
     def action_pitch_down(self):
         self.turtle.spatial.spin_k(-self.lsystem.pitch_angle / 180 * np.pi)
-    def action_binormal_ccw (self):
+
+    def action_binormal_ccw(self):
         self.turtle.spatial.spin_i(self.lsystem.binormal_angle / 180 * np.pi)
+
     def action_binormal_cw(self):
         self.turtle.spatial.spin_i(-self.lsystem.binormal_angle / 180 * np.pi)
-    def action_increase_size (self):
+
+    def action_increase_size(self):
         self.turtle.spatial.scale *= self.lsystem.scale_multiplier
-    def action_decrease_size (self):
+
+    def action_decrease_size(self):
         self.turtle.spatial.scale /= self.lsystem.scale_multiplier
+
     def action_push(self):
         self.turtle_stack.append(self.turtle.copy())
 
@@ -104,11 +115,11 @@ class LSystemGenerator:
         e.mesh = self.get_current_mesh()
         return e
 
-    def action_increase_resource (self):
-        self.turtle.resource = (self.turtle.resource + 1)%len(self.lsystem.resources)
+    def action_increase_resource(self):
+        self.turtle.resource = (self.turtle.resource + 1) % len(self.lsystem.resources)
 
-    def action_decrease_resource (self):
-        self.turtle.resource = (self.turtle.resource - 1)%len(self.lsystem.resources)
+    def action_decrease_resource(self):
+        self.turtle.resource = (self.turtle.resource - 1) % len(self.lsystem.resources)
 
 
 class LSystem:
@@ -119,14 +130,14 @@ class LSystem:
     Letters should always be user defined
     Numbers 0-9 are commands to set the resource to draw
     """
-    ACTIONS:Dict[str, Callable] = {
+    ACTIONS: Dict[str, Callable] = {
         '+': LSystemGenerator.action_forward,
         '-': LSystemGenerator.action_backward,
-        '*': LSystemGenerator.action_theta_cw, # j (green)
+        '*': LSystemGenerator.action_theta_cw,  # j (green)
         '!': LSystemGenerator.action_theta_ccw,
-        '^': LSystemGenerator.action_pitch_up, # k (blue)
+        '^': LSystemGenerator.action_pitch_up,  # k (blue)
         '&': LSystemGenerator.action_pitch_down,
-        '@': LSystemGenerator.action_binormal_ccw, # i (red)
+        '@': LSystemGenerator.action_binormal_ccw,  # i (red)
         '$': LSystemGenerator.action_binormal_cw,
         '_': LSystemGenerator.action_decrease_size,
         '=': LSystemGenerator.action_increase_size,

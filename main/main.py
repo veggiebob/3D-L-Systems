@@ -7,7 +7,7 @@ import OpenGL
 from main.core.entity import Entity
 from main.core.scene import Scene
 from main.graphics.mesh import Mesh
-from main.lsystems import mesh_generator
+from main.lsystems import mesh_generator, openSCAD
 from main.lsystems.parser import LSystem
 from main.math.vertex_math import norm_vec3
 
@@ -296,7 +296,7 @@ def main():
     ls.axiom = '[S]!!!!!S'
     ls.rules = {
         'S': '3#+[&AB]****[&AB]*****[&AB]',
-        'A': '_3#[B]+[&AB]****[&AB]******&AB',
+        'A': '__3#[B]+[&AB]****[&AB]******&AB',
         'B': '4#+1[&&#]****[&&#]****[&&#]'
     }
     leaves = gltf_loader.load_gltf('data/gltf/lsystemassets/leaves.glb', ['maskAlpha'])
@@ -308,6 +308,9 @@ def main():
     current_scene = Scene('lsystempreview')
     current_scene.elements.append(gltf_loader.load_gltf('data/gltf/env_room.glb', ['skybox', 'unlit'])[0])
     tree = mesh_generator.create_lsystem(ls)
+
+    openSCAD.generate_OpenSCAD_script(tree, output_file='data/OpenSCAD-scripts/out.scad', detail=12)
+
     current_scene.elements.append(tree)
 
     if SHOW_DEBUG_AXES:

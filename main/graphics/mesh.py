@@ -103,3 +103,4 @@ class Mesh:
         GL.glBindBuffer(GL.GL_ARRAY_BUFFER, 0)
         mesh.unbind_vao()
         return mesh
+

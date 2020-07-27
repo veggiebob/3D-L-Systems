@@ -7,7 +7,7 @@ from main.math import vertex_math, matrix
 class Transform:
     def __init__(self, scene_elem:'Entity'=None):
         self._translation = np.array([0, 0, 0], dtype='float32')  # x y z
-        self._rotation = np.array([0, 0, 0, 1], dtype='float32')  # w z y x
+        self._rotation = np.array([0, 0, 0, 1], dtype='float32')  # x y z w
         self._scale = np.array([1, 1, 1])  # x y z
         self._mv_needs_rebuild = True
         self._mv: np.ndarray = None
